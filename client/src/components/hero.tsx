@@ -10,13 +10,15 @@ export default function Hero() {
 
   return (
     <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center hero-gradient"
-        style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1563170351-be82bc888aa4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=800')"
-        }}
-      />
+      {/* Background with golden lights */}
+      <div className="absolute inset-0 bg-black">
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-luxury-gold/20 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/3 right-1/3 w-80 h-80 bg-luxury-gold/15 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-luxury-gold/25 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-luxury-gold/10 rounded-full blur-3xl"></div>
+        </div>
+      </div>
 
       <div className="relative z-10 container mx-auto px-6 text-center">
         <motion.div 
@@ -25,18 +27,7 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          <motion.div 
-            className="mb-8"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            <div className="inline-block gold-gradient p-1 rounded-full mb-6">
-              <div className="bg-black px-6 py-2 rounded-full">
-                <span className="text-luxury-gold font-medium">💯💧 100% Originales</span>
-              </div>
-            </div>
-          </motion.div>
+
 
           <motion.h1 
             className="text-6xl md:text-8xl font-playfair font-bold mb-6 leading-tight"

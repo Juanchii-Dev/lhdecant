@@ -14,17 +14,7 @@ export default function PerfumeCatalog() {
     queryKey: ["/api/perfumes"],
   });
 
-  const filteredPerfumes = perfumes.filter(
-    (perfume) => selectedCategory === "all" || perfume.category === selectedCategory
-  );
-
-  const categories = [
-    { id: "all", label: "Todos" },
-    { id: "masculine", label: "Masculinos" },
-    { id: "feminine", label: "Femeninos" },
-    { id: "unisex", label: "Unisex" },
-    { id: "niche", label: "Nicho" },
-  ];
+  const filteredPerfumes = perfumes;
 
   const handleAddToCart = (perfume: Perfume) => {
     toast({
@@ -73,29 +63,7 @@ export default function PerfumeCatalog() {
           </p>
         </motion.div>
 
-        {/* Categories Filter */}
-        <motion.div 
-          className="flex flex-wrap justify-center gap-4 mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          viewport={{ once: true }}
-        >
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              variant={selectedCategory === category.id ? "default" : "outline"}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`px-6 py-2 rounded-full font-medium transition-all duration-300 ${
-                selectedCategory === category.id
-                  ? "bg-luxury-gold text-black"
-                  : "border-luxury-gold/30 text-luxury-gold hover:bg-luxury-gold hover:text-black"
-              }`}
-            >
-              {category.label}
-            </Button>
-          ))}
-        </motion.div>
+
 
         {/* Products Grid */}
         {isLoading ? (

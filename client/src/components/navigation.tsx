@@ -36,14 +36,11 @@ export default function Navigation() {
       <nav className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <motion.div 
-            className="flex items-center space-x-2"
+            className="flex items-center"
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="w-10 h-10 gold-gradient rounded-lg flex items-center justify-center">
-              <i className="fas fa-flask text-black text-lg"></i>
-            </div>
-            <span className="text-2xl font-playfair font-bold">LH Decants</span>
+            <span className="text-2xl font-montserrat font-bold text-luxury-gold">LH Decants</span>
           </motion.div>
 
           <div className="hidden md:flex items-center space-x-8">
@@ -57,7 +54,7 @@ export default function Navigation() {
               <motion.button
                 key={item.id}
                 onClick={() => scrollToSection(item.id)}
-                className="hover:text-luxury-gold transition-colors duration-300"
+                className="font-montserrat font-medium hover:text-luxury-gold transition-colors duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
