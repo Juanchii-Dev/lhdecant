@@ -39,32 +39,43 @@ export default function Features() {
               viewport={{ once: true }}
               whileHover={{ scale: 1.02 }}
             >
-              <div className="bg-gradient-to-br from-charcoal to-black border border-luxury-gold/20 rounded-2xl p-8 h-full hover:border-luxury-gold/40 transition-all duration-300">
-                <motion.div 
-                  className="w-20 h-20 bg-gradient-to-br from-luxury-gold to-champagne rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"
-                  whileHover={{ 
-                    boxShadow: "0 0 30px hsl(var(--luxury-gold) / 0.6)",
-                    scale: 1.1
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-black">
+              <motion.div 
+                className="bg-gradient-to-br from-charcoal to-black border border-luxury-gold/20 rounded-2xl p-8 h-full hover:border-luxury-gold/40 transition-all duration-300 relative overflow-hidden"
+                whileHover={{ 
+                  boxShadow: "0 0 40px hsl(var(--luxury-gold) / 0.3)",
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="w-20 h-20 bg-gradient-to-br from-luxury-gold to-champagne rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg relative z-10">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-black">
                     {feature.icon === "fas fa-certificate" && (
-                      <path d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z" fill="currentColor"/>
+                      <g>
+                        <path d="M12 2l3.09 6.26L22 9l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.87 2 10l6.91-1.74L12 2z" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1"/>
+                      </g>
                     )}
                     {feature.icon === "fas fa-shipping-fast" && (
-                      <path d="M3 17H5.5L6.5 15H17.5L18.5 17H21V19H3V17ZM6 12L8 7H16L18 12H6ZM7.5 10H16.5L15.5 8H8.5L7.5 10Z" fill="currentColor"/>
+                      <g>
+                        <path d="M4 8h11l2 2v6h-2c0 1.1-.9 2-2 2s-2-.9-2-2H7c0 1.1-.9 2-2 2s-2-.9-2-2H2v-6l2-2z" fill="currentColor"/>
+                        <circle cx="5" cy="17" r="1.5" fill="currentColor"/>
+                        <circle cx="13" cy="17" r="1.5" fill="currentColor"/>
+                        <path d="M3 6h3m2 0h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      </g>
                     )}
                     {feature.icon === "fas fa-award" && (
-                      <path d="M12 8.5C13.38 8.5 14.5 7.38 14.5 6C14.5 4.62 13.38 3.5 12 3.5C10.62 3.5 9.5 4.62 9.5 6C9.5 7.38 10.62 8.5 12 8.5ZM12 10.5C9.79 10.5 8 8.71 8 6.5C8 4.29 9.79 2.5 12 2.5C14.21 2.5 16 4.29 16 6.5C16 8.71 14.21 10.5 12 10.5ZM12 11L15.09 17.26L22 18L17 23L18.18 30L12 26.77L5.82 30L7 23L2 18L8.91 17.26L12 11Z" fill="currentColor"/>
+                      <g>
+                        <circle cx="12" cy="9" r="7" fill="currentColor"/>
+                        <path d="m9 12 2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </g>
                     )}
                   </svg>
-                </motion.div>
+                </div>
                 <h3 className="text-xl font-montserrat font-bold mb-4 text-luxury-gold">
                   {feature.title}
                 </h3>
                 <p className="text-gray-300 leading-relaxed">{feature.description}</p>
-              </div>
+              </motion.div>
             </motion.div>
           ))}
         </div>
