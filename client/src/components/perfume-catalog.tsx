@@ -83,12 +83,12 @@ export default function PerfumeCatalog() {
           </div>
         ) : (
           <motion.div 
-            className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
           >
-            {filteredPerfumes.map((perfume, index) => (
+            {filteredPerfumes.slice(0, 3).map((perfume, index) => (
               <motion.div
                 key={perfume.id}
                 initial={{ opacity: 0, y: 30 }}
@@ -152,10 +152,9 @@ export default function PerfumeCatalog() {
           viewport={{ once: true }}
         >
           <Button
-            variant="outline"
-            className="border-2 border-luxury-gold text-luxury-gold px-8 py-4 rounded-lg font-semibold hover:bg-luxury-gold hover:text-black transition-all duration-300"
+            className="bg-luxury-gold text-black px-8 py-4 rounded-lg font-montserrat font-semibold hover:bg-champagne transition-all duration-300 shadow-lg hover:shadow-xl"
           >
-            Ver Más Perfumes
+            Ver Catálogo Completo
             <i className="fas fa-arrow-right ml-2"></i>
           </Button>
         </motion.div>

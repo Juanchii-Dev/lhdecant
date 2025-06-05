@@ -11,12 +11,12 @@ export default function Hero() {
   return (
     <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background with golden lights */}
-      <div className="absolute inset-0 bg-black">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-luxury-gold/20 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/3 right-1/3 w-80 h-80 bg-luxury-gold/15 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-luxury-gold/25 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-luxury-gold/10 rounded-full blur-3xl"></div>
+      <div className="absolute inset-0 hero-gradient">
+        <div className="absolute inset-0 opacity-40">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-luxury-gold/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-1/3 right-1/3 w-80 h-80 bg-luxury-gold/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-luxury-gold/35 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+          <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-luxury-gold/15 rounded-full blur-3xl animate-pulse" style={{animationDelay: '0.5s'}}></div>
         </div>
       </div>
 
