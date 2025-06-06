@@ -40,12 +40,11 @@ export default function Features() {
               whileHover={{ scale: 1.02 }}
             >
               <motion.div 
-                className="bg-gradient-to-br from-charcoal to-black border border-luxury-gold/20 rounded-2xl p-8 h-full hover:border-luxury-gold/40 transition-all duration-150 relative overflow-hidden"
+                className="glass-card luxury-hover-lift border border-luxury-gold/30 rounded-2xl p-8 h-full relative overflow-hidden"
                 whileHover={{ 
-                  boxShadow: "0 0 40px hsl(var(--luxury-gold) / 0.4)",
-                  scale: 1.02
+                  borderColor: "rgba(212, 175, 55, 0.6)"
                 }}
-                transition={{ duration: 0.15 }}
+                transition={{ duration: 0.3 }}
               >
                 <div className="w-24 h-24 bg-gradient-to-br from-luxury-gold to-champagne rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg relative z-10">
                   {feature.icon === "fas fa-certificate" && (
