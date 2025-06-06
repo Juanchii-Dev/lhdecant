@@ -142,7 +142,7 @@ export class MemStorage implements IStorage {
         theme: "date_night",
         price: "60.00",
         originalPrice: "70.00",
-        imageUrl: "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&h=600",
+        imageUrl: "https://i.imgur.com/Vgwv7Kh.png",
         perfumeIds: [1, 2, 3],
         isNew: false,
         isPopular: false,
