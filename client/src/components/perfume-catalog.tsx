@@ -226,14 +226,14 @@ export default function PerfumeCatalog() {
                       {/* Price and add to cart */}
                       <div className="flex items-center justify-between pt-2">
                         <div>
-                          <span className="text-2xl font-bold text-luxury-gold">
+                          <span className="text-2xl font-bold luxury-gold-text">
                             ${getPrice(perfume, selectedSize)}
                           </span>
                           <span className="text-sm text-gray-400 ml-2">/ {selectedSize}</span>
                         </div>
                         <Button
                           onClick={() => handleAddToCart(perfume, selectedSize)}
-                          className="bg-luxury-gold text-black hover:bg-champagne transition-all duration-300 font-montserrat font-semibold px-6 py-2 rounded-xl shadow-lg hover:shadow-xl"
+                          className="luxury-button font-montserrat font-semibold px-6 py-2 rounded-xl"
                         >
                           Agregar
                         </Button>
@@ -254,7 +254,7 @@ export default function PerfumeCatalog() {
           viewport={{ once: true }}
         >
           <Button
-            className="bg-luxury-gold text-black px-8 py-4 rounded-lg font-montserrat font-semibold hover:bg-champagne transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="luxury-button px-8 py-4 rounded-lg font-montserrat font-semibold"
           >
             Ver Catálogo Completo
             <i className="fas fa-arrow-right ml-2"></i>
