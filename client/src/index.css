@@ -174,3 +174,37 @@
   background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
   animation: shimmer 3s ease-in-out infinite;
 }
+
+/* Professional gradient overlays */
+.luxury-gradient {
+  background: linear-gradient(135deg, 
+    rgba(212, 175, 55, 0.1) 0%, 
+    rgba(0, 0, 0, 0.8) 50%, 
+    rgba(212, 175, 55, 0.05) 100%);
+}
+
+.luxury-border {
+  border: 1px solid;
+  border-image: linear-gradient(135deg, 
+    rgba(212, 175, 55, 0.5) 0%, 
+    rgba(212, 175, 55, 0.1) 50%, 
+    rgba(212, 175, 55, 0.5) 100%) 1;
+}
+
+/* Enhanced typography */
+.luxury-text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(212, 175, 55, 0.2);
+}
+
+/* Professional hover effects */
+.luxury-hover-lift {
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.luxury-hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(212, 175, 55, 0.1),
+    inset 0 1px 0 rgba(212, 175, 55, 0.1);
+}

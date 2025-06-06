@@ -26,8 +26,8 @@ export default function Navigation() {
     <motion.header
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-black/95 backdrop-blur-md border-b border-luxury-gold/20"
-          : "bg-black/90 backdrop-blur-md border-b border-luxury-gold/20"
+          ? "bg-black/98 backdrop-blur-xl border-b border-luxury-gold/30 shadow-xl shadow-black/50"
+          : "bg-black/90 backdrop-blur-lg border-b border-luxury-gold/20"
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}

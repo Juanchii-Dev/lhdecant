@@ -55,19 +55,24 @@ export default function PerfumeCatalog() {
     <section id="perfumes" className="py-24 bg-black">
       <div className="container mx-auto px-6">
         <motion.div 
-          className="text-center mb-16"
+          className="text-center mb-20"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <div className="inline-block bg-luxury-gold/10 border border-luxury-gold/30 rounded-full px-6 py-2 mb-6">
-            <span className="text-luxury-gold font-medium">Catálogo Individual</span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-playfair font-bold mb-6">
+          <motion.div 
+            className="inline-block bg-gradient-to-r from-luxury-gold/10 to-luxury-gold/5 border border-luxury-gold/30 rounded-full px-8 py-3 mb-8 backdrop-blur-sm"
+            whileHover={{ scale: 1.05, borderColor: "rgba(212, 175, 55, 0.5)" }}
+            transition={{ duration: 0.3 }}
+          >
+            <span className="text-luxury-gold font-semibold tracking-wide text-sm uppercase">Catálogo Individual</span>
+          </motion.div>
+          <h2 className="text-5xl md:text-6xl font-playfair font-bold mb-8 luxury-text-shadow">
             Perfumes <span className="text-luxury-gold">Individuales</span>
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+          <div className="w-24 h-1 bg-gradient-to-r from-transparent via-luxury-gold to-transparent mx-auto mb-8"></div>
+          <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
             Explora nuestra selección de decants individuales de las mejores fragancias del mundo. 
             Perfectos para probar antes de comprar el frasco completo.
           </p>
@@ -114,7 +119,7 @@ export default function PerfumeCatalog() {
                   }}
                   className="group perspective-1000"
                 >
-                  <div className="glass-card rounded-3xl overflow-hidden relative">
+                  <div className="glass-card luxury-hover-lift rounded-3xl overflow-hidden relative border border-luxury-gold/20">
                     <div className="relative h-72 overflow-hidden">
                       <motion.img
                         src={perfume.imageUrl}
