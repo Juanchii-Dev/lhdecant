@@ -196,10 +196,8 @@ export default function PerfumeCatalog() {
                         <div className="flex gap-2">
                           <motion.button
                             onClick={() => handleSizeChange(perfume.id, '5ml')}
-                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                              selectedSize === '5ml'
-                                ? 'bg-luxury-gold text-black'
-                                : 'bg-charcoal/50 text-gray-300 hover:bg-luxury-gold/20 hover:text-luxury-gold border border-luxury-gold/20'
+                            className={`flex-1 py-2 px-3 rounded-lg text-sm size-selector-button ${
+                              selectedSize === '5ml' ? 'active' : ''
                             }`}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -209,10 +207,8 @@ export default function PerfumeCatalog() {
                           </motion.button>
                           <motion.button
                             onClick={() => handleSizeChange(perfume.id, '10ml')}
-                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                              selectedSize === '10ml'
-                                ? 'bg-luxury-gold text-black'
-                                : 'bg-charcoal/50 text-gray-300 hover:bg-luxury-gold/20 hover:text-luxury-gold border border-luxury-gold/20'
+                            className={`flex-1 py-2 px-3 rounded-lg text-sm size-selector-button ${
+                              selectedSize === '10ml' ? 'active' : ''
                             }`}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}

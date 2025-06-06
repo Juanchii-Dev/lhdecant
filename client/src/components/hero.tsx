@@ -82,7 +82,7 @@ export default function Hero() {
           >
             <motion.button
               onClick={() => scrollToSection("perfumes")}
-              className="group bg-luxury-gold text-black px-8 py-4 rounded-lg font-semibold hover:bg-champagne transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="luxury-outline-button px-8 py-4 rounded-lg"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -98,7 +98,7 @@ export default function Hero() {
 
             <motion.button
               onClick={() => scrollToSection("colecciones")}
-              className="border-2 border-luxury-gold text-luxury-gold px-8 py-4 rounded-lg font-semibold hover:bg-luxury-gold hover:text-black transition-all duration-300"
+              className="luxury-outline-button px-8 py-4 rounded-lg"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
