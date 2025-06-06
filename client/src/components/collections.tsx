@@ -159,7 +159,7 @@ export default function Collections() {
               <div className="glass-card rounded-3xl overflow-hidden relative">
                 <div className="relative h-48 overflow-hidden">
                   <motion.img
-                    src={collection.imageUrl}
+                    src="https://i.imgur.com/Vgwv7Kh.png"
                     alt={collection.name}
                     className="w-full h-full object-cover"
                     whileHover={{ scale: 1.05 }}
