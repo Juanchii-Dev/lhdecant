@@ -26,9 +26,11 @@
   --ring: 45 69% 53%; /* #D4AF37 */
   --radius: 0.5rem;
   
-  /* Custom colors */
-  --luxury-gold: 45 69% 53%; /* #D4AF37 */
-  --champagne: 45 69% 85%; /* #F4E4BC */
+  /* Custom colors - Rich metallic tones */
+  --luxury-gold: 40 55% 40%; /* #B8860B - Darker, richer gold */
+  --luxury-bronze: 30 45% 35%; /* #CD7F32 - Bronze accent */
+  --luxury-copper: 25 65% 45%; /* #B87333 - Copper highlight */
+  --champagne: 42 25% 70%; /* #C9B037 - Muted champagne */
   --charcoal: 0 0% 10.6%; /* #1A1A1A */
 }
 
@@ -191,9 +193,12 @@
     rgba(212, 175, 55, 0.5) 100%) 1;
 }
 
-/* Enhanced typography */
+/* Enhanced typography with rich metallic glow */
 .luxury-text-shadow {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(212, 175, 55, 0.2);
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.5), 
+    0 0 15px rgba(184, 134, 11, 0.3),
+    0 0 30px rgba(218, 165, 32, 0.1);
 }
 
 /* Professional hover effects */
@@ -227,32 +232,70 @@
     0 1px 0 rgba(212, 175, 55, 0.2) inset;
 }
 
-/* Premium button styling */
+/* Premium button styling with rich metallic textures */
 .luxury-button {
-  background: linear-gradient(135deg, #d4af37, #f4d03f);
-  border: none;
+  background: linear-gradient(135deg, 
+    #B8860B 0%, 
+    #CD7F32 25%, 
+    #DAA520 50%, 
+    #B87333 75%, 
+    #8B6914 100%
+  );
+  border: 1px solid rgba(184, 134, 11, 0.3);
   color: #000;
   font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   box-shadow: 
-    0 4px 15px rgba(212, 175, 55, 0.3),
-    0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    0 4px 15px rgba(184, 134, 11, 0.4),
+    0 1px 0 rgba(255, 215, 0, 0.2) inset,
+    0 -1px 0 rgba(139, 105, 20, 0.3) inset;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.luxury-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 215, 0, 0.3), 
+    transparent
+  );
+  animation: shimmer 2s ease-in-out infinite;
 }
 
 .luxury-button:hover {
-  background: linear-gradient(135deg, #f4d03f, #d4af37);
+  background: linear-gradient(135deg, 
+    #DAA520 0%, 
+    #B8860B 25%, 
+    #CD7F32 50%, 
+    #DAA520 75%, 
+    #B87333 100%
+  );
   transform: translateY(-2px);
   box-shadow: 
-    0 8px 25px rgba(212, 175, 55, 0.4),
-    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+    0 8px 25px rgba(184, 134, 11, 0.5),
+    0 2px 0 rgba(255, 215, 0, 0.3) inset,
+    0 -2px 0 rgba(139, 105, 20, 0.4) inset;
 }
 
-/* Elegant section dividers */
+/* Elegant section dividers with metallic gradient */
 .section-divider {
   width: 100px;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #d4af37, transparent);
+  background: linear-gradient(90deg, 
+    transparent, 
+    #B8860B, 
+    #DAA520, 
+    #CD7F32, 
+    #B8860B, 
+    transparent
+  );
   margin: 2rem auto;
 }
 
@@ -263,4 +306,21 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Rich metallic text gradient */
+.luxury-gold-text {
+  background: linear-gradient(135deg, 
+    #DAA520 0%, 
+    #B8860B 25%, 
+    #CD7F32 50%, 
+    #B87333 75%, 
+    #8B6914 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 10px rgba(184, 134, 11, 0.2);
 }

@@ -66,10 +66,10 @@ export default function PerfumeCatalog() {
             whileHover={{ scale: 1.05, borderColor: "rgba(212, 175, 55, 0.5)" }}
             transition={{ duration: 0.3 }}
           >
-            <span className="text-luxury-gold font-semibold tracking-wide text-sm uppercase">Catálogo Individual</span>
+            <span className="luxury-gold-text font-semibold tracking-wide text-sm uppercase">Catálogo Individual</span>
           </motion.div>
           <h2 className="text-5xl md:text-6xl font-playfair font-bold mb-8 luxury-text-shadow">
-            Perfumes <span className="text-luxury-gold">Individuales</span>
+            Perfumes <span className="luxury-gold-text">Individuales</span>
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-transparent via-luxury-gold to-transparent mx-auto mb-8"></div>
           <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">

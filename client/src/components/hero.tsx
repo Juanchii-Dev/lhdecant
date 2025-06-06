@@ -37,7 +37,7 @@ export default function Hero() {
           >
             <span className="text-white">LH</span>
             <motion.span 
-              className="text-luxury-gold"
+              className="luxury-gold-text"
               animate={{ 
                 textShadow: [
                   "0 0 20px hsl(var(--luxury-gold) / 0.3)",
