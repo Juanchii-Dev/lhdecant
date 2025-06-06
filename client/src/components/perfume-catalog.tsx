@@ -103,35 +103,114 @@ export default function PerfumeCatalog() {
               return (
                 <motion.div
                   key={perfume.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  initial={{ opacity: 0, y: 30, rotateY: -10 }}
+                  whileInView={{ opacity: 1, y: 0, rotateY: 0 }}
+                  transition={{ duration: 0.8, delay: index * 0.15, type: "spring", bounce: 0.3 }}
                   viewport={{ once: true }}
-                  className="group"
+                  whileHover={{ 
+                    scale: 1.05, 
+                    y: -10,
+                    rotateY: 5,
+                    transition: { duration: 0.3, type: "spring", bounce: 0.4 }
+                  }}
+                  className="group perspective-1000"
                 >
-                  <div className="bg-gradient-to-br from-black via-charcoal to-black border border-luxury-gold/30 rounded-3xl overflow-hidden hover:border-luxury-gold/60 transition-all duration-300 hover:shadow-xl shadow-luxury-gold/10">
+                  <div className="glass-card shimmer-effect rounded-3xl overflow-hidden transition-all duration-500 transform-gpu hover:shadow-2xl hover:shadow-luxury-gold/20 relative">
                     <div className="relative h-72 overflow-hidden">
-                      <img
+                      <motion.img
                         src={perfume.imageUrl}
                         alt={perfume.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        className="w-full h-full object-cover"
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                      <motion.div 
+                        className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
+                        whileHover={{ background: "linear-gradient(to top, rgba(0,0,0,0.6), transparent, transparent)" }}
+                        transition={{ duration: 0.3 }}
+                      ></motion.div>
+                      
+                      {/* Floating particles effect */}
+                      <div className="absolute inset-0 opacity-20">
+                        <motion.div
+                          className="absolute w-1 h-1 bg-luxury-gold rounded-full"
+                          style={{ top: "20%", left: "30%" }}
+                          animate={{ 
+                            y: [0, -10, 0],
+                            opacity: [0.3, 1, 0.3]
+                          }}
+                          transition={{ 
+                            duration: 2,
+                            repeat: Infinity,
+                            delay: 0
+                          }}
+                        />
+                        <motion.div
+                          className="absolute w-1 h-1 bg-luxury-gold rounded-full"
+                          style={{ top: "60%", right: "25%" }}
+                          animate={{ 
+                            y: [0, -15, 0],
+                            opacity: [0.2, 0.8, 0.2]
+                          }}
+                          transition={{ 
+                            duration: 2.5,
+                            repeat: Infinity,
+                            delay: 0.5
+                          }}
+                        />
+                        <motion.div
+                          className="absolute w-0.5 h-0.5 bg-luxury-gold rounded-full"
+                          style={{ top: "40%", left: "70%" }}
+                          animate={{ 
+                            y: [0, -8, 0],
+                            opacity: [0.4, 1, 0.4]
+                          }}
+                          transition={{ 
+                            duration: 1.8,
+                            repeat: Infinity,
+                            delay: 1
+                          }}
+                        />
+                      </div>
                       
                       {/* Brand badge */}
-                      <div className="absolute top-4 left-4">
-                        <div className="bg-luxury-gold/90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-xs font-montserrat font-bold">
+                      <motion.div 
+                        className="absolute top-4 left-4"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + index * 0.1 }}
+                      >
+                        <motion.div 
+                          className="bg-luxury-gold/90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-xs font-montserrat font-bold"
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ type: "spring", bounce: 0.4 }}
+                        >
                           {perfume.brand}
-                        </div>
-                      </div>
+                        </motion.div>
+                      </motion.div>
                       
                       {/* Rating */}
-                      <div className="absolute top-4 right-4">
-                        <div className="bg-black/50 backdrop-blur-sm text-luxury-gold px-2 py-1 rounded-full text-xs flex items-center">
-                          <span className="mr-1">⭐</span>
+                      <motion.div 
+                        className="absolute top-4 right-4"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 + index * 0.1 }}
+                      >
+                        <motion.div 
+                          className="bg-black/50 backdrop-blur-sm text-luxury-gold px-2 py-1 rounded-full text-xs flex items-center"
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ type: "spring", bounce: 0.4 }}
+                        >
+                          <motion.span 
+                            className="mr-1"
+                            animate={{ rotate: [0, 10, -10, 0] }}
+                            transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
+                          >
+                            ⭐
+                          </motion.span>
                           {perfume.rating || "5.0"}
-                        </div>
-                      </div>
+                        </motion.div>
+                      </motion.div>
                     </div>
                     
                     <div className="p-6 space-y-4">
@@ -145,31 +224,42 @@ export default function PerfumeCatalog() {
                       </div>
                       
                       {/* Size selector */}
-                      <div className="space-y-3">
+                      <motion.div 
+                        className="space-y-3"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 + index * 0.1 }}
+                      >
                         <div className="text-sm text-gray-300 font-medium">Tamaño:</div>
                         <div className="flex gap-2">
-                          <button
+                          <motion.button
                             onClick={() => handleSizeChange(perfume.id, '5ml')}
                             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                               selectedSize === '5ml'
                                 ? 'bg-luxury-gold text-black'
                                 : 'bg-charcoal/50 text-gray-300 hover:bg-luxury-gold/20 hover:text-luxury-gold border border-luxury-gold/20'
                             }`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: "spring", bounce: 0.4 }}
                           >
                             5ml
-                          </button>
-                          <button
+                          </motion.button>
+                          <motion.button
                             onClick={() => handleSizeChange(perfume.id, '10ml')}
                             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                               selectedSize === '10ml'
                                 ? 'bg-luxury-gold text-black'
                                 : 'bg-charcoal/50 text-gray-300 hover:bg-luxury-gold/20 hover:text-luxury-gold border border-luxury-gold/20'
                             }`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: "spring", bounce: 0.4 }}
                           >
                             10ml
-                          </button>
+                          </motion.button>
                         </div>
-                      </div>
+                      </motion.div>
                       
                       {/* Price and add to cart */}
                       <div className="flex items-center justify-between pt-2">
