@@ -49,13 +49,13 @@ export default function Features() {
               >
                 <div className="w-24 h-24 bg-gradient-to-br from-luxury-gold to-champagne rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg relative z-10">
                   {feature.icon === "fas fa-certificate" && (
-                    <div className="text-5xl text-black font-bold">✓</div>
+                    <div className="text-6xl">💯</div>
                   )}
                   {feature.icon === "fas fa-shipping-fast" && (
-                    <div className="text-5xl text-black">🚚</div>
+                    <div className="text-6xl">🚚</div>
                   )}
                   {feature.icon === "fas fa-award" && (
-                    <div className="text-5xl text-black">🏆</div>
+                    <div className="text-6xl">🏆</div>
                   )}
                 </div>
                 <h3 className="text-xl font-montserrat font-bold mb-4 text-luxury-gold">
