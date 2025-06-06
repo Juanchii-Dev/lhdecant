@@ -113,7 +113,7 @@ export default function Collections() {
   const otherCollections = collections.slice(2);
 
   return (
-    <section id="colecciones" className="py-24 bg-charcoal">
+    <section id="colecciones" className="py-24 bg-black">
       <div className="container mx-auto px-6">
         <motion.div 
           className="text-center mb-16"
@@ -136,7 +136,7 @@ export default function Collections() {
 
         {/* Main Collections */}
         <motion.div 
-          className="grid lg:grid-cols-2 gap-12 mb-16"
+          className="grid lg:grid-cols-3 gap-8 mb-16"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
@@ -157,7 +157,7 @@ export default function Collections() {
               }}
             >
               <div className="glass-card rounded-3xl overflow-hidden relative">
-                <div className="relative h-80 overflow-hidden">
+                <div className="relative h-48 overflow-hidden">
                   <motion.img
                     src={collection.imageUrl}
                     alt={collection.name}
@@ -198,35 +198,35 @@ export default function Collections() {
                     </motion.div>
                   </motion.div>
                   
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <div className="flex items-center mb-2">
-                      <i className={`${getThemeIcon(collection.theme)} text-luxury-gold mr-2`}></i>
-                      <span className="text-luxury-gold text-sm font-medium">
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="flex items-center mb-1">
+                      <i className={`${getThemeIcon(collection.theme)} text-luxury-gold mr-2 text-sm`}></i>
+                      <span className="text-luxury-gold text-xs font-medium">
                         {getThemeLabel(collection.theme)}
                       </span>
                     </div>
-                    <h3 className="text-2xl font-playfair font-bold mb-2">
+                    <h3 className="text-lg font-playfair font-bold">
                       {collection.name}
                     </h3>
                   </div>
                 </div>
                 
-                <div className="p-8">
-                  <p className="text-gray-400 mb-6">
+                <div className="p-6">
+                  <p className="text-gray-400 mb-4 text-sm">
                     {collection.description}
                   </p>
                   
-                  <div className="space-y-4 mb-6">
-                    <h4 className="text-lg font-semibold mb-3">Incluye:</h4>
+                  <div className="space-y-3 mb-4">
+                    <h4 className="text-sm font-semibold mb-2">Incluye:</h4>
                     <div className="grid grid-cols-1 gap-3">
                       {collection.perfumeIds && collection.perfumeIds.map((perfumeId, perfumeIndex) => (
-                        <div key={perfumeIndex} className="flex items-center p-3 bg-charcoal/30 rounded-lg">
-                          <div className="w-12 h-12 bg-luxury-gold/20 rounded-lg flex items-center justify-center mr-3">
-                            <span className="text-luxury-gold font-bold">{perfumeIndex + 1}</span>
+                        <div key={perfumeIndex} className="flex items-center p-2 bg-charcoal/30 rounded-lg">
+                          <div className="w-8 h-8 bg-luxury-gold/20 rounded-lg flex items-center justify-center mr-2">
+                            <span className="text-luxury-gold font-bold text-xs">{perfumeIndex + 1}</span>
                           </div>
                           <div>
-                            <div className="font-medium">Perfume #{perfumeId}</div>
-                            <div className="text-sm text-gray-400">5ml cada uno</div>
+                            <div className="font-medium text-sm">Perfume #{perfumeId}</div>
+                            <div className="text-xs text-gray-400">5ml cada uno</div>
                           </div>
                         </div>
                       ))}
