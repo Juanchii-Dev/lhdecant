@@ -123,10 +123,10 @@ export default function Collections() {
           viewport={{ once: true }}
         >
           <div className="inline-block bg-luxury-gold/10 border border-luxury-gold/30 rounded-full px-6 py-2 mb-6">
-            <span className="text-luxury-gold font-medium">Colecciones Especiales</span>
+            <span className="luxury-gold-text font-medium">Colecciones Especiales</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-playfair font-bold mb-6">
-            Nuestras <span className="text-luxury-gold">Colecciones</span>
+            Nuestras <span className="luxury-gold-text">Colecciones</span>
           </h2>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">
             Descubre nuestras colecciones curadas especialmente para diferentes ocasiones y temporadas. 
@@ -200,8 +200,8 @@ export default function Collections() {
                   
                   <div className="absolute bottom-4 left-4 right-4">
                     <div className="flex items-center mb-1">
-                      <i className={`${getThemeIcon(collection.theme)} text-luxury-gold mr-2 text-sm`}></i>
-                      <span className="text-luxury-gold text-xs font-medium">
+                      <i className={`${getThemeIcon(collection.theme)} luxury-gold-text mr-2 text-sm`}></i>
+                      <span className="luxury-gold-text text-xs font-medium">
                         {getThemeLabel(collection.theme)}
                       </span>
                     </div>
@@ -251,7 +251,7 @@ export default function Collections() {
                     </div>
                     <motion.button
                       onClick={() => handleAddToCart(collection)}
-                      className="bg-luxury-gold text-black px-6 py-3 rounded-lg font-semibold hover:bg-champagne transition-all duration-300 shadow-lg"
+                      className="luxury-button px-6 py-3 rounded-lg"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
@@ -298,12 +298,12 @@ export default function Collections() {
                     {collection.description}
                   </p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-luxury-gold">
+                    <span className="text-xl font-bold luxury-gold-text">
                       ${collection.price}
                     </span>
                     <motion.button
                       onClick={() => handleAddToCart(collection)}
-                      className="bg-luxury-gold text-black px-4 py-2 rounded-lg font-semibold hover:bg-champagne transition-all duration-300"
+                      className="luxury-button px-4 py-2 rounded-lg"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}

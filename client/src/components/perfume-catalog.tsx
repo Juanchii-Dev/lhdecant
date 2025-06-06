@@ -165,7 +165,7 @@ export default function PerfumeCatalog() {
                         transition={{ delay: 0.4 + index * 0.1 }}
                       >
                         <motion.div 
-                          className="bg-black/50 backdrop-blur-sm text-luxury-gold px-2 py-1 rounded-full text-xs flex items-center"
+                          className="bg-black/50 backdrop-blur-sm luxury-gold-text px-2 py-1 rounded-full text-xs flex items-center"
                           whileHover={{ scale: 1.05 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
                         >
