@@ -1,33 +1,33 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Collection } from "@shared/schema";
-import { toast } from "@/hooks/use-toast";
+import type { Collection } from "@shared/schema";
+import { Card } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Collections() {
-  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const {
-    data: collections,
-    isLoading,
-    error,
-  } = useQuery<Collection[]>({
+  const { data: collections, isLoading } = useQuery<Collection[]>({
     queryKey: ["/api/collections"],
   });
 
   const addToCartMutation = useMutation({
     mutationFn: async (collection: Collection) => {
-      console.log("Adding collection to cart:", collection);
-      return collection;
+      return apiRequest(`/api/cart/add`, "POST", {
+        type: "collection",
+        id: collection.id,
+        name: collection.name,
+        price: collection.price,
+      });
     },
     onSuccess: () => {
       toast({
         title: "¡Añadido al carrito!",
-        description: "La colección se ha añadido a tu carrito.",
+        description: "La colección se ha agregado exitosamente.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
     },
     onError: () => {
       toast({
@@ -42,10 +42,15 @@ export default function Collections() {
     addToCartMutation.mutate(collection);
   };
 
+  const mainCollections = collections?.filter(c => c.isNew || c.isPopular) || [];
+  const otherCollections = collections?.filter(c => !c.isNew && !c.isPopular) || [];
+
   const getThemeIcon = (theme: string) => {
     switch (theme) {
       case "summer":
         return "ri-sun-line";
+      case "winter":
+        return "ri-snowflake-line";
       case "evening":
         return "ri-moon-line";
       case "fresh":
@@ -85,33 +90,6 @@ export default function Collections() {
     );
   }
 
-  if (error) {
-    return (
-      <section id="colecciones" className="py-24 bg-charcoal">
-        <div className="container mx-auto px-6">
-          <div className="text-center">
-            <p className="text-red-400">Error cargando las colecciones</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (!collections || collections.length === 0) {
-    return (
-      <section id="colecciones" className="py-24 bg-charcoal">
-        <div className="container mx-auto px-6">
-          <div className="text-center">
-            <p className="text-gray-400">No hay colecciones disponibles</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  const mainCollections = collections.slice(0, 2);
-  const otherCollections = collections.slice(2);
-
   return (
     <section id="colecciones" className="py-24 bg-black">
       <div className="container mx-auto px-6">
@@ -123,10 +101,13 @@ export default function Collections() {
           viewport={{ once: true }}
         >
           <div className="inline-block bg-luxury-gold/10 border border-luxury-gold/30 rounded-full px-6 py-2 mb-6">
-            <span className="luxury-gold-text font-medium">Colecciones Especiales</span>
+            <span className="luxury-gold-text font-medium">Colecciones Exclusivas</span>
           </div>
+          
           <h2 className="text-4xl md:text-5xl font-playfair font-bold mb-6">
-            Nuestras <span className="luxury-gold-text">Colecciones</span>
+            <span className="text-white">Descubre Nuestras</span>
+            <br />
+            <span className="luxury-gold-text">Colecciones Curadas</span>
           </h2>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">
             Descubre nuestras colecciones curadas especialmente para diferentes ocasiones y temporadas. 
@@ -134,152 +115,130 @@ export default function Collections() {
           </p>
         </motion.div>
 
-        {/* Main Collections */}
-        <motion.div 
-          className="grid lg:grid-cols-3 gap-8 mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          viewport={{ once: true }}
-        >
-          {mainCollections.map((collection, index) => (
-            <motion.div
-              key={collection.id}
-              className="group perspective-1000"
-              initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: index * 0.2 }}
-              viewport={{ once: true }}
-              whileHover={{ 
-                scale: 1.02, 
-                y: -8,
-                transition: { duration: 0.3, ease: "easeOut" }
-              }}
-            >
-              <div className="glass-card rounded-3xl overflow-hidden relative">
-                <div className="relative h-48 overflow-hidden">
-                  <motion.img
-                    src="https://i.imgur.com/Vgwv7Kh.png"
-                    alt={collection.name}
-                    className="w-full h-full object-cover"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                  />
-                  
-                  <motion.div 
-                    className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
-                    whileHover={{ background: "linear-gradient(to top, rgba(0,0,0,0.6), transparent, transparent)" }}
-                    transition={{ duration: 0.3 }}
-                  ></motion.div>
-                  
-                  {/* Subtle glow effect */}
-                  <motion.div 
-                    className="absolute inset-0 bg-gradient-to-t from-luxury-gold/5 via-transparent to-transparent opacity-0"
-                    whileHover={{ opacity: 1 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                  />
-                  
-                  <motion.div 
-                    className="absolute top-4 right-4"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1 }}
-                  >
-                    <motion.div 
-                      className={`px-3 py-1 rounded-full text-sm font-bold ${
-                        collection.isNew 
-                          ? "bg-luxury-gold text-black" 
-                          : "bg-gray-700 text-white"
-                      }`}
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                    >
-                      {collection.isNew ? "NUEVO" : "POPULAR"}
-                    </motion.div>
-                  </motion.div>
-                  
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="flex items-center mb-1">
-                      <i className={`${getThemeIcon(collection.theme)} luxury-gold-text mr-2 text-sm`}></i>
-                      <span className="luxury-gold-text text-xs font-medium">
-                        {getThemeLabel(collection.theme)}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-playfair font-bold">
-                      {collection.name}
-                    </h3>
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  <p className="text-gray-400 mb-4 text-sm">
-                    {collection.description}
-                  </p>
-                  
-                  <div className="space-y-3 mb-4">
-                    <h4 className="text-sm font-semibold mb-2">Incluye:</h4>
-                    <div className="grid grid-cols-1 gap-3">
-                      {collection.perfumeIds && collection.perfumeIds.map((perfumeId, perfumeIndex) => (
-                        <div key={perfumeIndex} className="flex items-center p-2 bg-charcoal/30 rounded-lg">
-                          <div className="w-8 h-8 bg-luxury-gold/20 rounded-lg flex items-center justify-center mr-2">
-                            <span className="text-luxury-gold font-bold text-xs">{perfumeIndex + 1}</span>
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm">Perfume #{perfumeId}</div>
-                            <div className="text-xs text-gray-400">5ml cada uno</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="text-2xl font-bold text-luxury-gold">
-                        ${collection.price}
-                      </span>
-                      {collection.originalPrice && (
-                        <div className="ml-3">
-                          <div className="text-sm text-gray-400 line-through">
-                            ${collection.originalPrice}
-                          </div>
-                          <div className="text-xs text-luxury-gold">
-                            Ahorra ${(parseFloat(collection.originalPrice) - parseFloat(collection.price)).toFixed(0)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <motion.button
-                      onClick={() => handleAddToCart(collection)}
-                      className="luxury-button px-6 py-3 rounded-lg"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                    >
-                      Comprar Pack
-                    </motion.button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Additional Collections Grid */}
-        {otherCollections.length > 0 && (
+        {/* ESTILO 1: Cards Horizontales Modernas */}
+        <div className="mb-20">
+          <h3 className="text-2xl font-bold text-white mb-8 text-center">
+            <span className="luxury-gold-text">Estilo 1:</span> Cards Horizontales
+          </h3>
           <motion.div 
-            className="grid md:grid-cols-3 gap-8"
+            className="space-y-6"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
             viewport={{ once: true }}
           >
-            {otherCollections.map((collection, index) => (
+            {mainCollections.map((collection, index) => (
               <motion.div
-                key={collection.id}
-                initial={{ opacity: 0, y: 20 }}
+                key={`style1-${collection.id}`}
+                className="group"
+                initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: index * 0.2 }}
+                viewport={{ once: true }}
+                whileHover={{ 
+                  scale: 1.01, 
+                  transition: { duration: 0.3, ease: "easeOut" }
+                }}
+              >
+                <div className="glass-card rounded-2xl overflow-hidden relative flex flex-col lg:flex-row">
+                  <div className="relative lg:w-2/5 h-64 lg:h-auto overflow-hidden">
+                    <motion.img
+                      src="https://i.imgur.com/Vgwv7Kh.png"
+                      alt={collection.name}
+                      className="w-full h-full object-cover"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    />
+                    
+                    <motion.div 
+                      className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent"
+                    />
+                    
+                    <motion.div 
+                      className="absolute top-4 left-4"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                    >
+                      <motion.div 
+                        className={`px-4 py-2 rounded-full text-sm font-bold ${
+                          collection.isNew 
+                            ? "luxury-button" 
+                            : "bg-gray-800/80 text-white backdrop-blur-sm"
+                        }`}
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                      >
+                        {collection.isNew ? "NUEVO" : "POPULAR"}
+                      </motion.div>
+                    </motion.div>
+                  </div>
+                  
+                  <div className="lg:w-3/5 p-8 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="luxury-gold-text text-sm font-medium uppercase tracking-wide">
+                          {getThemeLabel(collection.theme)}
+                        </span>
+                        <i className={`${getThemeIcon(collection.theme)} luxury-gold-text text-xl`}></i>
+                      </div>
+                      
+                      <h3 className="text-white font-playfair font-bold text-3xl mb-4">
+                        {collection.name}
+                      </h3>
+                      
+                      <p className="text-gray-300 mb-6 leading-relaxed">
+                        {collection.description}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-3xl font-bold luxury-gold-text">${collection.price}</span>
+                        {collection.originalPrice && (
+                          <span className="text-lg text-gray-500 line-through">${collection.originalPrice}</span>
+                        )}
+                        <span className="text-sm text-gray-400">
+                          (3 perfumes)
+                        </span>
+                      </div>
+                      
+                      <motion.button
+                        onClick={() => handleAddToCart(collection)}
+                        className="luxury-button px-8 py-3 rounded-xl font-semibold"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                      >
+                        Agregar al Carrito
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* ESTILO 2: Cards Verticales Compactas */}
+        <div className="mb-16">
+          <h3 className="text-2xl font-bold text-white mb-8 text-center">
+            <span className="luxury-gold-text">Estilo 2:</span> Cards Verticales Compactas
+          </h3>
+          <motion.div 
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            {mainCollections.map((collection, index) => (
+              <motion.div
+                key={`style2-${collection.id}`}
+                className="group perspective-1000"
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                transition={{ duration: 0.8, delay: index * 0.2 }}
                 viewport={{ once: true }}
                 whileHover={{ 
                   scale: 1.02, 
@@ -287,35 +246,81 @@ export default function Collections() {
                   transition: { duration: 0.3, ease: "easeOut" }
                 }}
               >
-                <div className="glass-card rounded-3xl p-6">
-                  <div className="flex items-center mb-4">
-                    <i className={`${getThemeIcon(collection.theme)} text-luxury-gold text-xl mr-3`}></i>
-                    <h4 className="text-lg font-semibold group-hover:text-luxury-gold transition-colors duration-300">
-                      {collection.name}
-                    </h4>
+                <div className="glass-card rounded-2xl overflow-hidden relative border border-luxury-gold/20 h-full">
+                  <div className="relative h-40 overflow-hidden">
+                    <motion.img
+                      src="https://i.imgur.com/Vgwv7Kh.png"
+                      alt={collection.name}
+                      className="w-full h-full object-cover"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    />
+                    
+                    <motion.div 
+                      className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
+                    />
+                    
+                    <motion.div 
+                      className="absolute top-3 right-3"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                    >
+                      <motion.div 
+                        className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          collection.isNew 
+                            ? "luxury-button text-xs" 
+                            : "bg-gray-800/80 text-white backdrop-blur-sm"
+                        }`}
+                      >
+                        {collection.isNew ? "NUEVO" : "TOP"}
+                      </motion.div>
+                    </motion.div>
+                    
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <div className="flex items-center justify-between">
+                        <span className="luxury-gold-text text-xs font-medium uppercase tracking-wide">
+                          {getThemeLabel(collection.theme)}
+                        </span>
+                        <i className={`${getThemeIcon(collection.theme)} luxury-gold-text text-sm`}></i>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-gray-400 text-sm mb-4">
-                    {collection.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold luxury-gold-text">
-                      ${collection.price}
-                    </span>
+                  
+                  <div className="p-5">
+                    <h3 className="text-white font-playfair font-bold text-xl mb-2">
+                      {collection.name}
+                    </h3>
+                    
+                    <p className="text-gray-300 text-sm mb-4 leading-relaxed line-clamp-2">
+                      {collection.description}
+                    </p>
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <span className="text-xl font-bold luxury-gold-text">${collection.price}</span>
+                        {collection.originalPrice && (
+                          <span className="text-xs text-gray-500 line-through ml-2">${collection.originalPrice}</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-400">3 perfumes</span>
+                    </div>
+                    
                     <motion.button
                       onClick={() => handleAddToCart(collection)}
-                      className="luxury-button px-4 py-2 rounded-lg"
+                      className="w-full luxury-outline-button py-2 rounded-lg text-sm font-semibold"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
                     >
-                      Comprar
+                      Agregar al Carrito
                     </motion.button>
                   </div>
                 </div>
               </motion.div>
             ))}
           </motion.div>
-        )}
+        </div>
       </div>
     </section>
   );

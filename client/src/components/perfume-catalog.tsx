@@ -98,7 +98,7 @@ export default function PerfumeCatalog() {
           </div>
         ) : (
           <motion.div 
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
@@ -120,7 +120,7 @@ export default function PerfumeCatalog() {
                   className="group perspective-1000"
                 >
                   <div className="glass-card luxury-hover-lift rounded-3xl overflow-hidden relative border border-luxury-gold/20">
-                    <div className="relative h-72 overflow-hidden">
+                    <div className="relative h-56 overflow-hidden">
                       <motion.img
                         src="https://i.imgur.com/Vgwv7Kh.png"
                         alt={perfume.name}
