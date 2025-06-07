@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { Collection } from "@shared/schema";
-import { Card } from "@/components/ui/card";
+import type { Collection, Perfume } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Collections() {
@@ -11,6 +10,10 @@ export default function Collections() {
 
   const { data: collections, isLoading } = useQuery<Collection[]>({
     queryKey: ["/api/collections"],
+  });
+
+  const { data: perfumes } = useQuery<Perfume[]>({
+    queryKey: ["/api/perfumes"],
   });
 
   const addToCartMutation = useMutation({
@@ -42,9 +45,6 @@ export default function Collections() {
     addToCartMutation.mutate(collection);
   };
 
-  const mainCollections = collections?.filter(c => c.isNew || c.isPopular) || [];
-  const otherCollections = collections?.filter(c => !c.isNew && !c.isPopular) || [];
-
   const getThemeIcon = (theme: string) => {
     switch (theme) {
       case "summer":
@@ -75,6 +75,14 @@ export default function Collections() {
       default:
         return "Especial";
     }
+  };
+
+  const getPerfumeNames = (perfumeIds: number[]) => {
+    if (!perfumes) return [];
+    return perfumeIds
+      .map(id => perfumes.find(p => p.id === id)?.name)
+      .filter(Boolean)
+      .slice(0, 3); // Asegurar solo 3 perfumes
   };
 
   if (isLoading) {
@@ -115,126 +123,20 @@ export default function Collections() {
           </p>
         </motion.div>
 
-        {/* ESTILO 1: Cards Horizontales Modernas */}
-        <div className="mb-20">
-          <h3 className="text-2xl font-bold text-white mb-8 text-center">
-            <span className="luxury-gold-text">Estilo 1:</span> Cards Horizontales
-          </h3>
-          <motion.div 
-            className="space-y-6"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            viewport={{ once: true }}
-          >
-            {mainCollections.map((collection, index) => (
+        {/* Collections Grid */}
+        <motion.div 
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          viewport={{ once: true }}
+        >
+          {collections?.map((collection, index) => {
+            const perfumeNames = getPerfumeNames(collection.perfumeIds);
+            
+            return (
               <motion.div
-                key={`style1-${collection.id}`}
-                className="group"
-                initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                whileHover={{ 
-                  scale: 1.01, 
-                  transition: { duration: 0.3, ease: "easeOut" }
-                }}
-              >
-                <div className="glass-card rounded-2xl overflow-hidden relative flex flex-col lg:flex-row">
-                  <div className="relative lg:w-2/5 h-64 lg:h-auto overflow-hidden">
-                    <motion.img
-                      src="https://i.imgur.com/Vgwv7Kh.png"
-                      alt={collection.name}
-                      className="w-full h-full object-cover"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.4, ease: "easeOut" }}
-                    />
-                    
-                    <motion.div 
-                      className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent"
-                    />
-                    
-                    <motion.div 
-                      className="absolute top-4 left-4"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.4 + index * 0.1 }}
-                    >
-                      <motion.div 
-                        className={`px-4 py-2 rounded-full text-sm font-bold ${
-                          collection.isNew 
-                            ? "luxury-button" 
-                            : "bg-gray-800/80 text-white backdrop-blur-sm"
-                        }`}
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                      >
-                        {collection.isNew ? "NUEVO" : "POPULAR"}
-                      </motion.div>
-                    </motion.div>
-                  </div>
-                  
-                  <div className="lg:w-3/5 p-8 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="luxury-gold-text text-sm font-medium uppercase tracking-wide">
-                          {getThemeLabel(collection.theme)}
-                        </span>
-                        <i className={`${getThemeIcon(collection.theme)} luxury-gold-text text-xl`}></i>
-                      </div>
-                      
-                      <h3 className="text-white font-playfair font-bold text-3xl mb-4">
-                        {collection.name}
-                      </h3>
-                      
-                      <p className="text-gray-300 mb-6 leading-relaxed">
-                        {collection.description}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <span className="text-3xl font-bold luxury-gold-text">${collection.price}</span>
-                        {collection.originalPrice && (
-                          <span className="text-lg text-gray-500 line-through">${collection.originalPrice}</span>
-                        )}
-                        <span className="text-sm text-gray-400">
-                          (3 perfumes)
-                        </span>
-                      </div>
-                      
-                      <motion.button
-                        onClick={() => handleAddToCart(collection)}
-                        className="luxury-button px-8 py-3 rounded-xl font-semibold"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                      >
-                        Agregar al Carrito
-                      </motion.button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-
-        {/* ESTILO 2: Cards Verticales Compactas */}
-        <div className="mb-16">
-          <h3 className="text-2xl font-bold text-white mb-8 text-center">
-            <span className="luxury-gold-text">Estilo 2:</span> Cards Verticales Compactas
-          </h3>
-          <motion.div 
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            viewport={{ once: true }}
-          >
-            {mainCollections.map((collection, index) => (
-              <motion.div
-                key={`style2-${collection.id}`}
+                key={collection.id}
                 className="group perspective-1000"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -260,22 +162,23 @@ export default function Collections() {
                       className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
                     />
                     
-                    <motion.div 
-                      className="absolute top-3 right-3"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.4 + index * 0.1 }}
-                    >
-                      <motion.div 
-                        className={`px-2 py-1 rounded-full text-xs font-bold ${
-                          collection.isNew 
-                            ? "luxury-button text-xs" 
-                            : "bg-gray-800/80 text-white backdrop-blur-sm"
-                        }`}
-                      >
-                        {collection.isNew ? "NUEVO" : "TOP"}
-                      </motion.div>
-                    </motion.div>
+                    {/* Perfume Names as Tags */}
+                    <div className="absolute top-3 left-3 right-3">
+                      <div className="flex flex-wrap gap-1">
+                        {perfumeNames.map((name, idx) => (
+                          <motion.div 
+                            key={idx}
+                            className="bg-luxury-gold/90 backdrop-blur-sm text-black px-2 py-1 rounded-full text-xs font-bold"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.4 + (index * 0.1) + (idx * 0.1) }}
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            {name}
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
                     
                     <div className="absolute bottom-3 left-3 right-3">
                       <div className="flex items-center justify-between">
@@ -318,9 +221,9 @@ export default function Collections() {
                   </div>
                 </div>
               </motion.div>
-            ))}
-          </motion.div>
-        </div>
+            );
+          })}
+        </motion.div>
       </div>
     </section>
   );
