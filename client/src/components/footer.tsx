@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 
 export default function Footer() {
   const scrollToSection = (sectionId: string) => {
@@ -20,6 +21,7 @@ export default function Footer() {
     "Envíos",
     "Devoluciones",
     "Términos y Condiciones",
+    "Administrador",
   ];
 
   const socialLinks = [
@@ -116,12 +118,21 @@ export default function Footer() {
                   whileHover={{ x: 5 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <a
-                    href="#"
-                    className="hover:text-luxury-gold transition-colors duration-300"
-                  >
-                    {link}
-                  </a>
+                  {link === "Administrador" ? (
+                    <Link
+                      href="/auth"
+                      className="hover:text-luxury-gold transition-colors duration-300"
+                    >
+                      {link}
+                    </Link>
+                  ) : (
+                    <a
+                      href="#"
+                      className="hover:text-luxury-gold transition-colors duration-300"
+                    >
+                      {link}
+                    </a>
+                  )}
                 </motion.li>
               ))}
             </ul>
