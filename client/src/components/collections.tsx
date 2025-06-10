@@ -168,7 +168,7 @@ export default function Collections() {
                         {perfumeNames.map((name, idx) => (
                           <motion.div 
                             key={idx}
-                            className="bg-luxury-gold/90 backdrop-blur-sm text-black px-2 py-1 rounded-full text-xs font-bold"
+                            className="bg-black/80 backdrop-blur-sm text-luxury-gold border border-luxury-gold/50 px-2 py-1 rounded-full text-xs font-bold"
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 0.4 + (index * 0.1) + (idx * 0.1) }}
