@@ -35,14 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
+      if (!res.ok) {
+        throw new Error("Invalid credentials");
+      }
       return await res.json();
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: "Bienvenido al panel de administrador",
-      });
     },
     onError: (error: Error) => {
       toast({

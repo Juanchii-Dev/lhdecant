@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { loginMutation } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +21,13 @@ export default function AuthPage() {
       { username, password },
       {
         onSuccess: () => {
-          setLocation("/admin");
+          toast({
+            title: "Inicio de sesión exitoso",
+            description: "Redirigiendo al panel de administrador...",
+          });
+          setTimeout(() => {
+            setLocation("/admin");
+          }, 1000);
         },
       }
     );
@@ -49,7 +57,7 @@ export default function AuthPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 className="bg-black/50 border-[#D4AF37]/30 text-white focus:border-[#D4AF37]"
-                placeholder="lhdecants"
+                placeholder="Usuario"
               />
             </div>
             <div className="space-y-2">
@@ -63,7 +71,7 @@ export default function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="bg-black/50 border-[#D4AF37]/30 text-white focus:border-[#D4AF37]"
-                placeholder="••••"
+                placeholder="Contraseña"
               />
             </div>
             <Button
