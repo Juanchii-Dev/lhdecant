@@ -48,8 +48,6 @@ export default function Navigation() {
               { label: "Inicio", id: "inicio" },
               { label: "Perfumes", id: "perfumes" },
               { label: "Colecciones", id: "colecciones" },
-              { label: "Nosotros", id: "nosotros" },
-              { label: "Contacto", id: "contacto" },
             ].map((item) => (
               <motion.button
                 key={item.id}
@@ -101,8 +99,6 @@ export default function Navigation() {
               { label: "Inicio", id: "inicio" },
               { label: "Perfumes", id: "perfumes" },
               { label: "Colecciones", id: "colecciones" },
-              { label: "Nosotros", id: "nosotros" },
-              { label: "Contacto", id: "contacto" },
             ].map((item) => (
               <button
                 key={item.id}
