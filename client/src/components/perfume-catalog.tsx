@@ -120,11 +120,11 @@ export default function PerfumeCatalog() {
                   className="group perspective-1000"
                 >
                   <div className="glass-card luxury-hover-lift rounded-3xl overflow-hidden relative border border-luxury-gold/20">
-                    <div className="relative h-56 overflow-hidden">
+                    <div className="relative overflow-hidden">
                       <motion.img
                         src="https://i.imgur.com/Vgwv7Kh.png"
                         alt={perfume.name}
-                        className="w-full h-full object-contain"
+                        className="w-full h-auto object-contain"
                         whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.4, ease: "easeOut" }}
                       />

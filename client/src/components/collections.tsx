@@ -125,7 +125,7 @@ export default function Collections() {
 
         {/* Collections Grid */}
         <motion.div 
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
@@ -149,11 +149,11 @@ export default function Collections() {
                 }}
               >
                 <div className="glass-card rounded-2xl overflow-hidden relative border border-luxury-gold/20 h-full">
-                  <div className="relative h-40 overflow-hidden">
+                  <div className="relative overflow-hidden">
                     <motion.img
                       src="https://i.imgur.com/Vgwv7Kh.png"
                       alt={collection.name}
-                      className="w-full h-full object-contain"
+                      className="w-full h-auto object-contain"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.4, ease: "easeOut" }}
                     />
