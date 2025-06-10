@@ -211,7 +211,7 @@ export default function Collections() {
                     
                     <motion.button
                       onClick={() => handleAddToCart(collection)}
-                      className="w-full luxury-outline-button py-2 rounded-lg text-sm font-semibold"
+                      className="w-full luxury-button py-2 rounded-lg text-sm font-semibold"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
