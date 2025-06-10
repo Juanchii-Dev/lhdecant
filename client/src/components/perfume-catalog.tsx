@@ -18,7 +18,7 @@ export default function PerfumeCatalog() {
   const filteredPerfumes = perfumes;
 
   const handleAddToCart = (perfume: Perfume, size: '5ml' | '10ml') => {
-    const price = size === '5ml' ? (parseFloat(perfume.price) * 0.6).toFixed(2) : perfume.price;
+    const price = size === '5ml' ? perfume.price5ml : perfume.price10ml;
     toast({
       title: "Agregado al carrito",
       description: `${perfume.name} ${size} - $${price}`,
@@ -30,7 +30,7 @@ export default function PerfumeCatalog() {
   };
 
   const getPrice = (perfume: Perfume, size: '5ml' | '10ml') => {
-    return size === '5ml' ? (parseFloat(perfume.price) * 0.6).toFixed(2) : perfume.price;
+    return size === '5ml' ? perfume.price5ml : perfume.price10ml;
   };
 
   const renderStars = (rating: string) => {

@@ -1,18 +1,27 @@
-import { pgTable, text, serial, integer, boolean, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").unique().notNull(),
+  password: text("password").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const perfumes = pgTable("perfumes", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   brand: text("brand").notNull(),
   description: text("description").notNull(),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  price5ml: decimal("price_5ml", { precision: 10, scale: 2 }).notNull(),
+  price10ml: decimal("price_10ml", { precision: 10, scale: 2 }).notNull(),
   category: text("category").notNull(), // "masculine", "feminine", "unisex", "niche"
   notes: text("notes").array().notNull(),
   imageUrl: text("image_url").notNull(),
   rating: decimal("rating", { precision: 2, scale: 1 }).default("5.0"),
   inStock: boolean("in_stock").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const collections = pgTable("collections", {
@@ -26,6 +35,7 @@ export const collections = pgTable("collections", {
   perfumeIds: integer("perfume_ids").array().notNull(),
   isNew: boolean("is_new").default(false),
   isPopular: boolean("is_popular").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const contactMessages = pgTable("contact_messages", {
@@ -34,21 +44,31 @@ export const contactMessages = pgTable("contact_messages", {
   email: text("email").notNull(),
   subject: text("subject").notNull(),
   message: text("message").notNull(),
-  createdAt: text("created_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertPerfumeSchema = createInsertSchema(perfumes).omit({
   id: true,
+  createdAt: true,
 });
 
 export const insertCollectionSchema = createInsertSchema(collections).omit({
   id: true,
+  createdAt: true,
 });
 
 export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({
   id: true,
   createdAt: true,
 });
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
 
 export type InsertPerfume = z.infer<typeof insertPerfumeSchema>;
 export type Perfume = typeof perfumes.$inferSelect;
