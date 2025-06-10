@@ -122,7 +122,7 @@ export default function PerfumeCatalog() {
                   <div className="glass-card luxury-hover-lift rounded-3xl overflow-hidden relative border border-luxury-gold/20">
                     <div className="relative overflow-hidden">
                       <motion.img
-                        src="https://i.imgur.com/Vgwv7Kh.png"
+                        src={perfume.imageUrl}
                         alt={perfume.name}
                         className="w-full h-auto object-contain"
                         whileHover={{ scale: 1.05 }}
