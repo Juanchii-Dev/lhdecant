@@ -124,7 +124,7 @@ export default function PerfumeCatalog() {
                       <motion.img
                         src="https://i.imgur.com/Vgwv7Kh.png"
                         alt={perfume.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.4, ease: "easeOut" }}
                       />
