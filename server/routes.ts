@@ -1,10 +1,21 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContactMessageSchema } from "@shared/schema";
+import { insertContactMessageSchema, insertPerfumeSchema } from "@shared/schema";
 import { z } from "zod";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  setupAuth(app);
+
+  // Middleware to check if user is authenticated for admin routes
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    next();
+  };
   // Get all perfumes
   app.get("/api/perfumes", async (req, res) => {
     try {
@@ -37,6 +48,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(perfume);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch perfume" });
+    }
+  });
+
+  // Create perfume (admin only)
+  app.post("/api/perfumes", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertPerfumeSchema.parse(req.body);
+      const perfume = await storage.createPerfume(validatedData);
+      res.status(201).json(perfume);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid perfume data", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to create perfume" });
+    }
+  });
+
+  // Update perfume (admin only)
+  app.put("/api/perfumes/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertPerfumeSchema.partial().parse(req.body);
+      const perfume = await storage.updatePerfume(id, validatedData);
+      res.json(perfume);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid perfume data", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to update perfume" });
+    }
+  });
+
+  // Delete perfume (admin only)
+  app.delete("/api/perfumes/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deletePerfume(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete perfume" });
     }
   });
 
