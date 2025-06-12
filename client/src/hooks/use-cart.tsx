@@ -9,7 +9,7 @@ type CartContextType = {
   isLoading: boolean;
   totalItems: number;
   totalAmount: number;
-  addToCart: (perfumeId: number, size: '5ml' | '10ml', price: string) => void;
+  addToCart: (perfumeId: number, size: '5ml' | '10ml' | 'collection', price: string) => void;
   updateQuantity: (id: number, quantity: number) => void;
   removeItem: (id: number) => void;
   clearCart: () => void;

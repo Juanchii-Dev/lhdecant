@@ -141,7 +141,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart routes
   app.post("/api/cart", async (req, res) => {
     try {
-      const sessionId = req.sessionID || `guest_${Date.now()}`;
+      // Ensure session exists
+      if (!req.session.cartId) {
+        req.session.cartId = `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+      const sessionId = req.session.cartId;
       const validatedData = insertCartItemSchema.parse(req.body);
       const cartItem = await storage.addToCart(sessionId, validatedData);
       res.status(201).json(cartItem);
@@ -158,7 +162,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/cart", async (req, res) => {
     try {
-      const sessionId = req.sessionID || `guest_${Date.now()}`;
+      // Use the same session ID as when adding items
+      if (!req.session.cartId) {
+        req.session.cartId = `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+      const sessionId = req.session.cartId;
       const items = await storage.getCartItems(sessionId);
       res.json(items);
     } catch (error) {
@@ -189,7 +197,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart", async (req, res) => {
     try {
-      const sessionId = req.sessionID || `guest_${Date.now()}`;
+      if (!req.session.cartId) {
+        req.session.cartId = `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+      const sessionId = req.session.cartId;
       await storage.clearCart(sessionId);
       res.status(204).send();
     } catch (error) {
