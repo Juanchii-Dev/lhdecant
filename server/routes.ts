@@ -141,15 +141,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart routes
   app.post("/api/cart", async (req, res) => {
     try {
-      // Ensure session exists
-      if (!req.session.cartId) {
-        req.session.cartId = `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      }
-      const sessionId = req.session.cartId;
+      const sessionId = req.sessionID;
+      console.log('Adding to cart with sessionId:', sessionId);
       const validatedData = insertCartItemSchema.parse(req.body);
       const cartItem = await storage.addToCart(sessionId, validatedData);
       res.status(201).json(cartItem);
     } catch (error) {
+      console.error('Error adding to cart:', error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Invalid cart item data", 
@@ -162,14 +160,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/cart", async (req, res) => {
     try {
-      // Use the same session ID as when adding items
-      if (!req.session.cartId) {
-        req.session.cartId = `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      }
-      const sessionId = req.session.cartId;
+      const sessionId = req.sessionID;
+      console.log('Getting cart with sessionId:', sessionId);
       const items = await storage.getCartItems(sessionId);
+      console.log('Cart items found:', items.length);
       res.json(items);
     } catch (error) {
+      console.error('Error getting cart:', error);
       res.status(500).json({ message: "Failed to fetch cart items" });
     }
   });
@@ -197,10 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart", async (req, res) => {
     try {
-      if (!req.session.cartId) {
-        req.session.cartId = `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      }
-      const sessionId = req.session.cartId;
+      const sessionId = req.sessionID;
       await storage.clearCart(sessionId);
       res.status(204).send();
     } catch (error) {

@@ -38,10 +38,11 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'lhdecants-secret-key-2024',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     store: storage.sessionStore,
     cookie: {
       secure: false,
+      httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   };
