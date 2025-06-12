@@ -30,7 +30,7 @@ export interface IStorage {
   createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
 
   // Cart
-  addToCart(sessionId: string, item: InsertCartItem): Promise<CartItem>;
+  addToCart(sessionId: string, item: Omit<InsertCartItem, 'sessionId'>): Promise<CartItem>;
   getCartItems(sessionId: string): Promise<(CartItem & { perfume: Perfume })[]>;
   updateCartItemQuantity(id: number, quantity: number): Promise<CartItem>;
   removeFromCart(id: number): Promise<void>;
@@ -133,7 +133,7 @@ export class DatabaseStorage implements IStorage {
     return message;
   }
 
-  async addToCart(sessionId: string, item: InsertCartItem): Promise<CartItem> {
+  async addToCart(sessionId: string, item: Omit<InsertCartItem, 'sessionId'>): Promise<CartItem> {
     // Check if item already exists in cart
     const existingItem = await db
       .select()
@@ -149,7 +149,7 @@ export class DatabaseStorage implements IStorage {
       // Update quantity if item exists
       const [updatedItem] = await db
         .update(cartItems)
-        .set({ quantity: existingItem[0].quantity + item.quantity })
+        .set({ quantity: existingItem[0].quantity + (item.quantity || 1) })
         .where(eq(cartItems.id, existingItem[0].id))
         .returning();
       return updatedItem;

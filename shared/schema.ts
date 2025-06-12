@@ -102,6 +102,7 @@ export const insertContactMessageSchema = createInsertSchema(contactMessages).om
 
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({
   id: true,
+  sessionId: true,
   createdAt: true,
 });
 

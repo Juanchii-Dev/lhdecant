@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { CartDrawer } from "./cart";
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -69,13 +70,7 @@ export default function Navigation() {
             >
               <i className="fas fa-search text-lg"></i>
             </motion.button>
-            <motion.button 
-              className="hover:text-luxury-gold transition-colors duration-300"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <i className="fas fa-shopping-cart text-lg"></i>
-            </motion.button>
+            <CartDrawer />
             <motion.button
               className="md:hidden hover:text-luxury-gold transition-colors duration-300"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
