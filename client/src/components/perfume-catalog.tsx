@@ -4,12 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/hooks/use-cart";
 import type { Perfume } from "@shared/schema";
 
 export default function PerfumeCatalog() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSizes, setSelectedSizes] = useState<{ [key: number]: '5ml' | '10ml' }>({});
   const { toast } = useToast();
+  const { addToCart } = useCart();
 
   const { data: perfumes = [], isLoading } = useQuery<Perfume[]>({
     queryKey: ["/api/perfumes"],
@@ -19,10 +21,7 @@ export default function PerfumeCatalog() {
 
   const handleAddToCart = (perfume: Perfume, size: '5ml' | '10ml') => {
     const price = size === '5ml' ? perfume.price5ml : perfume.price10ml;
-    toast({
-      title: "Agregado al carrito",
-      description: `${perfume.name} ${size} - $${price}`,
-    });
+    addToCart(perfume.id, size, price);
   };
 
   const handleSizeChange = (perfumeId: number, size: '5ml' | '10ml') => {

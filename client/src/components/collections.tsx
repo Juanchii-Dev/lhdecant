@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Collection, Perfume } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/hooks/use-cart";
 
 export default function Collections() {
   const { toast } = useToast();
