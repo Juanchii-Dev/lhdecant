@@ -7,6 +7,7 @@ import { useCart } from "@/hooks/use-cart";
 
 export default function Collections() {
   const { toast } = useToast();
+  const { addToCart } = useCart();
   const queryClient = useQueryClient();
 
   const { data: collections, isLoading } = useQuery<Collection[]>({
@@ -17,33 +18,13 @@ export default function Collections() {
     queryKey: ["/api/perfumes"],
   });
 
-  const addToCartMutation = useMutation({
-    mutationFn: async (collection: Collection) => {
-      return apiRequest(`/api/cart/add`, "POST", {
-        type: "collection",
-        id: collection.id,
-        name: collection.name,
-        price: collection.price,
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "¡Añadido al carrito!",
-        description: "La colección se ha agregado exitosamente.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "No se pudo añadir la colección al carrito.",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleAddToCart = (collection: Collection) => {
-    addToCartMutation.mutate(collection);
+    // For collections, we'll add them as a special perfume with negative ID
+    addToCart(-collection.id, "collection", collection.price);
+    toast({
+      title: "¡Añadido al carrito!",
+      description: `${collection.name} - $${collection.price}`,
+    });
   };
 
   const getThemeIcon = (theme: string) => {
