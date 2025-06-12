@@ -1,4 +1,4 @@
-import { perfumes, collections, contactMessages, users, type Perfume, type Collection, type ContactMessage, type InsertPerfume, type InsertCollection, type InsertContactMessage, type User, type InsertUser } from "@shared/schema";
+import { perfumes, collections, contactMessages, users, cartItems, orders, orderItems, type Perfume, type Collection, type ContactMessage, type InsertPerfume, type InsertCollection, type InsertContactMessage, type User, type InsertUser, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
@@ -28,6 +28,19 @@ export interface IStorage {
 
   // Contact Messages
   createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
+
+  // Cart
+  addToCart(sessionId: string, item: InsertCartItem): Promise<CartItem>;
+  getCartItems(sessionId: string): Promise<(CartItem & { perfume: Perfume })[]>;
+  updateCartItemQuantity(id: number, quantity: number): Promise<CartItem>;
+  removeFromCart(id: number): Promise<void>;
+  clearCart(sessionId: string): Promise<void>;
+
+  // Orders
+  createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
+  getOrders(): Promise<Order[]>;
+  getOrder(id: number): Promise<(Order & { items: OrderItem[] }) | undefined>;
+  updateOrderStatus(id: number, status: string): Promise<Order>;
 
   // Session Store
   sessionStore: session.SessionStore;
