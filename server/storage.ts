@@ -1,6 +1,6 @@
 import { perfumes, collections, contactMessages, users, cartItems, orders, orderItems, type Perfume, type Collection, type ContactMessage, type InsertPerfume, type InsertCollection, type InsertContactMessage, type User, type InsertUser, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -131,6 +131,119 @@ export class DatabaseStorage implements IStorage {
       .values(insertMessage)
       .returning();
     return message;
+  }
+
+  async addToCart(sessionId: string, item: InsertCartItem): Promise<CartItem> {
+    // Check if item already exists in cart
+    const existingItem = await db
+      .select()
+      .from(cartItems)
+      .where(and(
+        eq(cartItems.sessionId, sessionId),
+        eq(cartItems.perfumeId, item.perfumeId),
+        eq(cartItems.size, item.size)
+      ))
+      .limit(1);
+
+    if (existingItem.length > 0) {
+      // Update quantity if item exists
+      const [updatedItem] = await db
+        .update(cartItems)
+        .set({ quantity: existingItem[0].quantity + item.quantity })
+        .where(eq(cartItems.id, existingItem[0].id))
+        .returning();
+      return updatedItem;
+    } else {
+      // Insert new item
+      const [newItem] = await db
+        .insert(cartItems)
+        .values({ ...item, sessionId })
+        .returning();
+      return newItem;
+    }
+  }
+
+  async getCartItems(sessionId: string): Promise<(CartItem & { perfume: Perfume })[]> {
+    const items = await db
+      .select({
+        id: cartItems.id,
+        sessionId: cartItems.sessionId,
+        perfumeId: cartItems.perfumeId,
+        size: cartItems.size,
+        quantity: cartItems.quantity,
+        price: cartItems.price,
+        createdAt: cartItems.createdAt,
+        perfume: {
+          id: perfumes.id,
+          name: perfumes.name,
+          brand: perfumes.brand,
+          description: perfumes.description,
+          price5ml: perfumes.price5ml,
+          price10ml: perfumes.price10ml,
+          category: perfumes.category,
+          notes: perfumes.notes,
+          imageUrl: perfumes.imageUrl,
+          rating: perfumes.rating,
+          inStock: perfumes.inStock,
+          createdAt: perfumes.createdAt,
+        }
+      })
+      .from(cartItems)
+      .innerJoin(perfumes, eq(cartItems.perfumeId, perfumes.id))
+      .where(eq(cartItems.sessionId, sessionId));
+
+    return items;
+  }
+
+  async updateCartItemQuantity(id: number, quantity: number): Promise<CartItem> {
+    const [updatedItem] = await db
+      .update(cartItems)
+      .set({ quantity })
+      .where(eq(cartItems.id, id))
+      .returning();
+    return updatedItem;
+  }
+
+  async removeFromCart(id: number): Promise<void> {
+    await db.delete(cartItems).where(eq(cartItems.id, id));
+  }
+
+  async clearCart(sessionId: string): Promise<void> {
+    await db.delete(cartItems).where(eq(cartItems.sessionId, sessionId));
+  }
+
+  async createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
+    const [newOrder] = await db
+      .insert(orders)
+      .values(order)
+      .returning();
+
+    // Insert order items
+    const orderItemsWithOrderId = items.map(item => ({ ...item, orderId: newOrder.id }));
+    await db.insert(orderItems).values(orderItemsWithOrderId);
+
+    return newOrder;
+  }
+
+  async getOrders(): Promise<Order[]> {
+    return await db.select().from(orders).orderBy(orders.createdAt);
+  }
+
+  async getOrder(id: number): Promise<(Order & { items: OrderItem[] }) | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    if (!order) return undefined;
+
+    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
+    return { ...order, items };
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<Order> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder;
   }
 }
 

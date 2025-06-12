@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContactMessageSchema, insertPerfumeSchema } from "@shared/schema";
+import { insertContactMessageSchema, insertPerfumeSchema, insertCartItemSchema, insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
 
@@ -135,6 +135,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Cart routes
+  app.post("/api/cart", async (req, res) => {
+    try {
+      const sessionId = req.sessionID || `guest_${Date.now()}`;
+      const validatedData = insertCartItemSchema.parse(req.body);
+      const cartItem = await storage.addToCart(sessionId, validatedData);
+      res.status(201).json(cartItem);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid cart item data", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to add to cart" });
+    }
+  });
+
+  app.get("/api/cart", async (req, res) => {
+    try {
+      const sessionId = req.sessionID || `guest_${Date.now()}`;
+      const items = await storage.getCartItems(sessionId);
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch cart items" });
+    }
+  });
+
+  app.put("/api/cart/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { quantity } = req.body;
+      const updatedItem = await storage.updateCartItemQuantity(id, quantity);
+      res.json(updatedItem);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update cart item" });
+    }
+  });
+
+  app.delete("/api/cart/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.removeFromCart(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove cart item" });
+    }
+  });
+
+  app.delete("/api/cart", async (req, res) => {
+    try {
+      const sessionId = req.sessionID || `guest_${Date.now()}`;
+      await storage.clearCart(sessionId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Order routes
+  app.post("/api/orders", async (req, res) => {
+    try {
+      const { orderData, orderItems } = req.body;
+      const validatedOrder = insertOrderSchema.parse(orderData);
+      const order = await storage.createOrder(validatedOrder, orderItems);
+      
+      // Clear cart after successful order
+      const sessionId = req.sessionID || `guest_${Date.now()}`;
+      await storage.clearCart(sessionId);
+      
+      res.status(201).json(order);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid order data", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to create order" });
+    }
+  });
+
+  app.get("/api/orders", requireAuth, async (req, res) => {
+    try {
+      const orders = await storage.getOrders();
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch orders" });
     }
   });
 
