@@ -82,28 +82,29 @@ export default function PerfumeCatalog() {
 
 
         {/* Products Grid */}
-        {isLoading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="bg-charcoal border-luxury-gold/20">
-                <div className="w-full h-64 bg-gray-700 animate-pulse rounded-t-lg"></div>
-                <CardContent className="p-6">
-                  <div className="space-y-3">
-                    <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
-                    <div className="h-6 bg-gray-700 rounded animate-pulse"></div>
-                    <div className="h-4 bg-gray-700 rounded animate-pulse w-3/4"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <motion.div 
-            className="grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-          >
+        <div className="flex justify-center">
+          {isLoading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="bg-charcoal border-luxury-gold/20 h-[600px]">
+                  <div className="w-full h-64 bg-gray-700 animate-pulse rounded-t-lg"></div>
+                  <CardContent className="p-6">
+                    <div className="space-y-3">
+                      <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
+                      <div className="h-6 bg-gray-700 rounded animate-pulse"></div>
+                      <div className="h-4 bg-gray-700 rounded animate-pulse w-3/4"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <motion.div 
+              className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6 }}
+            >
             {filteredPerfumes.slice(0, 3).map((perfume, index) => {
               const selectedSize = selectedSizes[perfume.id] || '10ml';
               return (
@@ -120,7 +121,7 @@ export default function PerfumeCatalog() {
                   }}
                   className="group perspective-1000"
                 >
-                  <div className="glass-card luxury-hover-lift rounded-3xl overflow-hidden relative border border-luxury-gold/20">
+                  <div className="glass-card luxury-hover-lift rounded-3xl overflow-hidden relative border border-luxury-gold/20 h-[600px] flex flex-col">
                     <div className="relative overflow-hidden">
                       <motion.img
                         src={perfume.imageUrl}
@@ -176,7 +177,7 @@ export default function PerfumeCatalog() {
                       </motion.div>
                     </div>
                     
-                    <div className="p-6 space-y-4">
+                    <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                       <div>
                         <h3 className="text-xl font-montserrat font-bold mb-2 text-white group-hover:text-luxury-gold transition-colors duration-300">
                           {perfume.name}
@@ -240,8 +241,9 @@ export default function PerfumeCatalog() {
                 </motion.div>
               );
             })}
-          </motion.div>
-        )}
+            </motion.div>
+          )}
+        </div>
 
         <motion.div 
           className="text-center mt-12"
