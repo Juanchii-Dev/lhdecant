@@ -95,13 +95,15 @@ export default function Collections() {
           </div>
           
           <h2 className="text-4xl md:text-5xl font-playfair font-bold mb-6">
-            <span className="text-white">Descubre Nuestras</span>
+            <span className="text-white">🎁 Descubrí Nuestras</span>
             <br />
-            <span className="luxury-gold-text">Colecciones Curadas</span>
+            <span className="luxury-gold-text">Colecciones</span>
           </h2>
+          <h3 className="text-2xl md:text-3xl font-light mb-6 text-gray-200">
+            Curadas para cada momento, diseñadas para sorprender.
+          </h3>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Descubre nuestras colecciones curadas especialmente para diferentes ocasiones y temporadas. 
-            Cada pack incluye 3 decants cuidadosamente seleccionados.
+            Explorá sets temáticos de 3 decants seleccionados con criterio experto, pensados para distintas ocasiones, estaciones o estilos personales.
           </p>
         </motion.div>
 

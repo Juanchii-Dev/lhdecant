@@ -68,12 +68,14 @@ export default function PerfumeCatalog() {
             <span className="luxury-gold-text font-semibold tracking-wide text-sm uppercase">Catálogo Individual</span>
           </motion.div>
           <h2 className="text-5xl md:text-6xl font-playfair font-bold mb-8 luxury-text-shadow">
-            Perfumes <span className="luxury-gold-text">Individuales</span>
+            Catálogo <span className="luxury-gold-text">Individual</span>
           </h2>
+          <h3 className="text-2xl md:text-3xl font-light mb-6 text-gray-200">
+            Descubrí tu próxima fragancia favorita.
+          </h3>
           <div className="w-24 h-1 bg-gradient-to-r from-transparent via-luxury-gold to-transparent mx-auto mb-8"></div>
           <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
-            Explora nuestra selección de decants individuales de las mejores fragancias del mundo. 
-            Perfectos para probar antes de comprar el frasco completo.
+            Explorá nuestra cuidada selección de decants individuales, ideales para conocer perfumes icónicos sin comprometerte al frasco completo.
           </p>
         </motion.div>
 
