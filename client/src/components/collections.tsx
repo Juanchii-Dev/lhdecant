@@ -14,6 +14,11 @@ export default function Collections() {
     queryKey: ["/api/collections"],
   });
 
+  // Don't render anything if no collections are available
+  if (!collections || collections.length === 0) {
+    return null;
+  }
+
   const { data: perfumes } = useQuery<Perfume[]>({
     queryKey: ["/api/perfumes"],
   });

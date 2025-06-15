@@ -212,6 +212,7 @@ export default function AdminPage() {
     const collection: InsertCollection = {
       name: formData.get("name") as string,
       description: formData.get("description") as string,
+      theme: formData.get("theme") as string,
       perfumeIds: (formData.get("perfumeIds") as string).split(",").map(id => parseInt(id.trim())),
       price: formData.get("price") as string,
       imageUrl: formData.get("imageUrl") as string,
@@ -237,6 +238,10 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-[#D4AF37]">Bienvenido, {user.username}</span>
+            <Button onClick={() => setLocation("/")} variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37]">
+              <Package className="w-4 h-4 mr-2" />
+              Ver Tienda
+            </Button>
             <Button onClick={handleLogout} variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37]">
               <LogOut className="w-4 h-4 mr-2" />
               Cerrar Sesión
@@ -537,6 +542,10 @@ export default function AdminPage() {
                         <div>
                           <Label htmlFor="description" className="text-[#D4AF37]">Descripción</Label>
                           <Textarea name="description" required className="bg-black/50 border-[#D4AF37]/30 text-white" />
+                        </div>
+                        <div>
+                          <Label htmlFor="theme" className="text-[#D4AF37]">Tema</Label>
+                          <Input name="theme" required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="Verano, Elegancia, etc." />
                         </div>
                         <div>
                           <Label htmlFor="perfumeIds" className="text-[#D4AF37]">IDs de Perfumes (separados por coma)</Label>

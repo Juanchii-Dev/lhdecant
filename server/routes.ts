@@ -86,6 +86,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update perfume with PATCH (admin only)
+  app.patch("/api/perfumes/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertPerfumeSchema.partial().parse(req.body);
+      const perfume = await storage.updatePerfume(id, validatedData);
+      res.json(perfume);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid perfume data", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to update perfume" });
+    }
+  });
+
   // Delete perfume (admin only)
   app.delete("/api/perfumes/:id", requireAuth, async (req, res) => {
     try {
@@ -100,6 +118,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all collections
   app.get("/api/collections", async (req, res) => {
     try {
+      // Check if collections are enabled
+      const collectionsEnabledSetting = await storage.getSetting('collections_enabled');
+      const collectionsEnabled = collectionsEnabledSetting?.value === 'true';
+      
+      if (!collectionsEnabled) {
+        res.json([]);
+        return;
+      }
+      
       const collections = await storage.getCollections();
       res.json(collections);
     } catch (error) {
