@@ -46,8 +46,12 @@ export default function SocialMedia() {
           >
             <div className="text-center mb-6">
               <div className="flex items-center justify-center space-x-3 mb-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-luxury-gold to-champagne rounded-xl flex items-center justify-center">
-                  <i className="fab fa-instagram text-black text-2xl"></i>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center">
+                  <img 
+                    src="https://i.imgur.com/huoe1e0.png" 
+                    alt="Instagram"
+                    className="w-10 h-10 object-contain"
+                  />
                 </div>
                 <span className="text-white text-xl font-semibold">Instagram</span>
               </div>
@@ -64,7 +68,11 @@ export default function SocialMedia() {
             
             <div className="h-80 bg-gradient-to-br from-luxury-gold/10 to-luxury-gold/5 rounded-xl flex items-center justify-center border border-luxury-gold/20">
               <div className="text-center">
-                <i className="fab fa-instagram text-luxury-gold text-6xl mb-4"></i>
+                <img 
+                  src="https://i.imgur.com/huoe1e0.png" 
+                  alt="Instagram"
+                  className="w-16 h-16 object-contain mx-auto mb-4"
+                />
                 <p className="text-gray-400 mb-4">Descubre nuestro contenido en Instagram</p>
                 <motion.a
                   href="https://www.instagram.com/lhdecant/"
@@ -94,8 +102,12 @@ export default function SocialMedia() {
           >
             <div className="text-center mb-6">
               <div className="flex items-center justify-center space-x-3 mb-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-luxury-gold to-champagne rounded-xl flex items-center justify-center">
-                  <i className="fab fa-tiktok text-black text-2xl"></i>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center">
+                  <img 
+                    src="https://i.imgur.com/IAh3uj5.png" 
+                    alt="TikTok"
+                    className="w-10 h-10 object-contain"
+                  />
                 </div>
                 <span className="text-white text-xl font-semibold">TikTok</span>
               </div>
@@ -112,7 +124,11 @@ export default function SocialMedia() {
             
             <div className="h-80 bg-gradient-to-br from-luxury-gold/10 to-luxury-gold/5 rounded-xl flex items-center justify-center border border-luxury-gold/20">
               <div className="text-center">
-                <i className="fab fa-tiktok text-luxury-gold text-6xl mb-4"></i>
+                <img 
+                  src="https://i.imgur.com/IAh3uj5.png" 
+                  alt="TikTok"
+                  className="w-16 h-16 object-contain mx-auto mb-4"
+                />
                 <p className="text-gray-400 mb-4">Sigue nuestros videos en TikTok</p>
                 <motion.a
                   href="https://www.tiktok.com/@lhdecants"
