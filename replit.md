@@ -97,6 +97,7 @@ The application is configured for Replit deployment with:
 
 Changelog:
 - June 15, 2025. Initial setup
+- June 15, 2025. Major collections system update: Added variable perfume sizes support, fixed JSON parsing errors, implemented collections visibility toggle, and added admin navigation
 
 ## User Preferences
 
