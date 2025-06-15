@@ -14,14 +14,14 @@ export default function Collections() {
     queryKey: ["/api/collections"],
   });
 
+  const { data: perfumes } = useQuery<Perfume[]>({
+    queryKey: ["/api/perfumes"],
+  });
+
   // Don't render anything if no collections are available
   if (!collections || collections.length === 0) {
     return null;
   }
-
-  const { data: perfumes } = useQuery<Perfume[]>({
-    queryKey: ["/api/perfumes"],
-  });
 
   const handleAddToCart = (collection: Collection) => {
     // For collections, we'll add them as a special perfume with negative ID
@@ -30,6 +30,30 @@ export default function Collections() {
       title: "¡Añadido al carrito!",
       description: `${collection.name} - $${collection.price}`,
     });
+  };
+
+  const getCollectionDetails = (collection: Collection) => {
+    if (!perfumes) return { perfumeDetails: [], totalOriginalPrice: 0 };
+    
+    const perfumeDetails = collection.perfumeIds.map((id, index) => {
+      const perfume = perfumes.find(p => p.id === id);
+      const size = collection.perfumeSizes[index];
+      if (!perfume) return null;
+      
+      // Find the price for the specific size
+      const sizeIndex = perfume.sizes.indexOf(size);
+      const price = sizeIndex !== -1 ? parseFloat(perfume.prices[sizeIndex]) : 0;
+      
+      return {
+        perfume,
+        size,
+        price
+      };
+    }).filter((detail): detail is NonNullable<typeof detail> => detail !== null);
+
+    const totalOriginalPrice = perfumeDetails.reduce((sum, detail) => sum + detail.price, 0);
+    
+    return { perfumeDetails, totalOriginalPrice };
   };
 
   const getThemeIcon = (theme: string) => {
@@ -123,6 +147,8 @@ export default function Collections() {
           >
           {collections?.map((collection, index) => {
             const perfumeNames = getPerfumeNames(collection.perfumeIds);
+            const { perfumeDetails, totalOriginalPrice } = getCollectionDetails(collection);
+            const savings = totalOriginalPrice - parseFloat(collection.price);
             
             return (
               <motion.div
@@ -189,14 +215,30 @@ export default function Collections() {
                       {collection.description}
                     </p>
                     
+                    {/* Show included perfumes with sizes */}
+                    <div className="mb-4">
+                      <h4 className="text-xs text-gray-400 mb-2">Incluye:</h4>
+                      <div className="space-y-1">
+                        {perfumeDetails.map((detail, idx) => (
+                          <div key={idx} className="text-xs text-gray-300 flex justify-between">
+                            <span>{detail.perfume.name}</span>
+                            <span className="text-[#D4AF37]">{detail.size}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <span className="text-xl font-bold luxury-gold-text">${collection.price}</span>
-                        {collection.originalPrice && (
-                          <span className="text-xs text-gray-500 line-through ml-2">${collection.originalPrice}</span>
+                        {totalOriginalPrice > parseFloat(collection.price) && (
+                          <span className="text-xs text-gray-500 line-through ml-2">${totalOriginalPrice.toFixed(2)}</span>
+                        )}
+                        {savings > 0 && (
+                          <div className="text-xs text-green-400">Ahorras: ${savings.toFixed(2)}</div>
                         )}
                       </div>
-                      <span className="text-xs text-gray-400">3 perfumes</span>
+                      <span className="text-xs text-gray-400">{perfumeDetails.length} perfumes</span>
                     </div>
                     
                     <motion.button
