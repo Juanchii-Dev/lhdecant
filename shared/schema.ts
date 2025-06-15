@@ -33,6 +33,7 @@ export const collections = pgTable("collections", {
   originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
   imageUrl: text("image_url").notNull(),
   perfumeIds: integer("perfume_ids").array().notNull(),
+  perfumeSizes: text("perfume_sizes").array().notNull(), // Corresponding sizes for each perfume
   isNew: boolean("is_new").default(false),
   isPopular: boolean("is_popular").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),

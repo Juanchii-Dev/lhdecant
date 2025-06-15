@@ -214,6 +214,7 @@ export default function AdminPage() {
       description: formData.get("description") as string,
       theme: formData.get("theme") as string,
       perfumeIds: (formData.get("perfumeIds") as string).split(",").map(id => parseInt(id.trim())),
+      perfumeSizes: (formData.get("perfumeSizes") as string).split(",").map(size => size.trim()),
       price: formData.get("price") as string,
       imageUrl: formData.get("imageUrl") as string,
     };
@@ -550,6 +551,10 @@ export default function AdminPage() {
                         <div>
                           <Label htmlFor="perfumeIds" className="text-[#D4AF37]">IDs de Perfumes (separados por coma)</Label>
                           <Input name="perfumeIds" required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="1, 2, 3" />
+                        </div>
+                        <div>
+                          <Label htmlFor="perfumeSizes" className="text-[#D4AF37]">Tamaños de Perfumes (separados por coma)</Label>
+                          <Input name="perfumeSizes" required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="5ml, 10ml, 5ml" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>

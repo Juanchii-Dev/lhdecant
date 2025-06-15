@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContactMessageSchema, insertPerfumeSchema, insertCartItemSchema, insertOrderSchema } from "@shared/schema";
+import { insertContactMessageSchema, insertPerfumeSchema, insertCartItemSchema, insertOrderSchema, insertCollectionSchema } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
 
@@ -131,6 +131,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(collections);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch collections" });
+    }
+  });
+
+  // Create collection (admin only)
+  app.post("/api/collections", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertCollectionSchema.parse(req.body);
+      const collection = await storage.createCollection(validatedData);
+      res.status(201).json(collection);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid collection data", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to create collection" });
     }
   });
 
