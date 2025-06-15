@@ -183,8 +183,8 @@ export class DatabaseStorage implements IStorage {
           name: perfumes.name,
           brand: perfumes.brand,
           description: perfumes.description,
-          price5ml: perfumes.price5ml,
-          price10ml: perfumes.price10ml,
+          sizes: perfumes.sizes,
+          prices: perfumes.prices,
           category: perfumes.category,
           notes: perfumes.notes,
           imageUrl: perfumes.imageUrl,
@@ -249,6 +249,27 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, id))
       .returning();
     return updatedOrder;
+  }
+
+  async getSetting(key: string): Promise<Settings | undefined> {
+    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
+    return setting || undefined;
+  }
+
+  async setSetting(key: string, value: string): Promise<Settings> {
+    const [setting] = await db
+      .insert(settings)
+      .values({ key, value })
+      .onConflictDoUpdate({
+        target: settings.key,
+        set: { value, updatedAt: new Date() }
+      })
+      .returning();
+    return setting;
+  }
+
+  async getSettings(): Promise<Settings[]> {
+    return await db.select().from(settings);
   }
 }
 

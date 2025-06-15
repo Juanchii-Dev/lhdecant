@@ -9,7 +9,7 @@ import type { Perfume } from "@shared/schema";
 
 export default function PerfumeCatalog() {
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedSizes, setSelectedSizes] = useState<{ [key: number]: '5ml' | '10ml' }>({});
+  const [selectedSizes, setSelectedSizes] = useState<{ [key: number]: string }>({});
   const { toast } = useToast();
   const { addToCart } = useCart();
 
@@ -19,17 +19,19 @@ export default function PerfumeCatalog() {
 
   const filteredPerfumes = perfumes;
 
-  const handleAddToCart = (perfume: Perfume, size: '5ml' | '10ml') => {
-    const price = size === '5ml' ? perfume.price5ml : perfume.price10ml;
+  const handleAddToCart = (perfume: Perfume, size: string) => {
+    const sizeIndex = perfume.sizes.indexOf(size);
+    const price = sizeIndex !== -1 ? perfume.prices[sizeIndex] : '0.00';
     addToCart(perfume.id, size, price);
   };
 
-  const handleSizeChange = (perfumeId: number, size: '5ml' | '10ml') => {
+  const handleSizeChange = (perfumeId: number, size: string) => {
     setSelectedSizes(prev => ({ ...prev, [perfumeId]: size }));
   };
 
-  const getPrice = (perfume: Perfume, size: '5ml' | '10ml') => {
-    return size === '5ml' ? perfume.price5ml : perfume.price10ml;
+  const getPrice = (perfume: Perfume, size: string) => {
+    const sizeIndex = perfume.sizes.indexOf(size);
+    return sizeIndex !== -1 ? perfume.prices[sizeIndex] : '0.00';
   };
 
   const renderStars = (rating: string) => {
@@ -106,7 +108,7 @@ export default function PerfumeCatalog() {
               transition={{ duration: 0.6 }}
             >
             {filteredPerfumes.slice(0, 3).map((perfume, index) => {
-              const selectedSize = selectedSizes[perfume.id] || '10ml';
+              const selectedSize = selectedSizes[perfume.id] || perfume.sizes[0];
               return (
                 <motion.div
                   key={perfume.id}
