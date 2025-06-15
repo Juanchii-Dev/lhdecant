@@ -138,6 +138,94 @@ export default function Footer() {
             </ul>
           </motion.div>
         </div>
+
+        {/* Social Media Section */}
+        <motion.div 
+          className="border-t border-luxury-gold/20 pt-12 pb-8"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          viewport={{ once: true }}
+        >
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-playfair font-bold text-luxury-gold mb-4">
+              Seguinos en Nuestras Redes
+            </h3>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              Mantente al día con nuestras últimas fragancias, consejos de perfumería y contenido exclusivo.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Instagram Embed */}
+            <motion.div 
+              className="glass-card border border-luxury-gold/20 rounded-2xl p-6"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="text-center mb-4">
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  <i className="fab fa-instagram text-luxury-gold text-2xl"></i>
+                  <span className="text-white font-semibold">Instagram</span>
+                </div>
+                <a 
+                  href="https://www.instagram.com/lhdecant/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-luxury-gold hover:text-champagne transition-colors"
+                >
+                  @lhdecant
+                </a>
+              </div>
+              <div className="aspect-square bg-gradient-to-br from-luxury-gold/10 to-luxury-gold/5 rounded-lg flex items-center justify-center">
+                <iframe
+                  src="https://www.instagram.com/lhdecant/embed"
+                  width="100%"
+                  height="400"
+                  frameBorder="0"
+                  scrolling="no"
+                  allowTransparency={true}
+                  className="rounded-lg"
+                  title="Instagram Feed"
+                ></iframe>
+              </div>
+            </motion.div>
+
+            {/* TikTok Embed */}
+            <motion.div 
+              className="glass-card border border-luxury-gold/20 rounded-2xl p-6"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="text-center mb-4">
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  <i className="fab fa-tiktok text-luxury-gold text-2xl"></i>
+                  <span className="text-white font-semibold">TikTok</span>
+                </div>
+                <a 
+                  href="https://www.tiktok.com/@lhdecants" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-luxury-gold hover:text-champagne transition-colors"
+                >
+                  @lhdecants
+                </a>
+              </div>
+              <div className="aspect-square bg-gradient-to-br from-luxury-gold/10 to-luxury-gold/5 rounded-lg flex items-center justify-center">
+                <iframe
+                  src="https://www.tiktok.com/embed/@lhdecants"
+                  width="100%"
+                  height="400"
+                  frameBorder="0"
+                  scrolling="no"
+                  allowTransparency={true}
+                  className="rounded-lg"
+                  title="TikTok Feed"
+                ></iframe>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
         
         <motion.div 
           className="border-t border-luxury-gold/20 pt-8 flex flex-col md:flex-row justify-between items-center"
