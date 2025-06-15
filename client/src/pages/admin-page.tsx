@@ -25,9 +25,19 @@ export default function AdminPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPerfume, setEditingPerfume] = useState<Perfume | null>(null);
+  const [isCreateCollectionDialogOpen, setIsCreateCollectionDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("perfumes");
 
   const { data: perfumes, isLoading } = useQuery<Perfume[]>({
     queryKey: ["/api/perfumes"],
+  });
+
+  const { data: collections } = useQuery<Collection[]>({
+    queryKey: ["/api/collections"],
+  });
+
+  const { data: settings } = useQuery<Settings[]>({
+    queryKey: ["/api/settings"],
   });
 
   const createPerfumeMutation = useMutation({
@@ -47,6 +57,49 @@ export default function AdminPage() {
       toast({
         title: "Error",
         description: "No se pudo crear el perfume",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createCollectionMutation = useMutation({
+    mutationFn: async (collection: InsertCollection) => {
+      const res = await apiRequest("POST", "/api/collections", collection);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      setIsCreateCollectionDialogOpen(false);
+      toast({
+        title: "Colección creada",
+        description: "La colección se ha agregado correctamente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo crear la colección",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateSettingMutation = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      const res = await apiRequest("POST", "/api/settings", { key, value });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({
+        title: "Configuración actualizada",
+        description: "La configuración se ha guardado correctamente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la configuración",
         variant: "destructive",
       });
     },
@@ -106,12 +159,19 @@ export default function AdminPage() {
   const handleCreatePerfume = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    
+    // Parse sizes and prices from form
+    const sizesStr = formData.get("sizes") as string;
+    const pricesStr = formData.get("prices") as string;
+    const sizes = sizesStr.split(",").map(s => s.trim());
+    const prices = pricesStr.split(",").map(p => p.trim());
+    
     const perfume: InsertPerfume = {
       name: formData.get("name") as string,
       brand: formData.get("brand") as string,
       description: formData.get("description") as string,
-      price5ml: formData.get("price5ml") as string,
-      price10ml: formData.get("price10ml") as string,
+      sizes,
+      prices,
       category: formData.get("category") as string,
       notes: (formData.get("notes") as string).split(",").map(note => note.trim()),
       imageUrl: formData.get("imageUrl") as string,
@@ -126,12 +186,19 @@ export default function AdminPage() {
     if (!editingPerfume) return;
     
     const formData = new FormData(e.currentTarget);
+    
+    // Parse sizes and prices from form
+    const sizesStr = formData.get("sizes") as string;
+    const pricesStr = formData.get("prices") as string;
+    const sizes = sizesStr.split(",").map(s => s.trim());
+    const prices = pricesStr.split(",").map(p => p.trim());
+    
     const updates: Partial<InsertPerfume> = {
       name: formData.get("name") as string,
       brand: formData.get("brand") as string,
       description: formData.get("description") as string,
-      price5ml: formData.get("price5ml") as string,
-      price10ml: formData.get("price10ml") as string,
+      sizes,
+      prices,
       category: formData.get("category") as string,
       notes: (formData.get("notes") as string).split(",").map(note => note.trim()),
       imageUrl: formData.get("imageUrl") as string,
@@ -275,8 +342,7 @@ export default function AdminPage() {
                     <TableHead className="text-[#D4AF37]">Nombre</TableHead>
                     <TableHead className="text-[#D4AF37]">Marca</TableHead>
                     <TableHead className="text-[#D4AF37]">Categoría</TableHead>
-                    <TableHead className="text-[#D4AF37]">Precio 5ml</TableHead>
-                    <TableHead className="text-[#D4AF37]">Precio 10ml</TableHead>
+                    <TableHead className="text-[#D4AF37]">Precios & Tamaños</TableHead>
                     <TableHead className="text-[#D4AF37]">Stock</TableHead>
                     <TableHead className="text-[#D4AF37]">Acciones</TableHead>
                   </TableRow>
@@ -291,8 +357,13 @@ export default function AdminPage() {
                           {perfume.category}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-gray-300">${perfume.price5ml}</TableCell>
-                      <TableCell className="text-gray-300">${perfume.price10ml}</TableCell>
+                      <TableCell className="text-gray-300">
+                        {perfume.sizes.map((size, index) => (
+                          <div key={size} className="text-xs">
+                            {size}: ${perfume.prices[index]}
+                          </div>
+                        ))}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={perfume.inStock ? "default" : "destructive"}>
                           {perfume.inStock ? "En Stock" : "Agotado"}
@@ -356,12 +427,12 @@ export default function AdminPage() {
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="price5ml" className="text-[#D4AF37]">Precio 5ml</Label>
-                    <Input name="price5ml" type="number" step="0.01" defaultValue={editingPerfume.price5ml} required className="bg-black/50 border-[#D4AF37]/30 text-white" />
+                    <Label htmlFor="sizes" className="text-[#D4AF37]">Tamaños (separados por coma)</Label>
+                    <Input name="sizes" defaultValue={editingPerfume.sizes.join(", ")} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="5ml, 10ml, 15ml" />
                   </div>
                   <div>
-                    <Label htmlFor="price10ml" className="text-[#D4AF37]">Precio 10ml</Label>
-                    <Input name="price10ml" type="number" step="0.01" defaultValue={editingPerfume.price10ml} required className="bg-black/50 border-[#D4AF37]/30 text-white" />
+                    <Label htmlFor="prices" className="text-[#D4AF37]">Precios (separados por coma)</Label>
+                    <Input name="prices" defaultValue={editingPerfume.prices.join(", ")} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="15.00, 25.00, 35.00" />
                   </div>
                   <div>
                     <Label htmlFor="category" className="text-[#D4AF37]">Categoría</Label>
