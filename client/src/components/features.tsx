@@ -15,7 +15,7 @@ export default function Features() {
     {
       icon: "fas fa-award",
       title: "🥂 Calidad Premium",
-      description: "Cada decant se presenta en frascos de vidrio de alta calidad, con un acabado profesional que honra la fragancia que contiene.",
+      description: "Cada decant se presenta en frascos de alta calidad, con un acabado profesional que honra la fragancia que contiene.",
     },
   ];
 
