@@ -108,13 +108,14 @@ export default function Collections() {
         </motion.div>
 
         {/* Collections Grid */}
-        <motion.div 
-          className="grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          viewport={{ once: true }}
-        >
+        <div className="flex justify-center">
+          <motion.div 
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
           {collections?.map((collection, index) => {
             const perfumeNames = getPerfumeNames(collection.perfumeIds);
             
@@ -132,7 +133,7 @@ export default function Collections() {
                   transition: { duration: 0.3, ease: "easeOut" }
                 }}
               >
-                <div className="glass-card rounded-2xl overflow-hidden relative border border-luxury-gold/20 h-full">
+                <div className="glass-card rounded-2xl overflow-hidden relative border border-luxury-gold/20 h-[600px] flex flex-col">
                   <div className="relative overflow-hidden">
                     <motion.img
                       src="https://i.imgur.com/Vgwv7Kh.png"
@@ -174,7 +175,7 @@ export default function Collections() {
                     </div>
                   </div>
                   
-                  <div className="p-5">
+                  <div className="p-5 flex-1 flex flex-col justify-between">
                     <h3 className="text-white font-playfair font-bold text-xl mb-2">
                       {collection.name}
                     </h3>
@@ -207,7 +208,8 @@ export default function Collections() {
               </motion.div>
             );
           })}
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
