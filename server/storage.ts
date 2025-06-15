@@ -1,4 +1,4 @@
-import { perfumes, collections, contactMessages, users, cartItems, orders, orderItems, type Perfume, type Collection, type ContactMessage, type InsertPerfume, type InsertCollection, type InsertContactMessage, type User, type InsertUser, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem } from "@shared/schema";
+import { perfumes, collections, contactMessages, users, cartItems, orders, orderItems, settings, type Perfume, type Collection, type ContactMessage, type InsertPerfume, type InsertCollection, type InsertContactMessage, type User, type InsertUser, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type Settings, type InsertSettings } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
@@ -41,6 +41,11 @@ export interface IStorage {
   getOrders(): Promise<Order[]>;
   getOrder(id: number): Promise<(Order & { items: OrderItem[] }) | undefined>;
   updateOrderStatus(id: number, status: string): Promise<Order>;
+
+  // Settings
+  getSetting(key: string): Promise<Settings | undefined>;
+  setSetting(key: string, value: string): Promise<Settings>;
+  getSettings(): Promise<Settings[]>;
 
   // Session Store
   sessionStore: any;
