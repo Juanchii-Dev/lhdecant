@@ -57,8 +57,9 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
           >
-            Descubre la elegancia en cada gota. Ofrecemos decants de perfumes 100% originales, 
-            permitiéndote experimentar las fragancias más exclusivas sin compromiso.
+            Elegancia en su forma más pura.
+            <br />
+            Explorá el arte del perfume sin comprar a ciegas: nuestros decants 100% originales te acercan a las fragancias más exclusivas del mundo, gota a gota.
           </motion.p>
 
           <motion.div 
@@ -67,10 +68,9 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.0 }}
           >
-            <h2 className="text-lg text-luxury-gold mb-4 font-medium">✨ Nada de clones, solo originales ✨</h2>
+            <h2 className="text-lg text-luxury-gold mb-4 font-medium">✨ Solo originales. Nunca imitaciones.</h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Cada decant proviene directamente de perfumes originales, garantizando la misma calidad 
-              y experiencia olfativa que el frasco completo.
+              Cada decant proviene directamente de frascos auténticos, preservando la calidad, la intensidad y el carácter de la fragancia tal como fue creada.
             </p>
           </motion.div>
 
