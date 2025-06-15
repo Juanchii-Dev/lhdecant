@@ -14,8 +14,8 @@ export const perfumes = pgTable("perfumes", {
   name: text("name").notNull(),
   brand: text("brand").notNull(),
   description: text("description").notNull(),
-  price5ml: decimal("price_5ml", { precision: 10, scale: 2 }).notNull(),
-  price10ml: decimal("price_10ml", { precision: 10, scale: 2 }).notNull(),
+  sizes: text("sizes").array().notNull(), // e.g., ["5ml", "10ml", "15ml"]
+  prices: text("prices").array().notNull(), // e.g., ["15.00", "25.00", "35.00"] - same order as sizes
   category: text("category").notNull(), // "masculine", "feminine", "unisex", "niche"
   notes: text("notes").array().notNull(),
   imageUrl: text("image_url").notNull(),
@@ -36,6 +36,13 @@ export const collections = pgTable("collections", {
   isNew: boolean("is_new").default(false),
   isPopular: boolean("is_popular").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").unique().notNull(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const contactMessages = pgTable("contact_messages", {
@@ -95,6 +102,11 @@ export const insertCollectionSchema = createInsertSchema(collections).omit({
   createdAt: true,
 });
 
+export const insertSettingsSchema = createInsertSchema(settings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({
   id: true,
   createdAt: true,
@@ -123,6 +135,9 @@ export type Perfume = typeof perfumes.$inferSelect;
 
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type Collection = typeof collections.$inferSelect;
+
+export type InsertSettings = z.infer<typeof insertSettingsSchema>;
+export type Settings = typeof settings.$inferSelect;
 
 export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
 export type ContactMessage = typeof contactMessages.$inferSelect;
