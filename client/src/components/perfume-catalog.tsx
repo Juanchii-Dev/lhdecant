@@ -198,28 +198,20 @@ export default function PerfumeCatalog() {
                       >
                         <div className="text-sm text-gray-300 font-medium">Tamaño:</div>
                         <div className="flex gap-2">
-                          <motion.button
-                            onClick={() => handleSizeChange(perfume.id, '5ml')}
-                            className={`flex-1 py-2 px-3 rounded-lg text-sm size-selector-button ${
-                              selectedSize === '5ml' ? 'active' : ''
-                            }`}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
-                          >
-                            5ml
-                          </motion.button>
-                          <motion.button
-                            onClick={() => handleSizeChange(perfume.id, '10ml')}
-                            className={`flex-1 py-2 px-3 rounded-lg text-sm size-selector-button ${
-                              selectedSize === '10ml' ? 'active' : ''
-                            }`}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
-                          >
-                            10ml
-                          </motion.button>
+                          {perfume.sizes.map((size, sizeIndex) => (
+                            <motion.button
+                              key={size}
+                              onClick={() => handleSizeChange(perfume.id, size)}
+                              className={`flex-1 py-2 px-3 rounded-lg text-sm size-selector-button ${
+                                selectedSize === size ? 'active' : ''
+                              }`}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              transition={{ duration: 0.2, ease: "easeOut" }}
+                            >
+                              {size}
+                            </motion.button>
+                          ))}
                         </div>
                       </motion.div>
                       

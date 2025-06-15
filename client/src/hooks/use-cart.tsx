@@ -105,10 +105,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
-  const addToCart = (perfumeId: number, size: '5ml' | '10ml' | 'collection', price: string) => {
+  const addToCart = (perfumeId: number, size: string, price: string) => {
     addToCartMutation.mutate({
       perfumeId,
-      size: size === 'collection' ? '5ml' : size, // Use 5ml as default for collections
+      size,
       price,
       quantity: 1,
     });
