@@ -4,18 +4,18 @@ export default function Features() {
   const features = [
     {
       icon: "fas fa-certificate",
-      title: "100% Originales",
-      description: "Cada decant proviene de perfumes auténticos. Sin imitaciones, sin clones.",
+      title: "💎 100% Originales",
+      description: "Decants extraídos exclusivamente de perfumes auténticos. Sin imitaciones, sin atajos. Solo esencia pura.",
     },
     {
       icon: "fas fa-shipping-fast",
-      title: "Envío Rápido",
-      description: "Entrega segura y rápida para que disfrutes tus fragancias sin espera.",
+      title: "🚚 Envío Rápido",
+      description: "Recibí tu fragancia en tiempo récord. Seguro, ágil y listo para que empieces a disfrutarla sin demoras.",
     },
     {
       icon: "fas fa-award",
-      title: "Calidad Premium",
-      description: "Frascos de vidrio premium y etiquetado profesional para cada decant.",
+      title: "🥂 Calidad Premium",
+      description: "Cada decant se presenta en frascos de vidrio de alta calidad, con un acabado profesional que honra la fragancia que contiene.",
     },
   ];
 
