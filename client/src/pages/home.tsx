@@ -3,6 +3,7 @@ import Hero from "@/components/hero";
 import Features from "@/components/features";
 import PerfumeCatalog from "@/components/perfume-catalog";
 import Collections from "@/components/collections";
+import SocialMedia from "@/components/social-media";
 import Footer from "@/components/footer";
 
 export default function Home() {
@@ -13,6 +14,7 @@ export default function Home() {
       <Features />
       <PerfumeCatalog />
       <Collections />
+      <SocialMedia />
       <Footer />
     </div>
   );
