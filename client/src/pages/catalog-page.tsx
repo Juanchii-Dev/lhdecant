@@ -25,6 +25,11 @@ export default function CatalogPage() {
 
   // Filter and sort perfumes
   const filteredPerfumes = perfumes?.filter((perfume) => {
+    // Only show perfumes that are in stock (stock check)
+    if (!perfume.inStock) {
+      return false;
+    }
+    
     const matchesSearch = perfume.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          perfume.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          perfume.notes.some(note => note.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -74,6 +79,19 @@ export default function CatalogPage() {
   };
 
   const getPrice = (perfume: Perfume, size: string) => {
+    const sizeIndex = perfume.sizes.indexOf(size);
+    const originalPrice = sizeIndex !== -1 ? perfume.prices[sizeIndex] : perfume.prices[0];
+    
+    if (perfume.isOnOffer && perfume.discountPercentage) {
+      const discount = parseFloat(perfume.discountPercentage);
+      const discountedPrice = parseFloat(originalPrice) * (1 - discount / 100);
+      return discountedPrice.toFixed(2);
+    }
+    
+    return originalPrice;
+  };
+
+  const getOriginalPrice = (perfume: Perfume, size: string) => {
     const sizeIndex = perfume.sizes.indexOf(size);
     return sizeIndex !== -1 ? perfume.prices[sizeIndex] : perfume.prices[0];
   };
@@ -241,6 +259,24 @@ export default function CatalogPage() {
                       </motion.div>
                     </motion.div>
                     
+                    {/* Offer badge */}
+                    {perfume.isOnOffer && (
+                      <motion.div 
+                        className="absolute top-4 right-4"
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.4 + index * 0.1 }}
+                      >
+                        <motion.div 
+                          className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold"
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          -{perfume.discountPercentage}%
+                        </motion.div>
+                      </motion.div>
+                    )}
+                    
 
                   </div>
                   
@@ -283,10 +319,31 @@ export default function CatalogPage() {
                     {/* Price and add to cart */}
                     <div className="flex items-center justify-between pt-2">
                       <div>
-                        <span className="text-2xl font-bold luxury-gold-text">
-                          ${getPrice(perfume, selectedSize)}
-                        </span>
-                        <span className="text-sm text-gray-400 ml-2">/ {selectedSize}</span>
+                        {perfume.isOnOffer ? (
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold luxury-gold-text">
+                                ${getPrice(perfume, selectedSize)}
+                              </span>
+                              <span className="text-lg text-gray-400 line-through">
+                                ${getOriginalPrice(perfume, selectedSize)}
+                              </span>
+                            </div>
+                            <span className="text-sm text-gray-400">/ {selectedSize}</span>
+                            {perfume.offerDescription && (
+                              <span className="text-xs text-red-400 mt-1">
+                                {perfume.offerDescription}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <>
+                            <span className="text-2xl font-bold luxury-gold-text">
+                              ${getPrice(perfume, selectedSize)}
+                            </span>
+                            <span className="text-sm text-gray-400 ml-2">/ {selectedSize}</span>
+                          </>
+                        )}
                       </div>
                       <Button
                         onClick={() => handleAddToCart(perfume, selectedSize)}

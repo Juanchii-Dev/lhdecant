@@ -26,6 +26,8 @@ export default function AdminPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPerfume, setEditingPerfume] = useState<Perfume | null>(null);
   const [isCreateCollectionDialogOpen, setIsCreateCollectionDialogOpen] = useState(false);
+  const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
+  const [editingOffer, setEditingOffer] = useState<Perfume | null>(null);
   const [activeTab, setActiveTab] = useState("perfumes");
 
   const { data: perfumes, isLoading } = useQuery<Perfume[]>({
@@ -449,17 +451,26 @@ export default function AdminPage() {
                             <div className="space-y-2">
                               <Switch
                                 checked={perfume.isOnOffer || false}
-                                onCheckedChange={(checked) => 
-                                  updateOfferMutation.mutate({ 
-                                    id: perfume.id, 
-                                    isOnOffer: checked,
-                                    discountPercentage: checked ? "10" : "0"
-                                  })
-                                }
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    // Show offer configuration dialog
+                                    setEditingOffer(perfume);
+                                    setIsOfferDialogOpen(true);
+                                  } else {
+                                    updateOfferMutation.mutate({ 
+                                      id: perfume.id, 
+                                      isOnOffer: false,
+                                      discountPercentage: "0"
+                                    });
+                                  }
+                                }}
                               />
                               {perfume.isOnOffer && (
                                 <div className="text-xs text-[#D4AF37]">
                                   {perfume.discountPercentage}% OFF
+                                  {perfume.offerDescription && (
+                                    <div className="text-gray-400">{perfume.offerDescription}</div>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -697,6 +708,85 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Offer Configuration Dialog */}
+      <Dialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
+        <DialogContent className="bg-black border-[#D4AF37]/30 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[#D4AF37]">Configurar Oferta</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Configure los detalles de la oferta para {editingOffer?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            const discountPercentage = formData.get('discountPercentage') as string;
+            const offerDescription = formData.get('offerDescription') as string;
+            
+            if (editingOffer) {
+              updateOfferMutation.mutate({
+                id: editingOffer.id,
+                isOnOffer: true,
+                discountPercentage,
+                offerDescription
+              });
+              setIsOfferDialogOpen(false);
+              setEditingOffer(null);
+            }
+          }} className="space-y-4">
+            <div>
+              <Label htmlFor="discountPercentage" className="text-[#D4AF37]">
+                Porcentaje de Descuento (%)
+              </Label>
+              <Input
+                id="discountPercentage"
+                name="discountPercentage"
+                type="number"
+                min="1"
+                max="99"
+                defaultValue={editingOffer?.discountPercentage || "10"}
+                className="bg-gray-900 border-[#D4AF37]/30 text-white"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="offerDescription" className="text-[#D4AF37]">
+                Descripción de Oferta (opcional)
+              </Label>
+              <Input
+                id="offerDescription"
+                name="offerDescription"
+                defaultValue={editingOffer?.offerDescription || ""}
+                placeholder="Ej: Oferta por tiempo limitado"
+                className="bg-gray-900 border-[#D4AF37]/30 text-white"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                className="flex-1 bg-[#D4AF37] text-black hover:bg-[#D4AF37]/80"
+              >
+                Guardar Oferta
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsOfferDialogOpen(false);
+                  setEditingOffer(null);
+                }}
+                className="border-[#D4AF37]/30 text-[#D4AF37]"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
