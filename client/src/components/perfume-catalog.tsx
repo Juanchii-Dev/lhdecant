@@ -78,26 +78,9 @@ export default function PerfumeCatalog() {
             Descubrí tu próxima fragancia favorita.
           </h3>
           <div className="w-24 h-1 bg-gradient-to-r from-transparent via-luxury-gold to-transparent mx-auto mb-8"></div>
-          <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-8">
+          <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
             Explorá nuestra cuidada selección de decants individuales, ideales para conocer perfumes icónicos sin comprometerte al frasco completo.
           </p>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            viewport={{ once: true }}
-          >
-            <Link href="/catalogo">
-              <Button 
-                className="bg-[#D4AF37] text-black hover:bg-[#D4AF37]/80 px-8 py-3 rounded-lg font-semibold text-lg"
-                size="lg"
-              >
-                <Eye className="w-5 h-5 mr-2" />
-                Ver Catálogo Completo
-              </Button>
-            </Link>
-          </motion.div>
         </motion.div>
 
 
@@ -265,12 +248,14 @@ export default function PerfumeCatalog() {
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <Button
-            className="luxury-button px-8 py-4 rounded-lg font-montserrat font-semibold"
-          >
-            Ver Catálogo Completo
-            <i className="fas fa-arrow-right ml-2"></i>
-          </Button>
+          <Link href="/catalogo">
+            <Button
+              className="luxury-button px-8 py-4 rounded-lg font-montserrat font-semibold"
+            >
+              Ver Catálogo Completo
+              <i className="fas fa-arrow-right ml-2"></i>
+            </Button>
+          </Link>
         </motion.div>
       </div>
     </section>

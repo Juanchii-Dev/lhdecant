@@ -67,7 +67,7 @@ export default function Navigation() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Catálogo Completo
+                Catálogo Perfumes
               </motion.span>
             </Link>
           </div>
@@ -118,7 +118,7 @@ export default function Navigation() {
                 className="block w-full text-left py-2 hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Catálogo Completo
+                Catálogo Perfumes
               </span>
             </Link>
           </motion.div>
