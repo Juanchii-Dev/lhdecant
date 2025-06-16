@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import { CartDrawer } from "./cart";
 
 export default function Navigation() {
@@ -60,6 +61,15 @@ export default function Navigation() {
                 {item.label}
               </motion.button>
             ))}
+            <Link href="/catalogo">
+              <motion.span
+                className="font-montserrat font-medium hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Catálogo Completo
+              </motion.span>
+            </Link>
           </div>
 
           <div className="flex items-center space-x-4">

@@ -8,12 +8,14 @@ import { CartProvider } from "@/hooks/use-cart";
 import Home from "@/pages/home";
 import AuthPage from "@/pages/auth-page";
 import AdminPage from "@/pages/admin-page";
+import CatalogPage from "@/pages/catalog-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/catalogo" component={CatalogPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
