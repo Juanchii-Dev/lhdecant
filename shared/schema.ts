@@ -21,6 +21,10 @@ export const perfumes = pgTable("perfumes", {
   imageUrl: text("image_url").notNull(),
   rating: decimal("rating", { precision: 2, scale: 1 }).default("5.0"),
   inStock: boolean("in_stock").default(true),
+  showOnHomepage: boolean("show_on_homepage").default(false),
+  isOnOffer: boolean("is_on_offer").default(false),
+  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }).default("0"),
+  offerDescription: text("offer_description"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

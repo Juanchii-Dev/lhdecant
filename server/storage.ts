@@ -16,10 +16,13 @@ export interface IStorage {
   // Perfumes
   getPerfumes(): Promise<Perfume[]>;
   getPerfumesByCategory(category: string): Promise<Perfume[]>;
+  getHomepagePerfumes(): Promise<Perfume[]>;
   getPerfume(id: number): Promise<Perfume | undefined>;
   createPerfume(perfume: InsertPerfume): Promise<Perfume>;
   updatePerfume(id: number, perfume: Partial<InsertPerfume>): Promise<Perfume>;
   deletePerfume(id: number): Promise<void>;
+  toggleHomepageDisplay(id: number, showOnHomepage: boolean): Promise<Perfume>;
+  updateOfferStatus(id: number, isOnOffer: boolean, discountPercentage?: string, offerDescription?: string): Promise<Perfume>;
 
   // Collections
   getCollections(): Promise<Collection[]>;

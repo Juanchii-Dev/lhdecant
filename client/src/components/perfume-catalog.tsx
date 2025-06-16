@@ -163,22 +163,7 @@ export default function PerfumeCatalog() {
                         </motion.div>
                       </motion.div>
                       
-                      {/* Rating */}
-                      <motion.div 
-                        className="absolute top-4 right-4"
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4 + index * 0.1 }}
-                      >
-                        <motion.div 
-                          className="bg-black/50 backdrop-blur-sm luxury-gold-text px-2 py-1 rounded-full text-xs flex items-center"
-                          whileHover={{ scale: 1.05 }}
-                          transition={{ duration: 0.2, ease: "easeOut" }}
-                        >
-                          <span className="mr-1">⭐</span>
-                          {perfume.rating || "5.0"}
-                        </motion.div>
-                      </motion.div>
+
                     </div>
                     
                     <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">

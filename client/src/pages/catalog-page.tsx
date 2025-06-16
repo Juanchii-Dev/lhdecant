@@ -44,8 +44,7 @@ export default function CatalogPage() {
         return parseFloat(a.prices[0]) - parseFloat(b.prices[0]);
       case "price-high":
         return parseFloat(b.prices[0]) - parseFloat(a.prices[0]);
-      case "rating":
-        return parseFloat(b.rating || "0") - parseFloat(a.rating || "0");
+
       default:
         return 0;
     }
@@ -164,7 +163,6 @@ export default function CatalogPage() {
                 <SelectItem value="brand" className="text-white hover:bg-luxury-gold/20">Marca A-Z</SelectItem>
                 <SelectItem value="price-low" className="text-white hover:bg-luxury-gold/20">Precio: Menor a Mayor</SelectItem>
                 <SelectItem value="price-high" className="text-white hover:bg-luxury-gold/20">Precio: Mayor a Menor</SelectItem>
-                <SelectItem value="rating" className="text-white hover:bg-luxury-gold/20">Mejor Calificación</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -243,22 +241,7 @@ export default function CatalogPage() {
                       </motion.div>
                     </motion.div>
                     
-                    {/* Rating */}
-                    <motion.div 
-                      className="absolute top-4 right-4"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 + index * 0.1 }}
-                    >
-                      <motion.div 
-                        className="bg-black/50 backdrop-blur-sm luxury-gold-text px-2 py-1 rounded-full text-xs flex items-center"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                      >
-                        <span className="mr-1">⭐</span>
-                        {perfume.rating || "5.0"}
-                      </motion.div>
-                    </motion.div>
+
                   </div>
                   
                   <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
