@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Search, Star, ShoppingCart, Filter } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,6 +15,7 @@ export default function CatalogPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedBrand, setSelectedBrand] = useState("all");
   const [sortBy, setSortBy] = useState("name");
+  const [selectedSizes, setSelectedSizes] = useState<{ [key: number]: string }>({});
   const { addToCart } = useCart();
   const { toast } = useToast();
 
@@ -51,17 +51,27 @@ export default function CatalogPage() {
     }
   });
 
-  // Get unique brands for filter
-  const uniqueBrands = Array.from(new Set(perfumes?.map(p => p.brand) || [])).sort();
+  const uniqueBrands = [...new Set(perfumes?.map(p => p.brand) || [])].sort();
+
+  const handleSizeChange = (perfumeId: number, size: string) => {
+    setSelectedSizes(prev => ({
+      ...prev,
+      [perfumeId]: size
+    }));
+  };
 
   const handleAddToCart = (perfume: Perfume, size: string) => {
-    const sizeIndex = perfume.sizes.indexOf(size);
-    const price = perfume.prices[sizeIndex];
+    const price = getPrice(perfume, size);
     addToCart(perfume.id, size, price);
     toast({
-      title: "¡Añadido al carrito!",
-      description: `${perfume.name} ${size} - $${price}`,
+      title: "Agregado al carrito",
+      description: `${perfume.name} - ${size} agregado correctamente`,
     });
+  };
+
+  const getPrice = (perfume: Perfume, size: string) => {
+    const sizeIndex = perfume.sizes.indexOf(size);
+    return sizeIndex !== -1 ? perfume.prices[sizeIndex] : perfume.prices[0];
   };
 
   const getCategoryLabel = (category: string) => {
@@ -87,42 +97,50 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-black via-gray-900 to-black py-16">
-        <div className="container mx-auto px-6 text-center">
-          <motion.h1 
-            className="text-4xl md:text-6xl font-bold text-[#D4AF37] mb-4"
+      {/* Header Section */}
+      <section className="pt-24 pb-12 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <motion.div
+            className="text-center"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            Catálogo Completo
-          </motion.h1>
-          <motion.p 
-            className="text-xl text-gray-300 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            Explora nuestra colección completa de perfumes premium
-          </motion.p>
+            <motion.div 
+              className="inline-block bg-gradient-to-r from-luxury-gold/10 to-luxury-gold/5 border border-luxury-gold/30 rounded-full px-8 py-3 mb-8 backdrop-blur-sm"
+              whileHover={{ scale: 1.05, borderColor: "rgba(212, 175, 55, 0.5)" }}
+              transition={{ duration: 0.3 }}
+            >
+              <span className="luxury-gold-text font-semibold tracking-wide text-sm uppercase">Catálogo Completo</span>
+            </motion.div>
+            <h1 className="text-5xl md:text-6xl font-playfair font-bold mb-8 luxury-text-shadow">
+              Catálogo <span className="luxury-gold-text">Completo</span>
+            </h1>
+            <h2 className="text-2xl md:text-3xl font-light mb-6 text-gray-200">
+              Explorá nuestra colección completa de perfumes premium
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-luxury-gold to-transparent mx-auto mb-8"></div>
+            <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+              Descubrí cada fragancia en nuestra cuidada selección, con filtros avanzados para encontrar tu perfume ideal.
+            </p>
+          </motion.div>
         </div>
-      </div>
+      </section>
 
       <div className="container mx-auto px-6 py-12">
         {/* Filters */}
         <motion.div 
-          className="bg-gray-900/50 rounded-2xl p-6 mb-8 border border-[#D4AF37]/20"
+          className="bg-charcoal/80 backdrop-blur-sm rounded-3xl p-8 mb-12 border border-luxury-gold/20"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         >
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-[#D4AF37]" />
-            <h2 className="text-xl font-bold text-[#D4AF37]">Filtros</h2>
+          <div className="flex items-center gap-2 mb-6">
+            <Filter className="w-6 h-6 text-luxury-gold" />
+            <h3 className="text-xl font-montserrat font-bold text-luxury-gold">Filtros</h3>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -130,16 +148,16 @@ export default function CatalogPage() {
                 placeholder="Buscar perfumes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-black/50 border-[#D4AF37]/30 text-white"
+                className="pl-10 bg-black/50 border-luxury-gold/30 text-white placeholder-gray-400"
               />
             </div>
 
             {/* Category Filter */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="bg-black/50 border-[#D4AF37]/30 text-white">
+              <SelectTrigger className="bg-black/50 border-luxury-gold/30 text-white">
                 <SelectValue placeholder="Categoría" />
               </SelectTrigger>
-              <SelectContent className="bg-black border-[#D4AF37]/30">
+              <SelectContent>
                 <SelectItem value="all">Todas las categorías</SelectItem>
                 <SelectItem value="masculine">Masculino</SelectItem>
                 <SelectItem value="feminine">Femenino</SelectItem>
@@ -150,12 +168,12 @@ export default function CatalogPage() {
 
             {/* Brand Filter */}
             <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-              <SelectTrigger className="bg-black/50 border-[#D4AF37]/30 text-white">
+              <SelectTrigger className="bg-black/50 border-luxury-gold/30 text-white">
                 <SelectValue placeholder="Marca" />
               </SelectTrigger>
-              <SelectContent className="bg-black border-[#D4AF37]/30">
+              <SelectContent>
                 <SelectItem value="all">Todas las marcas</SelectItem>
-                {uniqueBrands.map((brand) => (
+                {uniqueBrands.map(brand => (
                   <SelectItem key={brand} value={brand}>{brand}</SelectItem>
                 ))}
               </SelectContent>
@@ -163,10 +181,10 @@ export default function CatalogPage() {
 
             {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="bg-black/50 border-[#D4AF37]/30 text-white">
+              <SelectTrigger className="bg-black/50 border-luxury-gold/30 text-white">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
-              <SelectContent className="bg-black border-[#D4AF37]/30">
+              <SelectContent>
                 <SelectItem value="name">Nombre A-Z</SelectItem>
                 <SelectItem value="brand">Marca A-Z</SelectItem>
                 <SelectItem value="price-low">Precio: Menor a Mayor</SelectItem>
@@ -174,126 +192,157 @@ export default function CatalogPage() {
                 <SelectItem value="rating">Mejor Calificación</SelectItem>
               </SelectContent>
             </Select>
+          </div>
 
-            {/* Results count */}
-            <div className="flex items-center justify-center">
-              <span className="text-gray-400 text-sm">
-                {sortedPerfumes.length} perfume{sortedPerfumes.length !== 1 ? 's' : ''} encontrado{sortedPerfumes.length !== 1 ? 's' : ''}
-              </span>
-            </div>
+          {/* Results count */}
+          <div className="text-center">
+            <span className="text-gray-400 text-sm">
+              {sortedPerfumes.length} perfume{sortedPerfumes.length !== 1 ? 's' : ''} encontrado{sortedPerfumes.length !== 1 ? 's' : ''}
+            </span>
           </div>
         </motion.div>
 
         {/* Perfumes Grid */}
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.4 }}
         >
-          {sortedPerfumes.map((perfume, index) => (
-            <motion.div
-              key={perfume.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ scale: 1.02, y: -5 }}
-              className="group"
-            >
-              <Card className="bg-gray-900/50 border-[#D4AF37]/20 h-full overflow-hidden">
-                <div className="relative overflow-hidden">
-                  <img
-                    src={perfume.imageUrl || "https://i.imgur.com/Vgwv7Kh.png"}
-                    alt={perfume.name}
-                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <Badge variant="secondary" className="bg-[#D4AF37] text-black">
-                      {getCategoryLabel(perfume.category)}
-                    </Badge>
+          {sortedPerfumes.map((perfume, index) => {
+            const selectedSize = selectedSizes[perfume.id] || perfume.sizes[0];
+            
+            return (
+              <motion.div
+                key={perfume.id}
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  delay: 0.1 + index * 0.05,
+                  duration: 0.8,
+                  ease: [0.22, 1, 0.36, 1]
+                }}
+                viewport={{ once: true }}
+                whileHover={{ 
+                  scale: 1.02, 
+                  y: -8,
+                  transition: { duration: 0.3, ease: "easeOut" }
+                }}
+                className="group perspective-1000"
+              >
+                <div className="glass-card luxury-hover-lift rounded-3xl overflow-hidden relative border border-luxury-gold/20 h-[600px] flex flex-col">
+                  <div className="relative overflow-hidden">
+                    <motion.img
+                      src={perfume.imageUrl || "https://i.imgur.com/Vgwv7Kh.png"}
+                      alt={perfume.name}
+                      className="w-full h-auto object-contain"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    />
+                    <motion.div 
+                      className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
+                      whileHover={{ background: "linear-gradient(to top, rgba(0,0,0,0.6), transparent, transparent)" }}
+                      transition={{ duration: 0.3 }}
+                    ></motion.div>
+                    
+                    {/* Subtle glow effect */}
+                    <motion.div 
+                      className="absolute inset-0 bg-gradient-to-t from-luxury-gold/5 via-transparent to-transparent opacity-0"
+                      whileHover={{ opacity: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    />
+                    
+                    {/* Brand badge */}
+                    <motion.div 
+                      className="absolute top-4 left-4"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + index * 0.1 }}
+                    >
+                      <motion.div 
+                        className="bg-black/80 backdrop-blur-sm text-luxury-gold border border-luxury-gold/50 px-3 py-1 rounded-full text-xs font-montserrat font-bold"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                      >
+                        {perfume.brand}
+                      </motion.div>
+                    </motion.div>
+                    
+                    {/* Rating */}
+                    <motion.div 
+                      className="absolute top-4 right-4"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                    >
+                      <motion.div 
+                        className="bg-black/50 backdrop-blur-sm luxury-gold-text px-2 py-1 rounded-full text-xs flex items-center"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                      >
+                        <span className="mr-1">⭐</span>
+                        {perfume.rating || "5.0"}
+                      </motion.div>
+                    </motion.div>
                   </div>
-                  {!perfume.inStock && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <Badge variant="destructive">Agotado</Badge>
-                    </div>
-                  )}
-                </div>
-
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
+                  
+                  <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-bold text-white text-lg leading-tight">
+                      <h3 className="text-xl font-montserrat font-bold mb-2 text-white group-hover:text-luxury-gold transition-colors duration-300">
                         {perfume.name}
                       </h3>
-                      <p className="text-[#D4AF37] text-sm">{perfume.brand}</p>
+                      <p className="text-gray-400 text-sm leading-relaxed">
+                        {perfume.description}
+                      </p>
                     </div>
-                    {perfume.rating && (
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm text-gray-300">{perfume.rating}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                    {perfume.description}
-                  </p>
-
-                  {/* Notes */}
-                  <div className="mb-3">
-                    <p className="text-xs text-gray-500 mb-1">Notas:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {perfume.notes.slice(0, 3).map((note, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs border-[#D4AF37]/30 text-gray-300">
-                          {note}
-                        </Badge>
-                      ))}
-                      {perfume.notes.length > 3 && (
-                        <Badge variant="outline" className="text-xs border-[#D4AF37]/30 text-gray-300">
-                          +{perfume.notes.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Sizes and prices */}
-                  <div className="space-y-2">
-                    {perfume.sizes.map((size, idx) => (
-                      <div key={size} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-300">{size}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#D4AF37]">${perfume.prices[idx]}</span>
-                          <Button
-                            size="sm"
-                            onClick={() => handleAddToCart(perfume, size)}
-                            disabled={!perfume.inStock}
-                            className="bg-[#D4AF37] text-black hover:bg-[#D4AF37]/80 px-3 py-1 text-xs"
+                    
+                    {/* Size selector */}
+                    <motion.div 
+                      className="space-y-3"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 + index * 0.1 }}
+                    >
+                      <div className="text-sm text-gray-300 font-medium">Tamaño:</div>
+                      <div className="flex gap-2">
+                        {perfume.sizes.map((size, sizeIndex) => (
+                          <motion.button
+                            key={size}
+                            onClick={() => handleSizeChange(perfume.id, size)}
+                            className={`flex-1 py-2 px-3 rounded-lg text-sm size-selector-button ${
+                              selectedSize === size ? 'active' : ''
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
                           >
-                            <ShoppingCart className="w-3 h-3" />
-                          </Button>
-                        </div>
+                            {size}
+                          </motion.button>
+                        ))}
                       </div>
-                    ))}
+                    </motion.div>
+                    
+                    {/* Price and add to cart */}
+                    <div className="flex items-center justify-between pt-2">
+                      <div>
+                        <span className="text-2xl font-bold luxury-gold-text">
+                          ${getPrice(perfume, selectedSize)}
+                        </span>
+                        <span className="text-sm text-gray-400 ml-2">/ {selectedSize}</span>
+                      </div>
+                      <Button
+                        onClick={() => handleAddToCart(perfume, selectedSize)}
+                        className="luxury-button font-montserrat font-semibold px-6 py-2 rounded-xl"
+                      >
+                        Agregar
+                      </Button>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                </div>
+              </motion.div>
+            );
+          })}
         </motion.div>
-
-        {/* No results */}
-        {sortedPerfumes.length === 0 && (
-          <motion.div 
-            className="text-center py-16"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-bold text-gray-400 mb-2">No se encontraron perfumes</h3>
-            <p className="text-gray-500">Intenta ajustar los filtros de búsqueda</p>
-          </motion.div>
-        )}
       </div>
     </div>
   );
