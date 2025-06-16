@@ -51,7 +51,12 @@ export default function CatalogPage() {
     }
   });
 
-  const uniqueBrands = [...new Set(perfumes?.map(p => p.brand) || [])].sort();
+  const uniqueBrands = perfumes?.reduce((brands: string[], perfume) => {
+    if (!brands.includes(perfume.brand)) {
+      brands.push(perfume.brand);
+    }
+    return brands;
+  }, []).sort() || [];
 
   const handleSizeChange = (perfumeId: number, size: string) => {
     setSelectedSizes(prev => ({
@@ -97,106 +102,76 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header Section */}
-      <section className="pt-24 pb-12 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
-            className="text-center"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <motion.div 
-              className="inline-block bg-gradient-to-r from-luxury-gold/10 to-luxury-gold/5 border border-luxury-gold/30 rounded-full px-8 py-3 mb-8 backdrop-blur-sm"
-              whileHover={{ scale: 1.05, borderColor: "rgba(212, 175, 55, 0.5)" }}
-              transition={{ duration: 0.3 }}
-            >
-              <span className="luxury-gold-text font-semibold tracking-wide text-sm uppercase">Catálogo Completo</span>
-            </motion.div>
-            <h1 className="text-5xl md:text-6xl font-playfair font-bold mb-8 luxury-text-shadow">
-              Catálogo <span className="luxury-gold-text">Completo</span>
-            </h1>
-            <h2 className="text-2xl md:text-3xl font-light mb-6 text-gray-200">
-              Explorá nuestra colección completa de perfumes premium
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-luxury-gold to-transparent mx-auto mb-8"></div>
-            <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
-              Descubrí cada fragancia en nuestra cuidada selección, con filtros avanzados para encontrar tu perfume ideal.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6 pt-24 pb-12">
         {/* Filters */}
         <motion.div 
-          className="bg-charcoal/80 backdrop-blur-sm rounded-3xl p-8 mb-12 border border-luxury-gold/20"
+          className="bg-gradient-to-r from-luxury-gold/15 to-luxury-gold/10 backdrop-blur-sm rounded-3xl p-8 mb-12 border-2 border-luxury-gold/40 shadow-2xl shadow-luxury-gold/10"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         >
-          <div className="flex items-center gap-2 mb-6">
-            <Filter className="w-6 h-6 text-luxury-gold" />
-            <h3 className="text-xl font-montserrat font-bold text-luxury-gold">Filtros</h3>
+          <div className="flex items-center gap-3 mb-6">
+            <Filter className="w-7 h-7 text-luxury-gold drop-shadow-lg" />
+            <h3 className="text-2xl font-montserrat font-bold text-luxury-gold drop-shadow-lg">Filtros de Búsqueda</h3>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-luxury-gold w-5 h-5 drop-shadow-sm" />
               <Input
                 placeholder="Buscar perfumes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-black/50 border-luxury-gold/30 text-white placeholder-gray-400"
+                className="pl-12 h-12 bg-black/70 border-2 border-luxury-gold/50 text-white placeholder-gray-300 text-lg font-medium focus:border-luxury-gold focus:ring-2 focus:ring-luxury-gold/20 rounded-xl shadow-lg"
               />
             </div>
 
             {/* Category Filter */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="bg-black/50 border-luxury-gold/30 text-white">
+              <SelectTrigger className="h-12 bg-black/70 border-2 border-luxury-gold/50 text-white text-lg font-medium focus:border-luxury-gold focus:ring-2 focus:ring-luxury-gold/20 rounded-xl shadow-lg">
                 <SelectValue placeholder="Categoría" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las categorías</SelectItem>
-                <SelectItem value="masculine">Masculino</SelectItem>
-                <SelectItem value="feminine">Femenino</SelectItem>
-                <SelectItem value="unisex">Unisex</SelectItem>
-                <SelectItem value="niche">Nicho</SelectItem>
+              <SelectContent className="bg-black border-luxury-gold/50">
+                <SelectItem value="all" className="text-white hover:bg-luxury-gold/20">Todas las categorías</SelectItem>
+                <SelectItem value="masculine" className="text-white hover:bg-luxury-gold/20">Masculino</SelectItem>
+                <SelectItem value="feminine" className="text-white hover:bg-luxury-gold/20">Femenino</SelectItem>
+                <SelectItem value="unisex" className="text-white hover:bg-luxury-gold/20">Unisex</SelectItem>
+                <SelectItem value="niche" className="text-white hover:bg-luxury-gold/20">Nicho</SelectItem>
               </SelectContent>
             </Select>
 
             {/* Brand Filter */}
             <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-              <SelectTrigger className="bg-black/50 border-luxury-gold/30 text-white">
+              <SelectTrigger className="h-12 bg-black/70 border-2 border-luxury-gold/50 text-white text-lg font-medium focus:border-luxury-gold focus:ring-2 focus:ring-luxury-gold/20 rounded-xl shadow-lg">
                 <SelectValue placeholder="Marca" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las marcas</SelectItem>
+              <SelectContent className="bg-black border-luxury-gold/50">
+                <SelectItem value="all" className="text-white hover:bg-luxury-gold/20">Todas las marcas</SelectItem>
                 {uniqueBrands.map(brand => (
-                  <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                  <SelectItem key={brand} value={brand} className="text-white hover:bg-luxury-gold/20">{brand}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="bg-black/50 border-luxury-gold/30 text-white">
+              <SelectTrigger className="h-12 bg-black/70 border-2 border-luxury-gold/50 text-white text-lg font-medium focus:border-luxury-gold focus:ring-2 focus:ring-luxury-gold/20 rounded-xl shadow-lg">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Nombre A-Z</SelectItem>
-                <SelectItem value="brand">Marca A-Z</SelectItem>
-                <SelectItem value="price-low">Precio: Menor a Mayor</SelectItem>
-                <SelectItem value="price-high">Precio: Mayor a Menor</SelectItem>
-                <SelectItem value="rating">Mejor Calificación</SelectItem>
+              <SelectContent className="bg-black border-luxury-gold/50">
+                <SelectItem value="name" className="text-white hover:bg-luxury-gold/20">Nombre A-Z</SelectItem>
+                <SelectItem value="brand" className="text-white hover:bg-luxury-gold/20">Marca A-Z</SelectItem>
+                <SelectItem value="price-low" className="text-white hover:bg-luxury-gold/20">Precio: Menor a Mayor</SelectItem>
+                <SelectItem value="price-high" className="text-white hover:bg-luxury-gold/20">Precio: Mayor a Menor</SelectItem>
+                <SelectItem value="rating" className="text-white hover:bg-luxury-gold/20">Mejor Calificación</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Results count */}
-          <div className="text-center">
-            <span className="text-gray-400 text-sm">
+          <div className="text-center bg-black/30 rounded-xl p-4 border border-luxury-gold/30">
+            <span className="text-luxury-gold text-lg font-semibold drop-shadow-sm">
               {sortedPerfumes.length} perfume{sortedPerfumes.length !== 1 ? 's' : ''} encontrado{sortedPerfumes.length !== 1 ? 's' : ''}
             </span>
           </div>
