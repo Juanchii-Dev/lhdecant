@@ -102,6 +102,7 @@ Changelog:
 - June 16, 2025. Updated navigation structure: changed "Catálogo Completo" to "Catálogo Perfumes", made single "Ver Catálogo Completo" button below perfumes functional
 - June 16, 2025. Updated catalog page aesthetic to match homepage design, enhanced filter visibility with prominent golden styling
 - June 16, 2025. Removed rating system completely from all perfume cards and sort options across the application
+- June 16, 2025. Implemented advanced admin features: homepage display selection, customizable offers system with dialog configuration, and smart catalog filtering based on stock levels
 
 ## User Preferences
 

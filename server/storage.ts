@@ -219,6 +219,10 @@ export class DatabaseStorage implements IStorage {
           imageUrl: perfumes.imageUrl,
           rating: perfumes.rating,
           inStock: perfumes.inStock,
+          showOnHomepage: perfumes.showOnHomepage,
+          isOnOffer: perfumes.isOnOffer,
+          discountPercentage: perfumes.discountPercentage,
+          offerDescription: perfumes.offerDescription,
           createdAt: perfumes.createdAt,
         }
       })
