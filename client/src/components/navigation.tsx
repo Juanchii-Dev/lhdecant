@@ -113,6 +113,14 @@ export default function Navigation() {
                 {item.label}
               </button>
             ))}
+            <Link href="/catalogo">
+              <span
+                className="block w-full text-left py-2 hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Catálogo Completo
+              </span>
+            </Link>
           </motion.div>
         )}
       </nav>

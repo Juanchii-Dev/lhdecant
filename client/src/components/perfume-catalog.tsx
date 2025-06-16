@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
+import { Eye } from "lucide-react";
 import type { Perfume } from "@shared/schema";
 
 export default function PerfumeCatalog() {
@@ -76,9 +78,26 @@ export default function PerfumeCatalog() {
             Descubrí tu próxima fragancia favorita.
           </h3>
           <div className="w-24 h-1 bg-gradient-to-r from-transparent via-luxury-gold to-transparent mx-auto mb-8"></div>
-          <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-8">
             Explorá nuestra cuidada selección de decants individuales, ideales para conocer perfumes icónicos sin comprometerte al frasco completo.
           </p>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            <Link href="/catalogo">
+              <Button 
+                className="bg-[#D4AF37] text-black hover:bg-[#D4AF37]/80 px-8 py-3 rounded-lg font-semibold text-lg"
+                size="lg"
+              >
+                <Eye className="w-5 h-5 mr-2" />
+                Ver Catálogo Completo
+              </Button>
+            </Link>
+          </motion.div>
         </motion.div>
 
 
