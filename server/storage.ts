@@ -90,6 +90,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(perfumes).where(eq(perfumes.category, category));
   }
 
+  async getHomepagePerfumes(): Promise<Perfume[]> {
+    return await db.select().from(perfumes).where(eq(perfumes.showOnHomepage, true));
+  }
+
   async getPerfume(id: number): Promise<Perfume | undefined> {
     const [perfume] = await db.select().from(perfumes).where(eq(perfumes.id, id));
     return perfume || undefined;
@@ -114,6 +118,28 @@ export class DatabaseStorage implements IStorage {
 
   async deletePerfume(id: number): Promise<void> {
     await db.delete(perfumes).where(eq(perfumes.id, id));
+  }
+
+  async toggleHomepageDisplay(id: number, showOnHomepage: boolean): Promise<Perfume> {
+    const [updated] = await db
+      .update(perfumes)
+      .set({ showOnHomepage })
+      .where(eq(perfumes.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateOfferStatus(id: number, isOnOffer: boolean, discountPercentage?: string, offerDescription?: string): Promise<Perfume> {
+    const [updated] = await db
+      .update(perfumes)
+      .set({ 
+        isOnOffer, 
+        discountPercentage: discountPercentage || "0",
+        offerDescription: offerDescription || null
+      })
+      .where(eq(perfumes.id, id))
+      .returning();
+    return updated;
   }
 
   async getCollections(): Promise<Collection[]> {

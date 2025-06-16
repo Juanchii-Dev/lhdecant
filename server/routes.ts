@@ -26,6 +26,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/perfumes/homepage", async (req, res) => {
+    try {
+      const perfumes = await storage.getHomepagePerfumes();
+      res.json(perfumes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch homepage perfumes" });
+    }
+  });
+
   // Get perfumes by category
   app.get("/api/perfumes/category/:category", async (req, res) => {
     try {
@@ -112,6 +121,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete perfume" });
+    }
+  });
+
+  // Toggle homepage display
+  app.patch("/api/perfumes/:id/homepage", requireAuth, async (req, res) => {
+    try {
+      const { showOnHomepage } = req.body;
+      const perfume = await storage.toggleHomepageDisplay(parseInt(req.params.id), showOnHomepage);
+      res.json(perfume);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update homepage display" });
+    }
+  });
+
+  // Update offer status
+  app.patch("/api/perfumes/:id/offer", requireAuth, async (req, res) => {
+    try {
+      const { isOnOffer, discountPercentage, offerDescription } = req.body;
+      const perfume = await storage.updateOfferStatus(
+        parseInt(req.params.id), 
+        isOnOffer, 
+        discountPercentage, 
+        offerDescription
+      );
+      res.json(perfume);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update offer status" });
     }
   });
 

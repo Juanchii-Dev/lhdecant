@@ -106,6 +106,44 @@ export default function AdminPage() {
     },
   });
 
+  const toggleHomepageMutation = useMutation({
+    mutationFn: async ({ id, showOnHomepage }: { id: number, showOnHomepage: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/perfumes/${id}/homepage`, { showOnHomepage });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/perfumes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perfumes/homepage"] });
+      toast({
+        title: "Actualizado",
+        description: "Estado de página principal actualizado",
+      });
+    },
+  });
+
+  const updateOfferMutation = useMutation({
+    mutationFn: async ({ id, isOnOffer, discountPercentage, offerDescription }: { 
+      id: number, 
+      isOnOffer: boolean, 
+      discountPercentage?: string, 
+      offerDescription?: string 
+    }) => {
+      const res = await apiRequest("PATCH", `/api/perfumes/${id}/offer`, { 
+        isOnOffer, 
+        discountPercentage, 
+        offerDescription 
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/perfumes"] });
+      toast({
+        title: "Oferta actualizada",
+        description: "Estado de oferta actualizado correctamente",
+      });
+    },
+  });
+
   const createCollectionMutation = useMutation({
     mutationFn: async (collection: InsertCollection) => {
       const res = await apiRequest("POST", "/api/collections", collection);
