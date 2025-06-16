@@ -16,7 +16,7 @@ export default function PerfumeCatalog() {
   const { addToCart } = useCart();
 
   const { data: perfumes = [], isLoading } = useQuery<Perfume[]>({
-    queryKey: ["/api/perfumes"],
+    queryKey: ["/api/perfumes/homepage"],
   });
 
   const filteredPerfumes = perfumes;
@@ -32,6 +32,19 @@ export default function PerfumeCatalog() {
   };
 
   const getPrice = (perfume: Perfume, size: string) => {
+    const sizeIndex = perfume.sizes.indexOf(size);
+    const originalPrice = sizeIndex !== -1 ? perfume.prices[sizeIndex] : '0.00';
+    
+    if (perfume.isOnOffer && perfume.discountPercentage) {
+      const discount = parseFloat(perfume.discountPercentage);
+      const discountedPrice = parseFloat(originalPrice) * (1 - discount / 100);
+      return discountedPrice.toFixed(2);
+    }
+    
+    return originalPrice;
+  };
+
+  const getOriginalPrice = (perfume: Perfume, size: string) => {
     const sizeIndex = perfume.sizes.indexOf(size);
     return sizeIndex !== -1 ? perfume.prices[sizeIndex] : '0.00';
   };
@@ -163,6 +176,24 @@ export default function PerfumeCatalog() {
                         </motion.div>
                       </motion.div>
                       
+                      {/* Offer badge */}
+                      {perfume.isOnOffer && (
+                        <motion.div 
+                          className="absolute top-4 right-4"
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.4 + index * 0.1 }}
+                        >
+                          <motion.div 
+                            className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold"
+                            whileHover={{ scale: 1.1 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            -{perfume.discountPercentage}%
+                          </motion.div>
+                        </motion.div>
+                      )}
+                      
 
                     </div>
                     
@@ -205,10 +236,26 @@ export default function PerfumeCatalog() {
                       {/* Price and add to cart */}
                       <div className="flex items-center justify-between pt-2">
                         <div>
-                          <span className="text-2xl font-bold luxury-gold-text">
-                            ${getPrice(perfume, selectedSize)}
-                          </span>
-                          <span className="text-sm text-gray-400 ml-2">/ {selectedSize}</span>
+                          {perfume.isOnOffer ? (
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <span className="text-2xl font-bold luxury-gold-text">
+                                  ${getPrice(perfume, selectedSize)}
+                                </span>
+                                <span className="text-lg text-gray-400 line-through">
+                                  ${getOriginalPrice(perfume, selectedSize)}
+                                </span>
+                              </div>
+                              <span className="text-sm text-gray-400">/ {selectedSize}</span>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="text-2xl font-bold luxury-gold-text">
+                                ${getPrice(perfume, selectedSize)}
+                              </span>
+                              <span className="text-sm text-gray-400 ml-2">/ {selectedSize}</span>
+                            </>
+                          )}
                         </div>
                         <Button
                           onClick={() => handleAddToCart(perfume, selectedSize)}

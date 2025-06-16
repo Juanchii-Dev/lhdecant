@@ -410,6 +410,8 @@ export default function AdminPage() {
                         <TableHead className="text-[#D4AF37]">Categoría</TableHead>
                         <TableHead className="text-[#D4AF37]">Precios & Tamaños</TableHead>
                         <TableHead className="text-[#D4AF37]">Stock</TableHead>
+                        <TableHead className="text-[#D4AF37]">Página Principal</TableHead>
+                        <TableHead className="text-[#D4AF37]">Oferta</TableHead>
                         <TableHead className="text-[#D4AF37]">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -434,6 +436,33 @@ export default function AdminPage() {
                             <Badge variant={perfume.inStock ? "default" : "destructive"}>
                               {perfume.inStock ? "En Stock" : "Agotado"}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Switch
+                              checked={perfume.showOnHomepage || false}
+                              onCheckedChange={(checked) => 
+                                toggleHomepageMutation.mutate({ id: perfume.id, showOnHomepage: checked })
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-2">
+                              <Switch
+                                checked={perfume.isOnOffer || false}
+                                onCheckedChange={(checked) => 
+                                  updateOfferMutation.mutate({ 
+                                    id: perfume.id, 
+                                    isOnOffer: checked,
+                                    discountPercentage: checked ? "10" : "0"
+                                  })
+                                }
+                              />
+                              {perfume.isOnOffer && (
+                                <div className="text-xs text-[#D4AF37]">
+                                  {perfume.discountPercentage}% OFF
+                                </div>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
