@@ -1,14 +1,17 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Collection, Perfume } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
+import { Button } from "@/components/ui/button";
 
 export default function Collections() {
   const { toast } = useToast();
   const { addToCart } = useCart();
   const queryClient = useQueryClient();
+  const [selectedSizes, setSelectedSizes] = useState<{ [key: number]: string }>({});
 
   const { data: collections, isLoading } = useQuery<Collection[]>({
     queryKey: ["/api/collections"],
@@ -23,13 +26,22 @@ export default function Collections() {
     return null;
   }
 
-  const handleAddToCart = (collection: Collection) => {
+  const handleAddToCart = (collection: Collection, size: string) => {
+    const price = getPrice(collection, size);
     // For collections, we'll add them as a special perfume with negative ID
-    addToCart(-collection.id, "collection", collection.price);
+    addToCart(-collection.id, size, price);
     toast({
       title: "¡Añadido al carrito!",
-      description: `${collection.name} - $${collection.price}`,
+      description: `${collection.name} - ${size} - $${price}`,
     });
+  };
+
+  const getPrice = (collection: Collection, size: string) => {
+    if (!collection.sizes || !collection.prices) {
+      return collection.price.toString();
+    }
+    const sizeIndex = collection.sizes.indexOf(size);
+    return sizeIndex !== -1 ? collection.prices[sizeIndex] : collection.prices[0];
   };
 
   const getCollectionDetails = (collection: Collection) => {
@@ -228,28 +240,47 @@ export default function Collections() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <span className="text-xl font-bold luxury-gold-text">${collection.price}</span>
-                        {totalOriginalPrice > parseFloat(collection.price) && (
-                          <span className="text-xs text-gray-500 line-through ml-2">${totalOriginalPrice.toFixed(2)}</span>
-                        )}
-                        {savings > 0 && (
-                          <div className="text-xs text-green-400">Ahorras: ${savings.toFixed(2)}</div>
-                        )}
-                      </div>
-                      <span className="text-xs text-gray-400">{perfumeDetails.length} perfumes</span>
-                    </div>
-                    
-                    <motion.button
-                      onClick={() => handleAddToCart(collection)}
-                      className="w-full luxury-button py-2 rounded-lg text-sm font-semibold"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
+                    {/* Size selection buttons */}
+                    <motion.div 
+                      className="mb-4"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 + index * 0.1 }}
                     >
-                      Agregar al Carrito
-                    </motion.button>
+                      <div className="flex gap-2 mb-3">
+                        {(collection.sizes || ['2ml', '4ml', '6ml']).map((size) => (
+                          <Button
+                            key={size}
+                            variant={selectedSizes[collection.id] === size ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSelectedSizes(prev => ({ ...prev, [collection.id]: size }))}
+                            className={`text-xs ${
+                              selectedSizes[collection.id] === size 
+                                ? "bg-[#D4AF37] text-black border-[#D4AF37]" 
+                                : "border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37]/10"
+                            }`}
+                          >
+                            {size}
+                          </Button>
+                        ))}
+                      </div>
+                    </motion.div>
+
+                    {/* Price and add to cart */}
+                    <div className="flex items-center justify-between pt-2">
+                      <div>
+                        <span className="text-2xl font-bold luxury-gold-text">
+                          ${getPrice(collection, selectedSizes[collection.id] || (collection.sizes?.[0] || '2ml'))}
+                        </span>
+                        <span className="text-sm text-gray-400 ml-2">/ {selectedSizes[collection.id] || (collection.sizes?.[0] || '2ml')}</span>
+                      </div>
+                      <Button
+                        onClick={() => handleAddToCart(collection, selectedSizes[collection.id] || (collection.sizes?.[0] || '2ml'))}
+                        className="luxury-button font-montserrat font-semibold px-6 py-2 rounded-xl"
+                      >
+                        Agregar
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </motion.div>

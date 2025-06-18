@@ -104,6 +104,7 @@ Changelog:
 - June 16, 2025. Removed rating system completely from all perfume cards and sort options across the application
 - June 16, 2025. Implemented advanced admin features: homepage display selection, customizable offers system with dialog configuration, and smart catalog filtering based on stock levels
 - June 17, 2025. Added navigation buttons to catalog page: functional cart button with drawer panel and back to home button
+- June 17, 2025. Implemented custom pricing per ml for collections: added sizes and prices arrays to collections, size selection buttons like perfumes, and dynamic pricing system in admin panel
 
 ## User Preferences
 
