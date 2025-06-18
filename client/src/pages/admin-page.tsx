@@ -249,10 +249,18 @@ export default function AdminPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
+    // Parse collection sizes and prices
+    const sizesStr = formData.get("sizes") as string;
+    const pricesStr = formData.get("prices") as string;
+    const sizes = sizesStr.split(",").map(s => s.trim());
+    const prices = pricesStr.split(",").map(p => p.trim());
+    
     const collection: InsertCollection = {
       name: formData.get("name") as string,
       description: formData.get("description") as string,
       theme: formData.get("theme") as string,
+      sizes,
+      prices,
       perfumeIds: (formData.get("perfumeIds") as string).split(",").map(id => parseInt(id.trim())),
       perfumeSizes: (formData.get("perfumeSizes") as string).split(",").map(size => size.trim()),
       price: formData.get("price") as string,
@@ -634,9 +642,21 @@ export default function AdminPage() {
                           <Label htmlFor="perfumeSizes" className="text-[#D4AF37]">Tamaños de Perfumes (separados por coma)</Label>
                           <Input name="perfumeSizes" required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="5ml, 10ml, 5ml" />
                         </div>
+                        
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="price" className="text-[#D4AF37]">Precio</Label>
+                            <Label htmlFor="sizes" className="text-[#D4AF37]">Tamaños de Colección (separados por coma)</Label>
+                            <Input name="sizes" required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="2ml, 4ml, 6ml" />
+                          </div>
+                          <div>
+                            <Label htmlFor="prices" className="text-[#D4AF37]">Precios por Tamaño (separados por coma)</Label>
+                            <Input name="prices" required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="10, 20, 30" />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="price" className="text-[#D4AF37]">Precio Base</Label>
                             <Input name="price" required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="45.00" />
                           </div>
                           <div>

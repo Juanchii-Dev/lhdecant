@@ -33,6 +33,8 @@ export const collections = pgTable("collections", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   theme: text("theme").notNull(), // "summer", "winter", "date_night", "office", "weekend"
+  sizes: text("sizes").array().notNull().default(['2ml', '4ml', '6ml']), // Collection sizes like "2ml, 4ml, 6ml"
+  prices: text("prices").array().notNull().default(['10', '20', '30']), // Corresponding prices for each size
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
   imageUrl: text("image_url").notNull(),
@@ -105,6 +107,9 @@ export const insertPerfumeSchema = createInsertSchema(perfumes).omit({
 export const insertCollectionSchema = createInsertSchema(collections).omit({
   id: true,
   createdAt: true,
+}).extend({
+  sizes: z.array(z.string()).min(1, "Debe especificar al menos un tamaño"),
+  prices: z.array(z.string()).min(1, "Debe especificar al menos un precio"),
 });
 
 export const insertSettingsSchema = createInsertSchema(settings).omit({
