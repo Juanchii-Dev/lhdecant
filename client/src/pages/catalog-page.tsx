@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, ArrowLeft } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
+import { CartIcon } from "@/components/cart";
+import { Link } from "wouter";
 
 export default function CatalogPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -119,7 +121,43 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-6 pt-24 pb-12">
+      <div className="container mx-auto px-6 pt-8 pb-12">
+        {/* Header with navigation and cart */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex justify-between items-center mb-8"
+        >
+          <Link href="/">
+            <Button 
+              variant="outline" 
+              className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10 flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Volver al Inicio
+            </Button>
+          </Link>
+          
+          <div className="flex items-center gap-4">
+            <CartIcon />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-8"
+        >
+          <h1 className="text-4xl md:text-6xl font-montserrat font-bold mb-4 luxury-gold-text text-center">
+            Catálogo Completo
+          </h1>
+          <p className="text-gray-400 text-center max-w-2xl mx-auto">
+            Descubre nuestra colección completa de fragancias de lujo. Explora, filtra y encuentra tu perfume perfecto.
+          </p>
+        </motion.div>
+
         {/* Filters */}
         <motion.div 
           className="bg-gradient-to-r from-luxury-gold/15 to-luxury-gold/10 backdrop-blur-sm rounded-3xl p-8 mb-12 border-2 border-luxury-gold/40 shadow-2xl shadow-luxury-gold/10"
