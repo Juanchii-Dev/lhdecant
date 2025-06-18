@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Filter, ArrowLeft } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
-import { CartIcon } from "@/components/cart";
+import { CartDrawer } from "@/components/cart";
 import { Link } from "wouter";
 
 export default function CatalogPage() {
@@ -140,7 +140,7 @@ export default function CatalogPage() {
           </Link>
           
           <div className="flex items-center gap-4">
-            <CartIcon />
+            <CartDrawer />
           </div>
         </motion.div>
 
