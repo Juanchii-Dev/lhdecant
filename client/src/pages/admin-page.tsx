@@ -262,7 +262,7 @@ export default function AdminPage() {
       perfumeIds: (formData.get("perfumeIds") as string).split(",").map(id => parseInt(id.trim())),
       perfumeSizes: sizes, // Use collection sizes for perfume sizes
       price: prices[0], // Use first price as base price
-      imageUrl: formData.get("imageUrl") as string,
+      imageUrl: formData.get("imageUrl") as string || "",
     };
     createCollectionMutation.mutate(collection);
   };
@@ -407,6 +407,7 @@ export default function AdminPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="border-[#D4AF37]/20">
+                        <TableHead className="text-[#D4AF37]">ID</TableHead>
                         <TableHead className="text-[#D4AF37]">Nombre</TableHead>
                         <TableHead className="text-[#D4AF37]">Marca</TableHead>
                         <TableHead className="text-[#D4AF37]">Categoría</TableHead>
@@ -420,6 +421,7 @@ export default function AdminPage() {
                     <TableBody>
                       {perfumes?.map((perfume) => (
                         <TableRow key={perfume.id} className="border-[#D4AF37]/10">
+                          <TableCell className="font-medium text-[#D4AF37]">#{perfume.id}</TableCell>
                           <TableCell className="font-medium text-white">{perfume.name}</TableCell>
                           <TableCell className="text-gray-300">{perfume.brand}</TableCell>
                           <TableCell>
