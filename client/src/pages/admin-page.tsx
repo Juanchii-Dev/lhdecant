@@ -559,15 +559,9 @@ export default function AdminPage() {
                       <Label htmlFor="notes" className="text-[#D4AF37]">Notas (separadas por coma)</Label>
                       <Input name="notes" defaultValue={editingPerfume.notes.join(", ")} className="bg-black/50 border-[#D4AF37]/30 text-white" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
-                        <Input name="imageUrl" type="url" defaultValue={editingPerfume.imageUrl} className="bg-black/50 border-[#D4AF37]/30 text-white" />
-                      </div>
-                      <div>
-                        <Label htmlFor="rating" className="text-[#D4AF37]">Rating</Label>
-                        <Input name="rating" defaultValue={editingPerfume.rating || ""} className="bg-black/50 border-[#D4AF37]/30 text-white" />
-                      </div>
+                    <div>
+                      <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
+                      <Input name="imageUrl" type="url" defaultValue={editingPerfume.imageUrl} className="bg-black/50 border-[#D4AF37]/30 text-white" />
                     </div>
                     <div className="flex items-center space-x-2">
                       <input type="checkbox" name="inStock" value="true" id="inStockEdit" defaultChecked={editingPerfume.inStock || false} className="rounded border-[#D4AF37]/30" />
