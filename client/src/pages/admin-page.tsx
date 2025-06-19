@@ -26,6 +26,8 @@ export default function AdminPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPerfume, setEditingPerfume] = useState<Perfume | null>(null);
   const [isCreateCollectionDialogOpen, setIsCreateCollectionDialogOpen] = useState(false);
+  const [isEditCollectionDialogOpen, setIsEditCollectionDialogOpen] = useState(false);
+  const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<Perfume | null>(null);
   const [activeTab, setActiveTab] = useState("perfumes");
@@ -168,6 +170,29 @@ export default function AdminPage() {
     },
   });
 
+  const updateCollectionMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertCollection> }) => {
+      const res = await apiRequest("PUT", `/api/collections/${id}`, data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      setIsEditCollectionDialogOpen(false);
+      setEditingCollection(null);
+      toast({
+        title: "Colección actualizada",
+        description: "La colección se ha actualizado exitosamente.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteCollectionMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await apiRequest("DELETE", `/api/collections/${id}`);
@@ -287,6 +312,32 @@ export default function AdminPage() {
       imageUrl: formData.get("imageUrl") as string || "",
     };
     createCollectionMutation.mutate(collection);
+  };
+
+  const handleUpdateCollection = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingCollection) return;
+    
+    const formData = new FormData(e.currentTarget);
+    
+    // Parse collection sizes and prices
+    const sizesStr = formData.get("sizes") as string;
+    const pricesStr = formData.get("prices") as string;
+    const sizes = sizesStr.split(",").map(s => s.trim());
+    const prices = pricesStr.split(",").map(p => p.trim());
+    
+    const updates: Partial<InsertCollection> = {
+      name: formData.get("name") as string,
+      description: formData.get("description") as string,
+      theme: formData.get("theme") as string,
+      sizes,
+      prices,
+      perfumeIds: (formData.get("perfumeIds") as string).split(",").map(id => parseInt(id.trim())),
+      perfumeSizes: sizes, // Use collection sizes for perfume sizes
+      price: prices[0], // Use first price as base price
+      imageUrl: formData.get("imageUrl") as string || "",
+    };
+    updateCollectionMutation.mutate({ id: editingCollection.id, data: updates });
   };
 
   if (!user) {
@@ -705,11 +756,8 @@ export default function AdminPage() {
                               variant="outline"
                               className="border-[#D4AF37]/30 text-[#D4AF37]"
                               onClick={() => {
-                                // TODO: Implementar edición
-                                toast({
-                                  title: "Función en desarrollo",
-                                  description: "La edición de colecciones estará disponible pronto.",
-                                });
+                                setEditingCollection(collection);
+                                setIsEditCollectionDialogOpen(true);
                               }}
                             >
                               <Edit className="w-4 h-4" />
@@ -842,6 +890,64 @@ export default function AdminPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Collection Dialog */}
+      <Dialog open={isEditCollectionDialogOpen} onOpenChange={setIsEditCollectionDialogOpen}>
+        <DialogContent className="bg-black border-[#D4AF37]/20 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-[#D4AF37]">Editar Colección</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Actualiza la información de la colección
+            </DialogDescription>
+          </DialogHeader>
+          {editingCollection && (
+            <form onSubmit={handleUpdateCollection} className="space-y-4">
+              <div>
+                <Label htmlFor="name" className="text-[#D4AF37]">Nombre</Label>
+                <Input name="name" defaultValue={editingCollection.name} required className="bg-black/50 border-[#D4AF37]/30 text-white" />
+              </div>
+              <div>
+                <Label htmlFor="description" className="text-[#D4AF37]">Descripción</Label>
+                <Textarea name="description" defaultValue={editingCollection.description} required className="bg-black/50 border-[#D4AF37]/30 text-white" />
+              </div>
+              <div>
+                <Label htmlFor="theme" className="text-[#D4AF37]">Tema</Label>
+                <Input name="theme" defaultValue={editingCollection.theme} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="Verano, Elegancia, etc." />
+              </div>
+              <div>
+                <Label htmlFor="perfumeIds" className="text-[#D4AF37]">IDs de Perfumes (separados por coma)</Label>
+                <Input name="perfumeIds" defaultValue={editingCollection.perfumeIds.join(", ")} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="1, 2, 3" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="sizes" className="text-[#D4AF37]">Tamaños (separados por coma)</Label>
+                  <Input name="sizes" defaultValue={editingCollection.sizes.join(", ")} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="5ml, 10ml" />
+                </div>
+                <div>
+                  <Label htmlFor="prices" className="text-[#D4AF37]">Precios por Tamaño (separados por coma)</Label>
+                  <Input name="prices" defaultValue={editingCollection.prices.join(", ")} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="25, 45" />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
+                <Input name="imageUrl" type="url" defaultValue={editingCollection.imageUrl} className="bg-black/50 border-[#D4AF37]/30 text-white" />
+              </div>
+              <Button type="submit" disabled={updateCollectionMutation.isPending} className="w-full luxury-button">
+                {updateCollectionMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Actualizando...
+                  </>
+                ) : (
+                  "Actualizar Colección"
+                )}
+              </Button>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -28,6 +28,7 @@ export interface IStorage {
   getCollections(): Promise<Collection[]>;
   getCollection(id: number): Promise<Collection | undefined>;
   createCollection(collection: InsertCollection): Promise<Collection>;
+  updateCollection(id: number, collection: Partial<InsertCollection>): Promise<Collection>;
   deleteCollection(id: number): Promise<void>;
 
   // Contact Messages

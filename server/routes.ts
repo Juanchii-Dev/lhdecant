@@ -201,6 +201,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update collection (admin only)
+  app.put("/api/collections/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertCollectionSchema.partial().parse(req.body);
+      const collection = await storage.updateCollection(id, validatedData);
+      res.json(collection);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid collection data", 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to update collection" });
+    }
+  });
+
   // Delete collection (admin only)
   app.delete("/api/collections/:id", requireAuth, async (req, res) => {
     try {
