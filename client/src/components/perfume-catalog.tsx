@@ -122,7 +122,7 @@ export default function PerfumeCatalog() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6 }}
             >
-            {filteredPerfumes.slice(0, 3).map((perfume, index) => {
+            {filteredPerfumes.map((perfume, index) => {
               const selectedSize = selectedSizes[perfume.id] || perfume.sizes[0];
               return (
                 <motion.div
