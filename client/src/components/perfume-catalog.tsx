@@ -101,7 +101,7 @@ export default function PerfumeCatalog() {
         {/* Products Grid */}
         <div className="flex justify-center">
           {isLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl">
               {[...Array(6)].map((_, i) => (
                 <Card key={i} className="bg-charcoal border-luxury-gold/20 h-[600px]">
                   <div className="w-full h-64 bg-gray-700 animate-pulse rounded-t-lg"></div>
@@ -117,7 +117,7 @@ export default function PerfumeCatalog() {
             </div>
           ) : (
             <motion.div 
-              className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl"
+              className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6 }}

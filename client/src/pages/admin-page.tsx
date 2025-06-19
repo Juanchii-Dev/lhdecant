@@ -212,7 +212,6 @@ export default function AdminPage() {
       category: formData.get("category") as string,
       notes: (formData.get("notes") as string).split(",").map(note => note.trim()),
       imageUrl: formData.get("imageUrl") as string,
-      rating: formData.get("rating") as string,
       inStock: formData.get("inStock") === "true",
     };
     createPerfumeMutation.mutate(perfume);
@@ -239,7 +238,6 @@ export default function AdminPage() {
       category: formData.get("category") as string,
       notes: (formData.get("notes") as string).split(",").map(note => note.trim()),
       imageUrl: formData.get("imageUrl") as string,
-      rating: formData.get("rating") as string,
       inStock: formData.get("inStock") === "true",
     };
     updatePerfumeMutation.mutate({ id: editingPerfume.id, data: updates });
@@ -375,15 +373,9 @@ export default function AdminPage() {
                       <Label htmlFor="notes" className="text-[#D4AF37]">Notas (separadas por coma)</Label>
                       <Input name="notes" className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="Bergamota, Rosa, Vainilla" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
-                        <Input name="imageUrl" type="url" className="bg-black/50 border-[#D4AF37]/30 text-white" />
-                      </div>
-                      <div>
-                        <Label htmlFor="rating" className="text-[#D4AF37]">Rating</Label>
-                        <Input name="rating" className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="4.5" />
-                      </div>
+                    <div>
+                      <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
+                      <Input name="imageUrl" type="url" className="bg-black/50 border-[#D4AF37]/30 text-white" />
                     </div>
                     <div className="flex items-center space-x-2">
                       <input type="checkbox" name="inStock" value="true" id="inStock" className="rounded border-[#D4AF37]/30" />
