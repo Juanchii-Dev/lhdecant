@@ -161,6 +161,15 @@ export class DatabaseStorage implements IStorage {
     return collection;
   }
 
+  async updateCollection(id: number, updateData: Partial<InsertCollection>): Promise<Collection> {
+    const [collection] = await db
+      .update(collections)
+      .set(updateData)
+      .where(eq(collections.id, id))
+      .returning();
+    return collection;
+  }
+
   async deleteCollection(id: number): Promise<void> {
     await db.delete(collections).where(eq(collections.id, id));
   }
