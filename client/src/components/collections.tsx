@@ -21,7 +21,7 @@ export default function Collections() {
     queryKey: ["/api/perfumes"],
   });
 
-  // Don't render anything if no collections are available
+  // Don't render anything if no collections are available or if collections are disabled
   if (!collections || collections.length === 0) {
     return null;
   }

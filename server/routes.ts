@@ -201,6 +201,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete collection (admin only)
+  app.delete("/api/collections/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCollection(id);
+      res.json({ message: "Collection deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete collection" });
+    }
+  });
+
   // Submit contact form
   app.post("/api/contact", async (req, res) => {
     try {

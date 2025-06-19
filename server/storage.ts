@@ -28,6 +28,7 @@ export interface IStorage {
   getCollections(): Promise<Collection[]>;
   getCollection(id: number): Promise<Collection | undefined>;
   createCollection(collection: InsertCollection): Promise<Collection>;
+  deleteCollection(id: number): Promise<void>;
 
   // Contact Messages
   createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
@@ -157,6 +158,10 @@ export class DatabaseStorage implements IStorage {
       .values(insertCollection)
       .returning();
     return collection;
+  }
+
+  async deleteCollection(id: number): Promise<void> {
+    await db.delete(collections).where(eq(collections.id, id));
   }
 
   async createContactMessage(insertMessage: InsertContactMessage): Promise<ContactMessage> {

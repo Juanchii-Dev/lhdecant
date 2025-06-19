@@ -106,6 +106,7 @@ Changelog:
 - June 17, 2025. Added navigation buttons to catalog page: functional cart button with drawer panel and back to home button
 - June 17, 2025. Implemented custom pricing per ml for collections: added sizes and prices arrays to collections, size selection buttons like perfumes, and dynamic pricing system in admin panel
 - June 18, 2025. Updated homepage and catalog layouts: changed from 3-column to 4-column grid display, removed rating field from perfume creation forms, and optimized container widths for better layout
+- June 19, 2025. Enhanced collections management: added delete functionality with confirmation buttons, improved collection display with IDs and detailed information, and fixed configuration toggle for collections visibility on homepage
 
 ## User Preferences
 
