@@ -168,6 +168,27 @@ export default function AdminPage() {
     },
   });
 
+  const deleteCollectionMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/collections/${id}`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      toast({
+        title: "Colección eliminada",
+        description: "La colección se ha eliminado exitosamente.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateSettingMutation = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
       const res = await apiRequest("POST", "/api/settings", { key, value });
@@ -175,6 +196,7 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
       toast({
         title: "Configuración actualizada",
         description: "La configuración se ha actualizado exitosamente.",
@@ -662,9 +684,46 @@ export default function AdminPage() {
                   <div className="grid gap-4">
                     {collections.map((collection) => (
                       <div key={collection.id} className="border border-[#D4AF37]/20 rounded-lg p-4">
-                        <h3 className="text-[#D4AF37] font-medium">{collection.name}</h3>
-                        <p className="text-gray-400 text-sm">{collection.description}</p>
-                        <p className="text-white mt-2">Precio: ${collection.price}</p>
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="text-[#D4AF37] font-medium">{collection.name}</h3>
+                              <span className="text-xs text-gray-500">#{collection.id}</span>
+                            </div>
+                            <p className="text-gray-400 text-sm mb-2">{collection.description}</p>
+                            <div className="flex items-center gap-4 text-sm">
+                              <p className="text-white">Precio base: ${collection.price}</p>
+                              <p className="text-gray-400">Tamaños: {collection.sizes.join(", ")}</p>
+                            </div>
+                            <p className="text-gray-400 text-xs mt-1">
+                              Perfumes: [{collection.perfumeIds.join(", ")}]
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-[#D4AF37]/30 text-[#D4AF37]"
+                              onClick={() => {
+                                // TODO: Implementar edición
+                                toast({
+                                  title: "Función en desarrollo",
+                                  description: "La edición de colecciones estará disponible pronto.",
+                                });
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteCollectionMutation.mutate(collection.id)}
+                              disabled={deleteCollectionMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
