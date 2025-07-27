@@ -2,12 +2,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { useCart } from "@/hooks/use-cart";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
+import { useToast } from "../hooks/use-toast";
+import { useCart } from "../hooks/use-cart";
 import { Eye } from "lucide-react";
-import type { Perfume } from "@shared/schema";
+import { getQueryFn } from "../lib/queryClient";
 
 export default function PerfumeCatalog() {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -15,13 +15,14 @@ export default function PerfumeCatalog() {
   const { toast } = useToast();
   const { addToCart } = useCart();
 
-  const { data: perfumes = [], isLoading } = useQuery<Perfume[]>({
+  const { data: perfumes = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/perfumes/homepage"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
   const filteredPerfumes = perfumes;
 
-  const handleAddToCart = (perfume: Perfume, size: string) => {
+  const handleAddToCart = (perfume: any, size: string) => {
     const sizeIndex = perfume.sizes.indexOf(size);
     const price = sizeIndex !== -1 ? perfume.prices[sizeIndex] : '0.00';
     addToCart(perfume.id, size, price);
@@ -31,7 +32,7 @@ export default function PerfumeCatalog() {
     setSelectedSizes(prev => ({ ...prev, [perfumeId]: size }));
   };
 
-  const getPrice = (perfume: Perfume, size: string) => {
+  const getPrice = (perfume: any, size: string) => {
     const sizeIndex = perfume.sizes.indexOf(size);
     const originalPrice = sizeIndex !== -1 ? perfume.prices[sizeIndex] : '0.00';
     
@@ -44,7 +45,7 @@ export default function PerfumeCatalog() {
     return originalPrice;
   };
 
-  const getOriginalPrice = (perfume: Perfume, size: string) => {
+  const getOriginalPrice = (perfume: any, size: string) => {
     const sizeIndex = perfume.sizes.indexOf(size);
     return sizeIndex !== -1 ? perfume.prices[sizeIndex] : '0.00';
   };

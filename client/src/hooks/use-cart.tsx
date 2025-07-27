@@ -1,11 +1,12 @@
+import React from "react";
 import { createContext, ReactNode, useContext } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { CartItem, Perfume, InsertCartItem } from "@shared/schema";
-import { apiRequest, queryClient } from "../lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+// import { CartItem, Perfume, InsertCartItem } from "../../../shared/schema"; // ELIMINADO
+import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { useToast } from "./use-toast";
 
 type CartContextType = {
-  items: (CartItem & { perfume: Perfume })[];
+  items: (any & { perfume: any })[];
   isLoading: boolean;
   totalItems: number;
   totalAmount: number;
@@ -20,12 +21,13 @@ export const CartContext = createContext<CartContextType | null>(null);
 export function CartProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
-  const { data: items = [], isLoading } = useQuery<(CartItem & { perfume: Perfume })[]>({
+  const { data: items = [], isLoading } = useQuery<(any & { perfume: any })[]>({
     queryKey: ["/api/cart"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
   const addToCartMutation = useMutation({
-    mutationFn: async (item: InsertCartItem) => {
+    mutationFn: async (item: any) => {
       const res = await apiRequest("POST", "/api/cart", item);
       return await res.json();
     },

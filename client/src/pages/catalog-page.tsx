@@ -1,16 +1,18 @@
-import { useState } from "react";
+import React from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { Perfume } from "@shared/schema";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+// import { Perfume, Collection } from "../../../shared/schema"; // ELIMINADO
+import { Input } from "../components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import { Search, Filter, ArrowLeft } from "lucide-react";
-import { useCart } from "@/hooks/use-cart";
-import { useToast } from "@/hooks/use-toast";
-import { CartDrawer } from "@/components/cart";
+import { useCart } from "../hooks/use-cart";
+import { useToast } from "../hooks/use-toast";
+import { CartDrawer } from "../components/cart";
 import { Link } from "wouter";
+import { getQueryFn } from "../lib/queryClient";
 
 export default function CatalogPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,8 +23,9 @@ export default function CatalogPage() {
   const { addToCart } = useCart();
   const { toast } = useToast();
 
-  const { data: perfumes, isLoading } = useQuery<Perfume[]>({
+  const { data: perfumes, isLoading } = useQuery<any[]>({
     queryKey: ["/api/perfumes"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
   // Filter and sort perfumes
@@ -71,7 +74,7 @@ export default function CatalogPage() {
     }));
   };
 
-  const handleAddToCart = (perfume: Perfume, size: string) => {
+  const handleAddToCart = (perfume: any, size: string) => {
     const price = getPrice(perfume, size);
     addToCart(perfume.id, size, price);
     toast({
@@ -80,7 +83,7 @@ export default function CatalogPage() {
     });
   };
 
-  const getPrice = (perfume: Perfume, size: string) => {
+  const getPrice = (perfume: any, size: string) => {
     const sizeIndex = perfume.sizes.indexOf(size);
     const originalPrice = sizeIndex !== -1 ? perfume.prices[sizeIndex] : perfume.prices[0];
     
@@ -93,7 +96,7 @@ export default function CatalogPage() {
     return originalPrice;
   };
 
-  const getOriginalPrice = (perfume: Perfume, size: string) => {
+  const getOriginalPrice = (perfume: any, size: string) => {
     const sizeIndex = perfume.sizes.indexOf(size);
     return sizeIndex !== -1 ? perfume.prices[sizeIndex] : perfume.prices[0];
   };
@@ -337,7 +340,7 @@ export default function CatalogPage() {
                     >
                       <div className="text-sm text-gray-300 font-medium">Tamaño:</div>
                       <div className="flex gap-2">
-                        {perfume.sizes.map((size, sizeIndex) => (
+                        {perfume.sizes.map((size: any, sizeIndex: any) => (
                           <motion.button
                             key={size}
                             onClick={() => handleSizeChange(perfume.id, size)}

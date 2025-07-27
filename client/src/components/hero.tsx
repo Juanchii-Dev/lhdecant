@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 export default function Hero() {
   const scrollToSection = (sectionId: string) => {
@@ -88,11 +89,12 @@ export default function Hero() {
             >
               <span className="flex items-center">
                 Explorar Catálogo
-                <motion.i 
-                  className="fas fa-arrow-right ml-2"
+                <motion.div
                   animate={{ x: [0, 5, 0] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
-                />
+                >
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </motion.div>
               </span>
             </motion.button>
 
@@ -108,28 +110,7 @@ export default function Hero() {
         </motion.div>
       </div>
 
-      {/* Floating icons */}
-      <motion.div 
-        className="absolute top-1/4 left-10 text-luxury-gold/30"
-        animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <i className="fas fa-vial text-4xl"></i>
-      </motion.div>
-      <motion.div 
-        className="absolute top-1/3 right-16 text-luxury-gold/20"
-        animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-      >
-        <i className="fas fa-flask text-3xl"></i>
-      </motion.div>
-      <motion.div 
-        className="absolute bottom-1/4 left-1/4 text-luxury-gold/25"
-        animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-      >
-        <i className="fas fa-prescription-bottle text-2xl"></i>
-      </motion.div>
+
     </section>
   );
 }

@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import type { Collection, Perfume } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
-import { useCart } from "@/hooks/use-cart";
-import { Button } from "@/components/ui/button";
+import { apiRequest, getQueryFn } from "../lib/queryClient";
+import { useToast } from "../hooks/use-toast";
+import { useCart } from "../hooks/use-cart";
+import { Button } from "./ui/button";
 
 export default function Collections() {
   const { toast } = useToast();
@@ -13,12 +12,14 @@ export default function Collections() {
   const queryClient = useQueryClient();
   const [selectedSizes, setSelectedSizes] = useState<{ [key: number]: string }>({});
 
-  const { data: collections, isLoading } = useQuery<Collection[]>({
+  const { data: collections, isLoading } = useQuery<any[]>({
     queryKey: ["/api/collections"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const { data: perfumes } = useQuery<Perfume[]>({
+  const { data: perfumes } = useQuery<any[]>({
     queryKey: ["/api/perfumes"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
   // Don't render anything if no collections are available or if collections are disabled
@@ -26,7 +27,7 @@ export default function Collections() {
     return null;
   }
 
-  const handleAddToCart = (collection: Collection, size: string) => {
+  const handleAddToCart = (collection: any, size: string) => {
     const price = getPrice(collection, size);
     // For collections, we'll add them as a special perfume with negative ID
     addToCart(-collection.id, size, price);
@@ -36,7 +37,7 @@ export default function Collections() {
     });
   };
 
-  const getPrice = (collection: Collection, size: string) => {
+  const getPrice = (collection: any, size: string) => {
     if (!collection.sizes || !collection.prices) {
       return collection.price.toString();
     }
@@ -44,11 +45,11 @@ export default function Collections() {
     return sizeIndex !== -1 ? collection.prices[sizeIndex] : collection.prices[0];
   };
 
-  const getCollectionDetails = (collection: Collection) => {
+  const getCollectionDetails = (collection: any) => {
     if (!perfumes) return { perfumeDetails: [], totalOriginalPrice: 0 };
     
-    const perfumeDetails = collection.perfumeIds.map((id, index) => {
-      const perfume = perfumes.find(p => p.id === id);
+    const perfumeDetails = collection.perfumeIds.map((id: any, index: any) => {
+      const perfume = perfumes.find((p: any) => p.id === id);
       const size = collection.perfumeSizes[index];
       if (!perfume) return null;
       
@@ -61,9 +62,9 @@ export default function Collections() {
         size,
         price
       };
-    }).filter((detail): detail is NonNullable<typeof detail> => detail !== null);
+    }).filter((detail: any) => detail !== null);
 
-    const totalOriginalPrice = perfumeDetails.reduce((sum, detail) => sum + detail.price, 0);
+    const totalOriginalPrice = perfumeDetails.reduce((sum: any, detail: any) => sum + detail.price, 0);
     
     return { perfumeDetails, totalOriginalPrice };
   };
@@ -100,10 +101,10 @@ export default function Collections() {
     }
   };
 
-  const getPerfumeNames = (perfumeIds: number[]) => {
+  const getPerfumeNames = (perfumeIds: any[]) => {
     if (!perfumes) return [];
     return perfumeIds
-      .map(id => perfumes.find(p => p.id === id)?.name)
+      .map((id: any) => perfumes.find((p: any) => p.id === id)?.name)
       .filter(Boolean)
       .slice(0, 3); // Asegurar solo 3 perfumes
   };
@@ -193,7 +194,7 @@ export default function Collections() {
                     {/* Perfume Names as Tags */}
                     <div className="absolute top-3 left-3 right-3">
                       <div className="flex flex-wrap gap-1">
-                        {perfumeNames.map((name, idx) => (
+                        {perfumeNames.map((name: any, idx: any) => (
                           <motion.div 
                             key={idx}
                             className="bg-black/80 backdrop-blur-sm text-luxury-gold border border-luxury-gold/50 px-2 py-1 rounded-full text-xs font-bold"
@@ -231,7 +232,7 @@ export default function Collections() {
                     <div className="mb-4">
                       <h4 className="text-xs text-gray-400 mb-2">Incluye:</h4>
                       <div className="space-y-1">
-                        {perfumeDetails.map((detail, idx) => (
+                        {perfumeDetails.map((detail: any, idx: any) => (
                           <div key={idx} className="text-xs text-gray-300 flex justify-between">
                             <span>{detail.perfume.name}</span>
                             <span className="text-[#D4AF37]">{detail.size}</span>
@@ -248,7 +249,7 @@ export default function Collections() {
                       transition={{ delay: 0.3 + index * 0.1 }}
                     >
                       <div className="flex gap-2 mb-3">
-                        {(collection.sizes || ['2ml', '4ml', '6ml']).map((size) => (
+                        {(collection.sizes || ['2ml', '4ml', '6ml']).map((size: any) => (
                           <Button
                             key={size}
                             variant={selectedSizes[collection.id] === size ? "default" : "outline"}

@@ -1,11 +1,54 @@
-import * as React from "react"
+import React, { useState, useCallback, useContext, createContext } from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils";
 
-const ToastProvider = ToastPrimitives.Provider
+// CONTEXTO Y PROVIDER FUNCIONAL
+const ToastContext = createContext<any>(null);
+
+function genId() {
+  return Math.random().toString(36).substr(2, 9);
+}
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toasts, setToasts] = useState<any[]>([]);
+
+  const addToast = useCallback((toast: any) => {
+    setToasts((prev) => [...prev, { ...toast, open: true, id: genId() }]);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // API global para el hook useToast
+  const toast = useCallback((options: any) => {
+    addToast(options);
+  }, [addToast]);
+
+  const contextValue = {
+    toasts,
+    addToast,
+    removeToast,
+    toast,
+  };
+
+  return (
+    <ToastContext.Provider value={contextValue}>
+      {children}
+    </ToastContext.Provider>
+  );
+}
+
+export function useToast() {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  return context;
+}
 
 const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Viewport>,
@@ -117,11 +160,11 @@ type ToastActionElement = React.ReactElement<typeof ToastAction>
 export {
   type ToastProps,
   type ToastActionElement,
-  ToastProvider,
   ToastViewport,
   Toast,
   ToastTitle,
   ToastDescription,
   ToastClose,
   ToastAction,
+  ToastContext,
 }

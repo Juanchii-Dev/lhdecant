@@ -1,35 +1,50 @@
+import React from "react";
 import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User, InsertUser } from "@shared/schema";
+// import { insertUserSchema, User, InsertUser } from "@shared/schema"; // ELIMINADO
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "./use-toast";
 
 type AuthContextType = {
-  user: User | null;
+  user: any | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<User, Error, LoginData>;
+  loginMutation: UseMutationResult<any, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<User, Error, InsertUser>;
+  registerMutation: UseMutationResult<any, Error, any>;
 };
 
-type LoginData = Pick<InsertUser, "username" | "password">;
+type LoginData = Pick<any, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
+  let toastContext = null;
+  try {
+    toastContext = useToast();
+  } catch (e) {
+    console.error('CRITICAL: useToast returned null or error', e);
+    return <div>Error: Toast context not available</div>;
+  }
+  if (!toastContext) {
+    console.error('AuthProvider: useToast() returned null - ToastProvider missing');
+    return <div>Error: Toast context not available</div>;
+  }
+  const { toast } = toastContext;
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<User | undefined, Error>({
+  } = useQuery<any | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled: true,
   });
 
   const loginMutation = useMutation({
@@ -40,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return await res.json();
     },
-    onSuccess: (user: User) => {
+    onSuccess: (user: any) => {
       queryClient.setQueryData(["/api/user"], user);
     },
     onError: (error: Error) => {
@@ -53,11 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
+    mutationFn: async (credentials: any) => {
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
     },
-    onSuccess: (user: User) => {
+    onSuccess: (user: any) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registro exitoso",
