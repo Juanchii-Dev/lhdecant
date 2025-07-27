@@ -2,21 +2,14 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { CartDrawer } from "./cart";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { useAuth } from "../hooks/use-auth";
-import { useToast } from "../hooks/use-toast";
 import UserMenu from "./user-menu";
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, loginMutation, registerMutation, isLoading } = useAuth();
-  const { toast } = useToast();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [forgot, setForgot] = useState(false);
-  const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,28 +19,6 @@ export default function Navigation() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // Función mejorada para Google OAuth
-  const handleGoogle = async () => {
-    setLoadingGoogle(true);
-    try {
-      // Redirección directa al servidor backend para Google OAuth
-      window.location.href = '/api/auth/google';
-    } catch (error) {
-      toast({ 
-        title: "Error de conexión", 
-        description: "No se pudo conectar con el servidor. Intenta más tarde.",
-        variant: "destructive"
-      });
-      setLoadingGoogle(false);
-    }
-  };
-
-  const handleForgot = () => {
-    setForgot(true);
-    toast({ title: "Recuperar contraseña", description: "Funcionalidad pendiente de backend." });
-    setTimeout(() => setForgot(false), 2000);
-  };
 
   return (
     <>
