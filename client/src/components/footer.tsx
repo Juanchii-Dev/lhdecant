@@ -8,7 +8,8 @@ import {
   Heart,
   Award,
   Package,
-  CheckCircle
+  CheckCircle,
+  Settings
 } from "lucide-react";
 
 export default function Footer() {
@@ -188,7 +189,7 @@ export default function Footer() {
               <h4 className="text-lg font-semibold text-luxury-gold mb-4">
                 Mi Cuenta
               </h4>
-              <ul className="space-y-3">
+              <ul className="space-y-3 mb-6">
                 {accountLinks.map((link, index) => (
                   <motion.li 
                     key={index}
@@ -204,6 +205,22 @@ export default function Footer() {
                   </motion.li>
                 ))}
               </ul>
+
+              <h4 className="text-lg font-semibold text-luxury-gold mb-4">
+                Administración
+              </h4>
+              <motion.div
+                whileHover={{ x: 5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Link
+                  href="/admin-auth"
+                  className="flex items-center space-x-2 text-gray-400 hover:text-luxury-gold transition-colors duration-300 text-sm"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Acceso Administrador</span>
+                </Link>
+              </motion.div>
             </motion.div>
           </div>
 
