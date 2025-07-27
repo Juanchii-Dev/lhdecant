@@ -576,6 +576,147 @@ export class FirestoreStorage {
     
     await batch.commit();
   }
+
+  // User settings methods
+  async getUserSettings(userId: string): Promise<any> {
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      throw new Error('User not found');
+    }
+
+    const userData = userDoc.data();
+    return userData?.settings || {
+      notifications: {
+        email: true,
+        push: true,
+        sms: false,
+        marketing: false,
+        orderUpdates: true,
+        newProducts: true,
+        promotions: false,
+      },
+      privacy: {
+        profileVisibility: 'public',
+        showEmail: false,
+        showPhone: false,
+        allowAnalytics: true,
+        allowCookies: true,
+      },
+      appearance: {
+        theme: 'dark',
+        fontSize: 'medium',
+        compactMode: false,
+        animations: true,
+      },
+      language: {
+        locale: 'es-ES',
+        currency: 'USD',
+        timezone: 'America/New_York',
+      },
+      security: {
+        twoFactorAuth: false,
+        sessionTimeout: 30,
+        loginNotifications: true,
+      },
+      data: {
+        autoBackup: false,
+        backupFrequency: 'weekly',
+        exportFormat: 'json',
+      },
+    };
+  }
+
+  async updateUserSettings(userId: string, settings: any): Promise<any> {
+    const userRef = db.collection('users').doc(userId);
+    await userRef.update({
+      settings,
+      updatedAt: new Date()
+    });
+    return settings;
+  }
+
+  async exportUserData(userId: string, format: string = 'json'): Promise<any> {
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      throw new Error('User not found');
+    }
+
+    const userData = userDoc.data();
+    
+    // Obtener datos relacionados
+    const [favorites, addresses, paymentMethods, orders] = await Promise.all([
+      this.getUserFavorites(userId),
+      this.getUserAddresses(userId),
+      this.getUserPaymentMethods(userId),
+      db.collection('orders').where('userId', '==', userId).get().then(snapshot => 
+        snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      )
+    ]);
+
+    const exportData = {
+      user: {
+        id: userData?.id,
+        email: userData?.email,
+        name: userData?.name,
+        username: userData?.username,
+        createdAt: userData?.createdAt,
+        updatedAt: userData?.updatedAt,
+      },
+      settings: userData?.settings,
+      favorites,
+      addresses,
+      paymentMethods,
+      orders,
+      exportDate: new Date().toISOString(),
+      format
+    };
+
+    return exportData;
+  }
+
+  async deleteUserAccount(userId: string, password: string): Promise<void> {
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      throw new Error('User not found');
+    }
+
+    const userData = userDoc.data();
+    
+    // Verificar contraseña (asumiendo que está hasheada)
+    if (userData?.password !== password) {
+      throw new Error('Invalid password');
+    }
+
+    // Eliminar todos los datos del usuario
+    const batch = db.batch();
+    
+    // Eliminar favoritos
+    const favoritesSnapshot = await db.collection('favorites').where('userId', '==', userId).get();
+    favoritesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    
+    // Eliminar direcciones
+    const addressesSnapshot = await db.collection('addresses').where('userId', '==', userId).get();
+    addressesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    
+    // Eliminar métodos de pago
+    const paymentMethodsSnapshot = await db.collection('paymentMethods').where('userId', '==', userId).get();
+    paymentMethodsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    
+    // Eliminar órdenes
+    const ordersSnapshot = await db.collection('orders').where('userId', '==', userId).get();
+    ordersSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    
+    // Eliminar usuario
+    batch.delete(userRef);
+    
+    await batch.commit();
+  }
 }
 
 export const storage = new FirestoreStorage(); 

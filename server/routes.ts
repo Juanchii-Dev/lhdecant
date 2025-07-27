@@ -689,6 +689,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: 'Contraseña actualizada' });
   });
 
+  // User settings endpoints
+  app.get('/api/user/settings', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const settings = await storage.getUserSettings(req.user.id);
+      res.json(settings);
+    } catch (error) {
+      console.error('Error getting user settings:', error);
+      res.status(500).json({ error: 'Error getting settings' });
+    }
+  });
+
+  app.put('/api/user/settings', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const settings = req.body;
+      const updatedSettings = await storage.updateUserSettings(req.user.id, settings);
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error('Error updating user settings:', error);
+      res.status(500).json({ error: 'Error updating settings' });
+    }
+  });
+
+  // Data export endpoint
+  app.get('/api/user/export-data', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const { format = 'json' } = req.query;
+      const userData = await storage.exportUserData(req.user.id, format as string);
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="user-data-${new Date().toISOString().split('T')[0]}.${format}"`);
+      res.json(userData);
+    } catch (error) {
+      console.error('Error exporting user data:', error);
+      res.status(500).json({ error: 'Error exporting data' });
+    }
+  });
+
+  // Delete account endpoint
+  app.delete('/api/user/delete-account', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const { password } = req.body;
+      await storage.deleteUserAccount(req.user.id, password);
+      res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Error deleting account' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
