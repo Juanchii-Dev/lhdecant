@@ -4,17 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
-import { useToast } from "../hooks/use-toast";
-import { useCart } from "../hooks/use-cart";
-import { Eye } from "lucide-react";
 import { getQueryFn } from "../lib/queryClient";
 import PerfumeCard from "./perfume-card";
 
 export default function PerfumeCatalog() {
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSizes, setSelectedSizes] = useState<{ [key: number]: string }>({});
-  const { toast } = useToast();
-  const { addToCart } = useCart();
 
   const { data: perfumes = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/perfumes/homepage"],
@@ -23,50 +17,8 @@ export default function PerfumeCatalog() {
 
   const filteredPerfumes = perfumes;
 
-  const handleAddToCart = (perfume: any, size: string) => {
-    const sizeIndex = perfume.sizes.indexOf(size);
-    const price = sizeIndex !== -1 ? perfume.prices[sizeIndex] : '0.00';
-    addToCart(perfume.id, size, price);
-  };
-
   const handleSizeChange = (perfumeId: number, size: string) => {
     setSelectedSizes(prev => ({ ...prev, [perfumeId]: size }));
-  };
-
-  const getPrice = (perfume: any, size: string) => {
-    const sizeIndex = perfume.sizes.indexOf(size);
-    const originalPrice = sizeIndex !== -1 ? perfume.prices[sizeIndex] : '0.00';
-    
-    if (perfume.isOnOffer && perfume.discountPercentage) {
-      const discount = parseFloat(perfume.discountPercentage);
-      const discountedPrice = parseFloat(originalPrice) * (1 - discount / 100);
-      return discountedPrice.toFixed(2);
-    }
-    
-    return originalPrice;
-  };
-
-  const getOriginalPrice = (perfume: any, size: string) => {
-    const sizeIndex = perfume.sizes.indexOf(size);
-    return sizeIndex !== -1 ? perfume.prices[sizeIndex] : '0.00';
-  };
-
-  const renderStars = (rating: string) => {
-    const numRating = parseFloat(rating);
-    const fullStars = Math.floor(numRating);
-    const hasHalfStar = numRating % 1 !== 0;
-
-    return (
-      <div className="flex text-luxury-gold">
-        {[...Array(fullStars)].map((_, i) => (
-          <i key={i} className="fas fa-star text-xs"></i>
-        ))}
-        {hasHalfStar && <i className="fas fa-star-half-alt text-xs"></i>}
-        {[...Array(5 - Math.ceil(numRating))].map((_, i) => (
-          <i key={i} className="far fa-star text-xs"></i>
-        ))}
-      </div>
-    );
   };
 
   return (
