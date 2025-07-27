@@ -17,6 +17,7 @@ import { Loader2, Plus, Edit, Trash2, LogOut, Settings as SettingsIcon, Package 
 import { useToast } from "../hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "../lib/queryClient";
 import { useLocation } from "wouter";
+import ImageUpload from "../components/ui/image-upload";
 
 export default function AdminPage() {
   const { user, logoutMutation } = useAuth();
