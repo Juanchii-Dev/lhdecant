@@ -139,7 +139,7 @@ export default function AuthPage() {
                   className="w-full bg-luxury-gold text-black hover:bg-luxury-gold/80"
                 >
                   {loginMutation.isPending ? "Iniciando sesión..." : "Iniciar Sesión"}
-                </Button>
+            </Button>
               </form>
 
               <div className="mt-4 text-center">
@@ -159,7 +159,7 @@ export default function AuthPage() {
                 >
                   Regístrate
                 </button>
-              </div>
+            </div>
             </>
           )}
 
@@ -209,7 +209,7 @@ export default function AuthPage() {
                   className="w-full bg-luxury-gold text-black hover:bg-luxury-gold/80"
                 >
                   {registerMutation.isPending ? "Creando cuenta..." : "Crear Cuenta"}
-                </Button>
+            </Button>
               </form>
 
               <div className="mt-6 text-center">
@@ -222,7 +222,7 @@ export default function AuthPage() {
                 </button>
               </div>
             </>
-          )}
+            )}
 
           {mode === "forgot" && (
             <>
@@ -236,7 +236,7 @@ export default function AuthPage() {
                     className="w-full px-3 py-2 bg-black border border-gray-600 rounded-md text-white focus:outline-none focus:border-luxury-gold"
                     required
                   />
-                </div>
+            </div>
                 <Button
                   type="submit"
                   disabled={loading}
@@ -244,7 +244,7 @@ export default function AuthPage() {
                 >
                   {loading ? "Enviando..." : "Enviar Email de Recuperación"}
                 </Button>
-              </form>
+          </form>
 
               <div className="mt-6 text-center">
                 <button
@@ -253,7 +253,7 @@ export default function AuthPage() {
                 >
                   Volver al login
                 </button>
-              </div>
+            </div>
             </>
           )}
 
@@ -269,7 +269,7 @@ export default function AuthPage() {
                     className="w-full px-3 py-2 bg-black border border-gray-600 rounded-md text-white focus:outline-none focus:border-luxury-gold"
                     required
                   />
-                </div>
+            </div>
                 <Button
                   type="submit"
                   disabled={loading}
@@ -277,9 +277,9 @@ export default function AuthPage() {
                 >
                   {loading ? "Actualizando..." : "Actualizar Contraseña"}
                 </Button>
-              </form>
+          </form>
             </>
-          )}
+        )}
         </div>
       </div>
     </div>

@@ -18,6 +18,9 @@ import TrackingPage from "./pages/tracking-page";
 import PaymentMethodsPage from "./pages/payment-methods-page";
 import AddressesPage from "./pages/addresses-page";
 import SettingsPage from "./pages/settings-page";
+import CouponsPage from "./pages/coupons-page";
+import ReviewsPage from "./pages/reviews-page";
+import NotificationsPage from "./pages/notifications-page";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,9 +50,9 @@ export default function App() {
                 <Route path="/tracking" component={TrackingPage} />
                 <Route path="/payment-methods" component={PaymentMethodsPage} />
                 <Route path="/addresses" component={AddressesPage} />
-                <Route path="/coupons" component={() => <div className="min-h-screen bg-black text-white pt-24 flex items-center justify-center"><h1 className="text-2xl text-luxury-gold">Códigos de Descuento - Próximamente</h1></div>} />
-                <Route path="/reviews" component={() => <div className="min-h-screen bg-black text-white pt-24 flex items-center justify-center"><h1 className="text-2xl text-luxury-gold">Reseñas - Próximamente</h1></div>} />
-                <Route path="/notifications" component={() => <div className="min-h-screen bg-black text-white pt-24 flex items-center justify-center"><h1 className="text-2xl text-luxury-gold">Notificaciones - Próximamente</h1></div>} />
+                <Route path="/coupons" component={CouponsPage} />
+                <Route path="/reviews" component={ReviewsPage} />
+                <Route path="/notifications" component={NotificationsPage} />
                 <Route path="/settings" component={SettingsPage} />
                 <Route component={NotFound} />
               </Switch>

@@ -750,6 +750,209 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Coupons endpoints
+  app.get('/api/coupons/available', async (req, res) => {
+    try {
+      const coupons = await storage.getAvailableCoupons();
+      res.json(coupons);
+    } catch (error) {
+      console.error('Error getting available coupons:', error);
+      res.status(500).json({ error: 'Error getting coupons' });
+    }
+  });
+
+  app.get('/api/user-coupons', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const coupons = await storage.getUserCoupons(req.user.id);
+      res.json(coupons);
+    } catch (error) {
+      console.error('Error getting user coupons:', error);
+      res.status(500).json({ error: 'Error getting user coupons' });
+    }
+  });
+
+  app.post('/api/coupons/apply', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const { code } = req.body;
+      const result = await storage.applyCoupon(req.user.id, code);
+      res.json(result);
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Error applying coupon' });
+    }
+  });
+
+  // Reviews endpoints
+  app.get('/api/reviews', async (req, res) => {
+    try {
+      const { search, filter, sort } = req.query;
+      const reviews = await storage.getReviews({
+        search: search as string,
+        filter: filter as string,
+        sort: sort as string,
+      });
+      res.json(reviews);
+    } catch (error) {
+      console.error('Error getting reviews:', error);
+      res.status(500).json({ error: 'Error getting reviews' });
+    }
+  });
+
+  app.get('/api/user-reviews', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const reviews = await storage.getUserReviews(req.user.id);
+      res.json(reviews);
+    } catch (error) {
+      console.error('Error getting user reviews:', error);
+      res.status(500).json({ error: 'Error getting user reviews' });
+    }
+  });
+
+  app.post('/api/reviews', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const review = await storage.createReview(req.user.id, req.body);
+      res.status(201).json(review);
+    } catch (error) {
+      console.error('Error creating review:', error);
+      res.status(500).json({ error: 'Error creating review' });
+    }
+  });
+
+  app.put('/api/reviews/:id', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const review = await storage.updateReview(req.params.id, req.user.id, req.body);
+      res.json(review);
+    } catch (error) {
+      console.error('Error updating review:', error);
+      res.status(500).json({ error: 'Error updating review' });
+    }
+  });
+
+  app.delete('/api/reviews/:id', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      await storage.deleteReview(req.params.id, req.user.id);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      res.status(500).json({ error: 'Error deleting review' });
+    }
+  });
+
+  app.post('/api/reviews/:id/helpful', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const result = await storage.markReviewHelpful(req.params.id, req.user.id);
+      res.json(result);
+    } catch (error) {
+      console.error('Error marking review helpful:', error);
+      res.status(500).json({ error: 'Error marking review helpful' });
+    }
+  });
+
+  // Notifications endpoints
+  app.get('/api/notifications', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const { filter, showRead, search } = req.query;
+      const notifications = await storage.getNotifications(req.user.id, {
+        filter: filter as string,
+        showRead: showRead === 'true',
+        search: search as string,
+      });
+      res.json(notifications);
+    } catch (error) {
+      console.error('Error getting notifications:', error);
+      res.status(500).json({ error: 'Error getting notifications' });
+    }
+  });
+
+  app.get('/api/notification-settings', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const settings = await storage.getNotificationSettings(req.user.id);
+      res.json(settings);
+    } catch (error) {
+      console.error('Error getting notification settings:', error);
+      res.status(500).json({ error: 'Error getting notification settings' });
+    }
+  });
+
+  app.put('/api/notification-settings', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const settings = await storage.updateNotificationSettings(req.user.id, req.body);
+      res.json(settings);
+    } catch (error) {
+      console.error('Error updating notification settings:', error);
+      res.status(500).json({ error: 'Error updating notification settings' });
+    }
+  });
+
+  app.put('/api/notifications/:id/read', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      await storage.markNotificationAsRead(req.params.id, req.user.id);
+      res.json({ message: 'Notification marked as read' });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      res.status(500).json({ error: 'Error marking notification as read' });
+    }
+  });
+
+  app.put('/api/notifications/read-all', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      await storage.markAllNotificationsAsRead(req.user.id);
+      res.json({ message: 'All notifications marked as read' });
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      res.status(500).json({ error: 'Error marking all notifications as read' });
+    }
+  });
+
+  app.delete('/api/notifications/:id', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      await storage.deleteNotification(req.params.id, req.user.id);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      res.status(500).json({ error: 'Error deleting notification' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

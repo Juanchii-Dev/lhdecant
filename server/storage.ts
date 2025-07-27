@@ -1,6 +1,33 @@
 import admin from 'firebase-admin';
 import { User } from './types';
 
+interface CartItem {
+  id: string;
+  price: string;
+  quantity: number;
+  [key: string]: any;
+}
+
+interface UserCoupon {
+  id: string;
+  couponId: string;
+  userId: string;
+  usedAt?: Date;
+  isUsed: boolean;
+  [key: string]: any;
+}
+
+interface Review {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  perfumeName: string;
+  rating: number;
+  helpfulCount: number;
+  [key: string]: any;
+}
+
 function cleanEnvVar(value?: string) {
   if (!value) return undefined;
   return value.replace(/^"|"$/g, ''); // Elimina comillas al inicio y final
@@ -712,10 +739,383 @@ export class FirestoreStorage {
     const ordersSnapshot = await db.collection('orders').where('userId', '==', userId).get();
     ordersSnapshot.docs.forEach(doc => batch.delete(doc.ref));
     
+    // Eliminar reseñas
+    const reviewsSnapshot = await db.collection('reviews').where('userId', '==', userId).get();
+    reviewsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    
+    // Eliminar notificaciones
+    const notificationsSnapshot = await db.collection('notifications').where('userId', '==', userId).get();
+    notificationsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    
+    // Eliminar cupones del usuario
+    const userCouponsSnapshot = await db.collection('userCoupons').where('userId', '==', userId).get();
+    userCouponsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    
     // Eliminar usuario
     batch.delete(userRef);
     
     await batch.commit();
+  }
+
+  // Coupons methods
+  async getAvailableCoupons(): Promise<any[]> {
+    const couponsSnapshot = await db.collection('coupons')
+      .where('isActive', '==', true)
+      .where('validUntil', '>', new Date())
+      .get();
+    
+    return couponsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  }
+
+  async getUserCoupons(userId: string): Promise<any[]> {
+    const userCouponsSnapshot = await db.collection('userCoupons')
+      .where('userId', '==', userId)
+      .get();
+    
+    const userCoupons = userCouponsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as UserCoupon[];
+
+    // Obtener detalles de los cupones
+    const couponIds = userCoupons.map(uc => uc.couponId);
+    const couponsSnapshot = await db.collection('coupons')
+      .where(admin.firestore.FieldPath.documentId(), 'in', couponIds)
+      .get();
+    
+    const coupons = couponsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    return userCoupons.map(uc => ({
+      ...uc,
+      coupon: coupons.find(c => c.id === uc.couponId)
+    }));
+  }
+
+  async applyCoupon(userId: string, code: string): Promise<any> {
+    // Buscar el cupón
+    const couponsSnapshot = await db.collection('coupons')
+      .where('code', '==', code)
+      .where('isActive', '==', true)
+      .get();
+    
+    if (couponsSnapshot.empty) {
+      throw new Error('Cupón no encontrado o inactivo');
+    }
+
+    const coupon = couponsSnapshot.docs[0];
+    const couponData = coupon.data();
+
+    // Verificar validez
+    const now = new Date();
+    const validFrom = couponData.validFrom.toDate();
+    const validUntil = couponData.validUntil.toDate();
+
+    if (now < validFrom || now > validUntil) {
+      throw new Error('Cupón fuera de fecha');
+    }
+
+    if (couponData.usedCount >= couponData.usageLimit) {
+      throw new Error('Cupón agotado');
+    }
+
+    // Verificar si el usuario ya usó este cupón
+    const userCouponSnapshot = await db.collection('userCoupons')
+      .where('userId', '==', userId)
+      .where('couponId', '==', coupon.id)
+      .get();
+
+    if (!userCouponSnapshot.empty) {
+      throw new Error('Ya has usado este cupón');
+    }
+
+    // Aplicar cupón al carrito
+    const cartItems = await this.getCartItems(userId) as CartItem[];
+    const subtotal = cartItems.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+
+    if (subtotal < couponData.minPurchase) {
+      throw new Error(`Compra mínima requerida: $${couponData.minPurchase}`);
+    }
+
+    let discount = 0;
+    if (couponData.type === 'percentage') {
+      discount = subtotal * (couponData.value / 100);
+      if (couponData.maxDiscount) {
+        discount = Math.min(discount, couponData.maxDiscount);
+      }
+    } else {
+      discount = couponData.value;
+    }
+
+    // Registrar uso del cupón
+    await db.collection('userCoupons').add({
+      userId,
+      couponId: coupon.id,
+      usedAt: new Date(),
+      isUsed: true,
+    });
+
+    // Actualizar contador de uso
+    await coupon.ref.update({
+      usedCount: admin.firestore.FieldValue.increment(1)
+    });
+
+    return {
+      discount: discount.toFixed(2),
+      coupon: {
+        id: coupon.id,
+        ...couponData
+      }
+    };
+  }
+
+  // Reviews methods
+  async getReviews(filters: { search?: string; filter?: string; sort?: string } = {}): Promise<any[]> {
+    let query = db.collection('reviews').orderBy('createdAt', 'desc');
+
+    if (filters.filter && filters.filter !== 'all') {
+      query = query.where('type', '==', filters.filter);
+    }
+
+    const reviewsSnapshot = await query.get();
+    let reviews = reviewsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Review[];
+
+    // Filtrar por búsqueda
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      reviews = reviews.filter(review => 
+        review.title.toLowerCase().includes(searchTerm) ||
+        review.content.toLowerCase().includes(searchTerm) ||
+        review.perfumeName.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Ordenar
+    if (filters.sort) {
+      switch (filters.sort) {
+        case 'rating':
+          reviews.sort((a, b) => b.rating - a.rating);
+          break;
+        case 'helpful':
+          reviews.sort((a, b) => b.helpfulCount - a.helpfulCount);
+          break;
+        case 'oldest':
+          reviews.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+          break;
+        default:
+          reviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+    }
+
+    // Obtener datos de usuario
+    const userIds = Array.from(new Set(reviews.map(r => r.userId)));
+    const usersSnapshot = await db.collection('users')
+      .where(admin.firestore.FieldPath.documentId(), 'in', userIds)
+      .get();
+    
+    const users = usersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    return reviews.map(review => ({
+      ...review,
+      user: users.find(u => u.id === review.userId)
+    }));
+  }
+
+  async getUserReviews(userId: string): Promise<any[]> {
+    const reviewsSnapshot = await db.collection('reviews')
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .get();
+    
+    return reviewsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  }
+
+  async createReview(userId: string, reviewData: any): Promise<any> {
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+
+    const perfumeRef = db.collection('perfumes').doc(reviewData.perfumeId);
+    const perfumeDoc = await perfumeRef.get();
+    const perfumeData = perfumeDoc.data();
+
+    const review = {
+      userId,
+      perfumeId: reviewData.perfumeId,
+      perfumeName: perfumeData?.name || '',
+      perfumeBrand: perfumeData?.brand || '',
+      rating: reviewData.rating,
+      title: reviewData.title,
+      content: reviewData.content,
+      pros: reviewData.pros,
+      cons: reviewData.cons,
+      longevity: reviewData.longevity,
+      sillage: reviewData.sillage,
+      value: reviewData.value,
+      isVerified: true,
+      helpfulCount: 0,
+      createdAt: new Date(),
+      user: {
+        name: userData?.name || userData?.username || 'Usuario',
+        email: userData?.email || '',
+        avatar: userData?.avatar || '',
+      }
+    };
+
+    const reviewRef = await db.collection('reviews').add(review);
+    return { id: reviewRef.id, ...review };
+  }
+
+  async updateReview(reviewId: string, userId: string, updates: any): Promise<any> {
+    const reviewRef = db.collection('reviews').doc(reviewId);
+    const reviewDoc = await reviewRef.get();
+    
+    if (!reviewDoc.exists || reviewDoc.data()?.userId !== userId) {
+      throw new Error('Review not found or unauthorized');
+    }
+
+    await reviewRef.update({
+      ...updates,
+      updatedAt: new Date()
+    });
+
+    return { id: reviewId, ...updates };
+  }
+
+  async deleteReview(reviewId: string, userId: string): Promise<void> {
+    const reviewRef = db.collection('reviews').doc(reviewId);
+    const reviewDoc = await reviewRef.get();
+    
+    if (!reviewDoc.exists || reviewDoc.data()?.userId !== userId) {
+      throw new Error('Review not found or unauthorized');
+    }
+
+    await reviewRef.delete();
+  }
+
+  async markReviewHelpful(reviewId: string, userId: string): Promise<any> {
+    const reviewRef = db.collection('reviews').doc(reviewId);
+    await reviewRef.update({
+      helpfulCount: admin.firestore.FieldValue.increment(1)
+    });
+
+    return { message: 'Review marked as helpful' };
+  }
+
+  // Notifications methods
+  async getNotifications(userId: string, filters: { filter?: string; showRead?: boolean; search?: string } = {}): Promise<any[]> {
+    let query = db.collection('notifications').where('userId', '==', userId);
+
+    if (filters.filter && filters.filter !== 'all') {
+      query = query.where('type', '==', filters.filter);
+    }
+
+    if (!filters.showRead) {
+      query = query.where('isRead', '==', false);
+    }
+
+    const notificationsSnapshot = await query.orderBy('createdAt', 'desc').get();
+    let notifications = notificationsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    // Filtrar por búsqueda
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      notifications = notifications.filter(notification => 
+        (notification.title || '').toLowerCase().includes(searchTerm) ||
+        (notification.message || '').toLowerCase().includes(searchTerm)
+      );
+    }
+
+    return notifications;
+  }
+
+  async getNotificationSettings(userId: string): Promise<any> {
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      throw new Error('User not found');
+    }
+
+    const userData = userDoc.data();
+    return userData?.notificationSettings || {
+      email: true,
+      push: true,
+      sms: false,
+      orderUpdates: true,
+      promotions: true,
+      newProducts: true,
+      security: true,
+      system: true,
+    };
+  }
+
+  async updateNotificationSettings(userId: string, settings: any): Promise<any> {
+    const userRef = db.collection('users').doc(userId);
+    await userRef.update({
+      notificationSettings: settings,
+      updatedAt: new Date()
+    });
+    return settings;
+  }
+
+  async markNotificationAsRead(notificationId: string, userId: string): Promise<void> {
+    const notificationRef = db.collection('notifications').doc(notificationId);
+    const notificationDoc = await notificationRef.get();
+    
+    if (!notificationDoc.exists || notificationDoc.data()?.userId !== userId) {
+      throw new Error('Notification not found or unauthorized');
+    }
+
+    await notificationRef.update({
+      isRead: true,
+      readAt: new Date()
+    });
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    const notificationsSnapshot = await db.collection('notifications')
+      .where('userId', '==', userId)
+      .where('isRead', '==', false)
+      .get();
+
+    const batch = db.batch();
+    notificationsSnapshot.docs.forEach(doc => {
+      batch.update(doc.ref, {
+        isRead: true,
+        readAt: new Date()
+      });
+    });
+
+    await batch.commit();
+  }
+
+  async deleteNotification(notificationId: string, userId: string): Promise<void> {
+    const notificationRef = db.collection('notifications').doc(notificationId);
+    const notificationDoc = await notificationRef.get();
+    
+    if (!notificationDoc.exists || notificationDoc.data()?.userId !== userId) {
+      throw new Error('Notification not found or unauthorized');
+    }
+
+    await notificationRef.delete();
   }
 }
 

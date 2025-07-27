@@ -122,11 +122,11 @@ export default function Navigation() {
               {user ? (
                 <UserMenu user={user} />
               ) : (
-                <Link href="/auth">
-                  <Button variant="default" className="bg-luxury-gold text-black hover:bg-luxury-gold/80 font-semibold px-5 py-2 ml-2">
-                    Acceso / Registro
-                  </Button>
-                </Link>
+              <Link href="/auth">
+                <Button variant="default" className="bg-luxury-gold text-black hover:bg-luxury-gold/80 font-semibold px-5 py-2 ml-2">
+                  Acceso / Registro
+                </Button>
+              </Link>
               )}
               
               <motion.button

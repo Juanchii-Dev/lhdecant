@@ -193,7 +193,7 @@ export function setupAuth(app: Express) {
         
         let user = await storage.getUserByUsername(email);
         
-        if (!user) {
+      if (!user) {
           console.log('🆕 Creando nuevo usuario...');
           user = await storage.createUser({
             username: email,
