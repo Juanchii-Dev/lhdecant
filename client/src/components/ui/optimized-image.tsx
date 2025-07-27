@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Image as ImageIcon } from "lucide-react";
 
@@ -34,6 +34,15 @@ export default function OptimizedImage({
       setIsLoading(false);
     }
   };
+
+  // Verificar si la URL es válida antes de cargar
+  useEffect(() => {
+    if (src && !src.includes('imgur.com/example') && !src.includes('imgur.com/bleu-chanel') && !src.includes('imgur.com/la-vie-est-belle') && !src.includes('imgur.com/sauvage')) {
+      setCurrentSrc(src);
+    } else {
+      setCurrentSrc(fallbackSrc);
+    }
+  }, [src, fallbackSrc]);
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
