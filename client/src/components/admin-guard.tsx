@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "../hooks/use-auth";
+// Removido useAuth para evitar conflictos con autenticación de admin
 import { Loader2, Shield, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 

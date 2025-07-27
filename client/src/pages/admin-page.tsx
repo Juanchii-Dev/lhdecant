@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useAuth } from "../hooks/use-auth";
+// Removido useAuth para evitar conflictos con autenticación de admin
 import { useToast } from "../hooks/use-toast";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -180,6 +180,9 @@ export default function AdminPage() {
     );
   }
 
+  // Solo ejecutar queries si el usuario está autenticado
+  const shouldFetch = isAdmin && adminEmail === "lhdecant@gmail.com";
+
   // Queries
   const { data: perfumes = [] } = useQuery<Perfume[]>({
     queryKey: ["perfumes"],
@@ -189,7 +192,8 @@ export default function AdminPage() {
       });
       if (!response.ok) throw new Error("Error fetching perfumes");
       return response.json();
-    }
+    },
+    enabled: shouldFetch
   });
 
   const { data: collections = [] } = useQuery<Collection[]>({
@@ -200,7 +204,8 @@ export default function AdminPage() {
       });
       if (!response.ok) throw new Error("Error fetching collections");
       return response.json();
-    }
+    },
+    enabled: shouldFetch
   });
 
   const { data: dashboardStats } = useQuery<DashboardStats>({
@@ -211,7 +216,8 @@ export default function AdminPage() {
       });
       if (!response.ok) throw new Error("Error fetching dashboard stats");
       return response.json();
-    }
+    },
+    enabled: shouldFetch
   });
 
   const { data: recentOrders } = useQuery<Order[]>({
@@ -222,7 +228,8 @@ export default function AdminPage() {
       });
       if (!response.ok) throw new Error("Error fetching recent orders");
       return response.json();
-    }
+    },
+    enabled: shouldFetch
   });
 
   const { data: popularPerfumes } = useQuery<Perfume[]>({
@@ -233,7 +240,8 @@ export default function AdminPage() {
       });
       if (!response.ok) throw new Error("Error fetching popular perfumes");
       return response.json();
-    }
+    },
+    enabled: shouldFetch
   });
 
   const { data: contactMessages } = useQuery<ContactMessage[]>({
@@ -244,7 +252,8 @@ export default function AdminPage() {
       });
       if (!response.ok) throw new Error("Error fetching contact messages");
       return response.json();
-    }
+    },
+    enabled: shouldFetch
   });
 
   const { data: userStats } = useQuery<UserStats>({
@@ -255,7 +264,8 @@ export default function AdminPage() {
       });
       if (!response.ok) throw new Error("Error fetching user stats");
       return response.json();
-    }
+    },
+    enabled: shouldFetch
   });
 
   const { data: salesStats } = useQuery<SalesStats>({
@@ -266,7 +276,8 @@ export default function AdminPage() {
       });
       if (!response.ok) throw new Error("Error fetching sales stats");
       return response.json();
-    }
+    },
+    enabled: shouldFetch
   });
 
   // Mutations
