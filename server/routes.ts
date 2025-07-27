@@ -153,14 +153,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const pathname = urlObj.pathname.toLowerCase();
-      return validExtensions.some(ext => pathname.endsWith(ext));
+      
+      // Verificar si termina en extensión válida
+      const hasValidExtension = validExtensions.some(ext => pathname.endsWith(ext));
+      
+      // Si no tiene extensión, verificar que sea una URL válida de imagen
+      if (!hasValidExtension) {
+        // Permitir URLs sin extensión (como CDNs que sirven imágenes)
+        return urlObj.hostname.length > 0 && pathname.length > 0;
+      }
+      
+      return hasValidExtension;
     } catch {
       return false;
     }
   };
 
   // Create perfume (admin only)
-  app.post("/api/perfumes", requireAuth, async (req, res) => {
+  app.post("/api/perfumes", requireAdmin, async (req, res) => {
     try {
       // Validar URL de imagen si se proporciona
       if (req.body.imageUrl && !isValidImageUrl(req.body.imageUrl)) {
@@ -177,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update perfume (admin only)
-  app.put("/api/perfumes/:id", requireAuth, async (req, res) => {
+  app.put("/api/perfumes/:id", requireAdmin, async (req, res) => {
     try {
       const id = req.params.id;
       
@@ -196,7 +206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update perfume with PATCH (admin only)
-  app.patch("/api/perfumes/:id", requireAuth, async (req, res) => {
+  app.patch("/api/perfumes/:id", requireAdmin, async (req, res) => {
     try {
       const id = req.params.id;
       const perfume = await storage.updatePerfume(id, req.body);
@@ -207,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete perfume (admin only)
-  app.delete("/api/perfumes/:id", requireAuth, async (req, res) => {
+  app.delete("/api/perfumes/:id", requireAdmin, async (req, res) => {
     try {
       const id = req.params.id;
       await storage.deletePerfume(id);
@@ -218,7 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Toggle homepage display
-  app.patch("/api/perfumes/:id/homepage", requireAuth, async (req, res) => {
+  app.patch("/api/perfumes/:id/homepage", requireAdmin, async (req, res) => {
     try {
       const id = req.params.id;
       const { showOnHomepage } = req.body;
@@ -230,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update offer status
-  app.patch("/api/perfumes/:id/offer", requireAuth, async (req, res) => {
+  app.patch("/api/perfumes/:id/offer", requireAdmin, async (req, res) => {
     try {
       const id = req.params.id;
       const { isOnOffer, discountPercentage, offerDescription } = req.body;
