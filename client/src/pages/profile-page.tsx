@@ -1,9 +1,25 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, Calendar, Edit, Save, X, Camera, Crown } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Edit, Save, X, Camera, Crown, Heart, ShoppingBag, Star } from 'lucide-react';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
+import { getQueryFn } from '../lib/queryClient';
+
+interface UserStats {
+  favoritesCount: number;
+  ordersCount: number;
+  reviewsCount: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: 'favorite' | 'order' | 'review';
+  description: string;
+  date: string;
+  productName?: string;
+  orderId?: string;
+}
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -18,6 +34,20 @@ export default function ProfilePage() {
       marketing: false,
       notifications: true,
     },
+  });
+
+  // Obtener estadísticas reales del usuario
+  const { data: userStats, isLoading: statsLoading } = useQuery<UserStats>({
+    queryKey: ['user-stats', user?.id],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!user?.id,
+  });
+
+  // Obtener actividad reciente real
+  const { data: recentActivity = [], isLoading: activityLoading } = useQuery<RecentActivity[]>({
+    queryKey: ['user-activity', user?.id],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!user?.id,
   });
 
   // Usar datos del usuario directamente
@@ -126,6 +156,36 @@ export default function ProfilePage() {
       month: 'long',
       day: 'numeric',
     });
+  };
+
+  const formatRelativeDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      return 'Hace unos minutos';
+    } else if (diffInHours < 24) {
+      return `Hace ${diffInHours} hora${diffInHours > 1 ? 's' : ''}`;
+    } else if (diffInHours < 48) {
+      return 'Ayer';
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `Hace ${diffInDays} día${diffInDays > 1 ? 's' : ''}`;
+    }
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'favorite':
+        return <Heart className="w-4 h-4 text-red-400" />;
+      case 'order':
+        return <ShoppingBag className="w-4 h-4 text-blue-400" />;
+      case 'review':
+        return <Star className="w-4 h-4 text-yellow-400" />;
+      default:
+        return <div className="w-2 h-2 bg-luxury-gold rounded-full"></div>;
+    }
   };
 
   if (!user) {
@@ -287,16 +347,49 @@ export default function ProfilePage() {
               className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
             >
               <div className="bg-charcoal rounded-lg border border-luxury-gold/20 p-6 text-center">
-                <div className="text-3xl font-bold text-luxury-gold mb-2">12</div>
-                <div className="text-gray-400">Favoritos</div>
+                {statsLoading ? (
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-700 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-700 rounded"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-3xl font-bold text-luxury-gold mb-2">
+                      {userStats?.favoritesCount || 0}
+                    </div>
+                    <div className="text-gray-400">Favoritos</div>
+                  </>
+                )}
               </div>
               <div className="bg-charcoal rounded-lg border border-luxury-gold/20 p-6 text-center">
-                <div className="text-3xl font-bold text-luxury-gold mb-2">3</div>
-                <div className="text-gray-400">Pedidos</div>
+                {statsLoading ? (
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-700 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-700 rounded"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-3xl font-bold text-luxury-gold mb-2">
+                      {userStats?.ordersCount || 0}
+                    </div>
+                    <div className="text-gray-400">Pedidos</div>
+                  </>
+                )}
               </div>
               <div className="bg-charcoal rounded-lg border border-luxury-gold/20 p-6 text-center">
-                <div className="text-3xl font-bold text-luxury-gold mb-2">5</div>
-                <div className="text-gray-400">Reseñas</div>
+                {statsLoading ? (
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-700 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-700 rounded"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-3xl font-bold text-luxury-gold mb-2">
+                      {userStats?.reviewsCount || 0}
+                    </div>
+                    <div className="text-gray-400">Reseñas</div>
+                  </>
+                )}
               </div>
             </motion.div>
 
@@ -360,29 +453,37 @@ export default function ProfilePage() {
               className="bg-charcoal rounded-lg border border-luxury-gold/20 p-6"
             >
               <h3 className="text-xl font-bold text-white mb-4">Actividad Reciente</h3>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3 p-3 bg-black/30 rounded-lg">
-                  <div className="w-2 h-2 bg-luxury-gold rounded-full"></div>
-                  <div>
-                    <p className="text-white">Agregaste "Bleu de Chanel" a favoritos</p>
-                    <p className="text-sm text-gray-400">Hace 2 días</p>
-                  </div>
+              {activityLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex items-center space-x-3 p-3 bg-black/30 rounded-lg animate-pulse">
+                      <div className="w-2 h-2 bg-gray-700 rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-700 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-700 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center space-x-3 p-3 bg-black/30 rounded-lg">
-                  <div className="w-2 h-2 bg-luxury-gold rounded-full"></div>
-                  <div>
-                    <p className="text-white">Completaste tu pedido #1234</p>
-                    <p className="text-sm text-gray-400">Hace 1 semana</p>
-                  </div>
+              ) : recentActivity.length > 0 ? (
+                <div className="space-y-4">
+                  {recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-center space-x-3 p-3 bg-black/30 rounded-lg">
+                      {getActivityIcon(activity.type)}
+                      <div>
+                        <p className="text-white">{activity.description}</p>
+                        <p className="text-sm text-gray-400">{formatRelativeDate(activity.date)}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center space-x-3 p-3 bg-black/30 rounded-lg">
-                  <div className="w-2 h-2 bg-luxury-gold rounded-full"></div>
-                  <div>
-                    <p className="text-white">Escribiste una reseña para "La Vie Est Belle"</p>
-                    <p className="text-sm text-gray-400">Hace 2 semanas</p>
-                  </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-gray-500 mb-2">📝</div>
+                  <p className="text-gray-400">No hay actividad reciente</p>
+                  <p className="text-sm text-gray-500">Comienza a usar la aplicación para ver tu actividad aquí</p>
                 </div>
-              </div>
+              )}
             </motion.div>
           </div>
         )}

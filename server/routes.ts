@@ -953,6 +953,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User stats and activity endpoints
+  app.get('/api/user-stats', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const stats = await storage.getUserStats(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error getting user stats:', error);
+      res.status(500).json({ error: 'Error getting user stats' });
+    }
+  });
+
+  app.get('/api/user-activity', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const activity = await storage.getUserActivity(req.user.id);
+      res.json(activity);
+    } catch (error) {
+      console.error('Error getting user activity:', error);
+      res.status(500).json({ error: 'Error getting user activity' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

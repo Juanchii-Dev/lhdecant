@@ -4,6 +4,8 @@ import { Link } from "wouter";
 import { Button } from "./ui/button";
 import { useAuth } from "../hooks/use-auth";
 import { useToast } from "../hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "../lib/queryClient";
 import { 
   User, 
   Settings, 
@@ -24,10 +26,48 @@ interface UserMenuProps {
   user: any;
 }
 
+interface UserStats {
+  favoritesCount: number;
+  ordersCount: number;
+  reviewsCount: number;
+}
+
+interface Notification {
+  id: string;
+  isRead: boolean;
+  [key: string]: any;
+}
+
+interface Coupon {
+  id: string;
+  isActive: boolean;
+  [key: string]: any;
+}
+
 export default function UserMenu({ user }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { logoutMutation } = useAuth();
   const { toast } = useToast();
+
+  // Obtener estadísticas reales del usuario
+  const { data: userStats } = useQuery<UserStats>({
+    queryKey: ['user-stats', user?.id],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!user?.id,
+  });
+
+  // Obtener notificaciones no leídas
+  const { data: unreadNotifications = [] } = useQuery<Notification[]>({
+    queryKey: ['notifications', user?.id, 'unread'],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!user?.id,
+  });
+
+  // Obtener cupones disponibles
+  const { data: availableCoupons = [] } = useQuery<Coupon[]>({
+    queryKey: ['coupons', 'available'],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
 
   const handleLogout = async () => {
     try {
@@ -71,14 +111,14 @@ export default function UserMenu({ user }: UserMenuProps) {
       label: "Favoritos",
       href: "/favorites",
       description: "Perfumes que te gustan",
-      badge: "12"
+      badge: userStats && userStats.favoritesCount > 0 ? userStats.favoritesCount.toString() : undefined
     },
     {
       icon: <ShoppingBag className="w-4 h-4" />,
       label: "Mis Pedidos",
       href: "/orders",
       description: "Historial de compras",
-      badge: "3"
+      badge: userStats && userStats.ordersCount > 0 ? userStats.ordersCount.toString() : undefined
     },
     {
       icon: <Package className="w-4 h-4" />,
@@ -103,20 +143,21 @@ export default function UserMenu({ user }: UserMenuProps) {
       label: "Códigos de Descuento",
       href: "/coupons",
       description: "Cupones y promociones",
-      badge: "2"
+      badge: availableCoupons.length > 0 ? availableCoupons.length.toString() : undefined
     },
     {
       icon: <Star className="w-4 h-4" />,
       label: "Reseñas",
       href: "/reviews",
-      description: "Tus opiniones sobre productos"
+      description: "Tus opiniones sobre productos",
+      badge: userStats && userStats.reviewsCount > 0 ? userStats.reviewsCount.toString() : undefined
     },
     {
       icon: <Bell className="w-4 h-4" />,
       label: "Notificaciones",
       href: "/notifications",
       description: "Configurar alertas",
-      badge: "5"
+      badge: unreadNotifications.length > 0 ? unreadNotifications.length.toString() : undefined
     },
     {
       icon: <Settings className="w-4 h-4" />,

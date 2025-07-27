@@ -1117,6 +1117,97 @@ export class FirestoreStorage {
 
     await notificationRef.delete();
   }
+
+  // User stats and activity methods
+  async getUserStats(userId: string): Promise<any> {
+    // Obtener conteo de favoritos
+    const favoritesSnapshot = await db.collection('favorites')
+      .where('userId', '==', userId)
+      .get();
+    const favoritesCount = favoritesSnapshot.size;
+
+    // Obtener conteo de pedidos
+    const ordersSnapshot = await db.collection('orders')
+      .where('userId', '==', userId)
+      .get();
+    const ordersCount = ordersSnapshot.size;
+
+    // Obtener conteo de reseñas
+    const reviewsSnapshot = await db.collection('reviews')
+      .where('userId', '==', userId)
+      .get();
+    const reviewsCount = reviewsSnapshot.size;
+
+    return {
+      favoritesCount,
+      ordersCount,
+      reviewsCount,
+    };
+  }
+
+  async getUserActivity(userId: string): Promise<any[]> {
+    const activities: any[] = [];
+
+    // Obtener favoritos recientes
+    const favoritesSnapshot = await db.collection('favorites')
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .limit(5)
+      .get();
+
+    favoritesSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      activities.push({
+        id: doc.id,
+        type: 'favorite',
+        description: `Agregaste "${data.perfumeName || 'Perfume'}" a favoritos`,
+        date: data.createdAt?.toDate?.() || data.createdAt || new Date(),
+        productName: data.perfumeName,
+      });
+    });
+
+    // Obtener pedidos recientes
+    const ordersSnapshot = await db.collection('orders')
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .limit(5)
+      .get();
+
+    ordersSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      activities.push({
+        id: doc.id,
+        type: 'order',
+        description: `Completaste tu pedido #${doc.id.slice(-4)}`,
+        date: data.createdAt?.toDate?.() || data.createdAt || new Date(),
+        orderId: doc.id,
+      });
+    });
+
+    // Obtener reseñas recientes
+    const reviewsSnapshot = await db.collection('reviews')
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .limit(5)
+      .get();
+
+    reviewsSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      activities.push({
+        id: doc.id,
+        type: 'review',
+        description: `Escribiste una reseña para "${data.perfumeName || 'Perfume'}"`,
+        date: data.createdAt?.toDate?.() || data.createdAt || new Date(),
+        productName: data.perfumeName,
+      });
+    });
+
+    // Ordenar todas las actividades por fecha (más reciente primero)
+    activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // Retornar solo las 10 actividades más recientes
+    return activities.slice(0, 10);
+  }
 }
 
 export const storage = new FirestoreStorage(); 
