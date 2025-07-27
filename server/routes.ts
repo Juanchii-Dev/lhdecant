@@ -980,6 +980,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Seed perfumes endpoint (admin only)
+  app.post('/api/seed-perfumes', async (req, res) => {
+    try {
+      // Verificar si es admin
+      const isAdmin = req.headers['x-admin-key'] === 'lhdecant-admin-2024';
+      
+      if (!isAdmin) {
+        return res.status(403).json({ error: "Acceso denegado" });
+      }
+      
+      const { seedPerfumes } = await import("./seed-perfumes");
+      await seedPerfumes();
+      
+      res.json({ message: "Perfumes cargados exitosamente" });
+    } catch (error) {
+      console.error('Error seeding perfumes:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

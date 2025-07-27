@@ -1,0 +1,214 @@
+/* Estilos para las Cards de Perfumes - LH Decants */
+
+/* Variables CSS para colores de lujo */
+:root {
+  --luxury-gold: #D4AF37;
+  --luxury-gold-rgb: 212, 175, 55;
+  --charcoal: #333333;
+  --charcoal-rgb: 51, 51, 51;
+}
+
+/* Efectos de cristal y lujo */
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(var(--luxury-gold-rgb), 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Efecto de elevación de lujo */
+.luxury-hover-lift {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.luxury-hover-lift:hover {
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 8px 32px rgba(var(--luxury-gold-rgb), 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Perspectiva 3D */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Texto dorado de lujo */
+.luxury-gold-text {
+  color: var(--luxury-gold);
+  text-shadow: 0 0 10px rgba(var(--luxury-gold-rgb), 0.3);
+}
+
+/* Botón de lujo */
+.luxury-button {
+  background: linear-gradient(
+    135deg,
+    var(--luxury-gold) 0%,
+    #B8941F 100%
+  );
+  color: #000;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  box-shadow: 
+    0 4px 16px rgba(var(--luxury-gold-rgb), 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.luxury-button:hover {
+  background: linear-gradient(
+    135deg,
+    #E6C555 0%,
+    var(--luxury-gold) 100%
+  );
+  box-shadow: 
+    0 6px 24px rgba(var(--luxury-gold-rgb), 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  color: #000;
+}
+
+.luxury-button:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 8px rgba(var(--luxury-gold-rgb), 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Selector de tamaños */
+.size-selector-button {
+  background: rgba(var(--charcoal-rgb), 0.6);
+  border: 1px solid rgba(var(--luxury-gold-rgb), 0.3);
+  color: #fff;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  backdrop-filter: blur(8px);
+}
+
+.size-selector-button:hover {
+  background: rgba(var(--luxury-gold-rgb), 0.2);
+  border-color: var(--luxury-gold);
+  color: var(--luxury-gold);
+  box-shadow: 0 4px 12px rgba(var(--luxury-gold-rgb), 0.2);
+}
+
+.size-selector-button.active {
+  background: linear-gradient(
+    135deg,
+    var(--luxury-gold) 0%,
+    #B8941F 100%
+  );
+  border-color: var(--luxury-gold);
+  color: #000;
+  font-weight: 700;
+  box-shadow: 
+    0 4px 16px rgba(var(--luxury-gold-rgb), 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Fuentes tipográficas */
+.font-montserrat {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.font-playfair {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Efectos de animación suaves */
+@keyframes subtle-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(var(--luxury-gold-rgb), 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(var(--luxury-gold-rgb), 0.2);
+  }
+}
+
+.glass-card:hover {
+  animation: subtle-glow 3s ease-in-out infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .glass-card {
+    height: auto;
+    min-height: 500px;
+  }
+  
+  .luxury-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .size-selector-button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Estados de carga */
+.perfume-card-loading {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes loading-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Efectos de transición suaves */
+* {
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .glass-card,
+  .luxury-button,
+  .size-selector-button {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Focus states for accessibility */
+.luxury-button:focus,
+.size-selector-button:focus {
+  outline: 2px solid var(--luxury-gold);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .glass-card {
+    border: 2px solid var(--luxury-gold);
+    background: rgba(0, 0, 0, 0.9);
+  }
+  
+  .luxury-gold-text {
+    text-shadow: none;
+    font-weight: 800;
+  }
+} 

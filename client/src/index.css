@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Importar estilos de las cards de perfumes */
+@import './styles/perfume-card-styles.css';
+
 :root {
   --background: 0 0% 0%; /* #000000 */
   --foreground: 0 0% 100%; /* #FFFFFF */
