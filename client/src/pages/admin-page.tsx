@@ -171,14 +171,22 @@ export default function AdminPage() {
   const adminEmail = localStorage.getItem("adminEmail");
   
   if (!isAdmin || adminEmail !== "lhdecant@gmail.com") {
-    return null;
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-luxury-gold font-medium">Verificando acceso de administrador...</p>
+        </div>
+      </div>
+    );
   }
 
   // Queries
   const { data: perfumes = [] } = useQuery<Perfume[]>({
     queryKey: ["perfumes"],
     queryFn: async () => {
-      const response = await fetch("/api/perfumes");
+      const response = await fetch("/api/perfumes", {
+        credentials: "include"
+      });
       if (!response.ok) throw new Error("Error fetching perfumes");
       return response.json();
     }
@@ -187,7 +195,9 @@ export default function AdminPage() {
   const { data: collections = [] } = useQuery<Collection[]>({
     queryKey: ["collections"],
     queryFn: async () => {
-      const response = await fetch("/api/collections");
+      const response = await fetch("/api/collections", {
+        credentials: "include"
+      });
       if (!response.ok) throw new Error("Error fetching collections");
       return response.json();
     }
@@ -196,7 +206,9 @@ export default function AdminPage() {
   const { data: dashboardStats } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/dashboard-stats");
+      const response = await fetch("/api/admin/dashboard-stats", {
+        credentials: "include"
+      });
       if (!response.ok) throw new Error("Error fetching dashboard stats");
       return response.json();
     }
@@ -205,7 +217,9 @@ export default function AdminPage() {
   const { data: recentOrders } = useQuery<Order[]>({
     queryKey: ["recent-orders"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/recent-orders");
+      const response = await fetch("/api/admin/recent-orders", {
+        credentials: "include"
+      });
       if (!response.ok) throw new Error("Error fetching recent orders");
       return response.json();
     }
@@ -214,7 +228,9 @@ export default function AdminPage() {
   const { data: popularPerfumes } = useQuery<Perfume[]>({
     queryKey: ["popular-perfumes"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/popular-perfumes");
+      const response = await fetch("/api/admin/popular-perfumes", {
+        credentials: "include"
+      });
       if (!response.ok) throw new Error("Error fetching popular perfumes");
       return response.json();
     }
@@ -223,7 +239,9 @@ export default function AdminPage() {
   const { data: contactMessages } = useQuery<ContactMessage[]>({
     queryKey: ["contact-messages"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/contact-messages");
+      const response = await fetch("/api/admin/contact-messages", {
+        credentials: "include"
+      });
       if (!response.ok) throw new Error("Error fetching contact messages");
       return response.json();
     }
@@ -232,7 +250,9 @@ export default function AdminPage() {
   const { data: userStats } = useQuery<UserStats>({
     queryKey: ["user-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/user-stats");
+      const response = await fetch("/api/admin/user-stats", {
+        credentials: "include"
+      });
       if (!response.ok) throw new Error("Error fetching user stats");
       return response.json();
     }
@@ -241,7 +261,9 @@ export default function AdminPage() {
   const { data: salesStats } = useQuery<SalesStats>({
     queryKey: ["sales-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/sales-stats");
+      const response = await fetch("/api/admin/sales-stats", {
+        credentials: "include"
+      });
       if (!response.ok) throw new Error("Error fetching sales stats");
       return response.json();
     }
@@ -253,6 +275,7 @@ export default function AdminPage() {
       const response = await fetch("/api/perfumes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data)
       });
       if (!response.ok) throw new Error("Error creating perfume");
@@ -273,6 +296,7 @@ export default function AdminPage() {
       const response = await fetch(`/api/perfumes/${data.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data)
       });
       if (!response.ok) throw new Error("Error updating perfume");
@@ -292,7 +316,8 @@ export default function AdminPage() {
   const deletePerfumeMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/perfumes/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        credentials: "include"
       });
       if (!response.ok) throw new Error("Error deleting perfume");
     },
@@ -310,6 +335,7 @@ export default function AdminPage() {
       const response = await fetch("/api/collections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data)
       });
       if (!response.ok) throw new Error("Error creating collection");
@@ -330,6 +356,7 @@ export default function AdminPage() {
       const response = await fetch(`/api/collections/${data.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data)
       });
       if (!response.ok) throw new Error("Error updating collection");
@@ -351,6 +378,7 @@ export default function AdminPage() {
       const response = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data)
       });
       if (!response.ok) throw new Error("Error updating setting");
@@ -370,6 +398,7 @@ export default function AdminPage() {
       const response = await fetch(`/api/admin/orders/${data.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ status: data.status })
       });
       if (!response.ok) throw new Error("Error updating order status");
@@ -387,7 +416,8 @@ export default function AdminPage() {
   const markMessageAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/admin/contact-messages/${id}/read`, {
-        method: "PATCH"
+        method: "PATCH",
+        credentials: "include"
       });
       if (!response.ok) throw new Error("Error marking message as read");
       return response.json();
