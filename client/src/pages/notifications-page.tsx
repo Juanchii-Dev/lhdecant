@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../hooks/use-auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getQueryFn } from '../lib/queryClient';
@@ -6,25 +6,19 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Switch } from '../components/ui/switch';
-import { Separator } from '../components/ui/separator';
 import { useToast } from '../hooks/use-toast';
 import { 
   Bell, 
   Mail, 
-  Smartphone, 
   Settings, 
   CheckCircle, 
   AlertCircle,
   Info,
   ShoppingBag,
   Gift,
-  Star,
   Package,
-  CreditCard,
   Trash2,
   Eye,
-  EyeOff,
-  Filter,
   Search
 } from 'lucide-react';
 

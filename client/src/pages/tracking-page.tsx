@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Package, Truck, CheckCircle, Clock, MapPin, Search } from 'lucide-react';
@@ -155,7 +155,7 @@ export default function TrackingPage() {
                 </div>
               ) : trackingData && trackingData.length > 0 ? (
                 <div className="space-y-4">
-                  {trackingData.map((event, index) => (
+                  {trackingData.map((event) => (
                     <div key={event.id} className="flex items-start gap-4 p-4 bg-gray-700 rounded-lg">
                       <div className="flex-shrink-0 w-8 h-8 bg-luxury-gold rounded-full flex items-center justify-center">
                         <MapPin size={16} className="text-gray-900" />

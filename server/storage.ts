@@ -66,6 +66,8 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
+export { admin };
+
 export class FirestoreStorage {
   // Métodos de usuario
   async getUser(id: string): Promise<User | null> {

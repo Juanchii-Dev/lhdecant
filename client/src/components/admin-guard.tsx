@@ -9,7 +9,6 @@ interface AdminGuardProps {
 }
 
 export default function AdminGuard({ children }: AdminGuardProps) {
-  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [isChecking, setIsChecking] = useState(true);
 
@@ -48,7 +47,10 @@ export default function AdminGuard({ children }: AdminGuardProps) {
     );
   }
 
-  if (!user || user.email !== "lhdecant@gmail.com") {
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
+  const adminEmail = localStorage.getItem("adminEmail");
+  
+  if (!isAdmin || adminEmail !== "lhdecant@gmail.com") {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <motion.div
