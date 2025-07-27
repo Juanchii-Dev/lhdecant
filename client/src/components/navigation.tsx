@@ -27,16 +27,6 @@ export default function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-    setIsMobileMenuOpen(false);
-  };
-
-
-
   // Función mejorada para Google OAuth
   const handleGoogle = async () => {
     setLoadingGoogle(true);
@@ -73,30 +63,44 @@ export default function Navigation() {
       >
         <nav className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <motion.div 
-              className="flex items-center"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            >
-              <span className="text-2xl font-montserrat font-bold text-luxury-gold">LH Decants</span>
-            </motion.div>
+            <Link href="/">
+              <motion.div 
+                className="flex items-center cursor-pointer"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                <span className="text-2xl font-montserrat font-bold text-luxury-gold">LH Decants</span>
+              </motion.div>
+            </Link>
 
             <div className="hidden md:flex items-center space-x-8">
-              {[
-                { label: "Inicio", id: "inicio" },
-                { label: "Perfumes", id: "perfumes" },
-                { label: "Colecciones", id: "colecciones" },
-              ].map((item) => (
-                <motion.button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className="font-montserrat font-medium hover:text-luxury-gold transition-colors duration-300"
+              <Link href="/">
+                <motion.span
+                  className="font-montserrat font-medium hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  {item.label}
-                </motion.button>
-              ))}
+                  Inicio
+                </motion.span>
+              </Link>
+              <Link href="/catalogo">
+                <motion.span
+                  className="font-montserrat font-medium hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Perfumes
+                </motion.span>
+              </Link>
+              <Link href="/colecciones">
+                <motion.span
+                  className="font-montserrat font-medium hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Colecciones
+                </motion.span>
+              </Link>
               <Link href="/catalogo">
                 <motion.span
                   className="font-montserrat font-medium hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
@@ -148,19 +152,30 @@ export default function Navigation() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              {[
-                { label: "Inicio", id: "inicio" },
-                { label: "Perfumes", id: "perfumes" },
-                { label: "Colecciones", id: "colecciones" },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className="block w-full text-left py-2 hover:text-luxury-gold transition-colors duration-300"
+              <Link href="/">
+                <span
+                  className="block w-full text-left py-2 hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  {item.label}
-                </button>
-              ))}
+                  Inicio
+                </span>
+              </Link>
+              <Link href="/catalogo">
+                <span
+                  className="block w-full text-left py-2 hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Perfumes
+                </span>
+              </Link>
+              <Link href="/colecciones">
+                <span
+                  className="block w-full text-left py-2 hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Colecciones
+                </span>
+              </Link>
               <Link href="/catalogo">
                 <span
                   className="block w-full text-left py-2 hover:text-luxury-gold transition-colors duration-300 cursor-pointer"
