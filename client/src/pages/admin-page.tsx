@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Perfume, InsertPerfume, Collection, InsertCollection, Settings } from "../../../shared/schema";
+import { Perfume, InsertPerfume, Collection, InsertCollection, Settings } from "../../../shared/schema.ts";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -348,7 +348,7 @@ export default function AdminPage() {
     return null;
   }
 
-  const collectionsEnabled = settings?.find(s => s.key === 'collections_enabled')?.value === 'true';
+  const collectionsEnabled = Array.isArray(settings) ? settings.find(s => s.key === 'collections_enabled')?.value === 'true' : false;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -506,7 +506,7 @@ export default function AdminPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-gray-300">
-                            {perfume.sizes.map((size, index) => (
+                            {perfume.sizes.map((size: string, index: number) => (
                               <div key={size} className="text-xs">
                                 {size}: ${perfume.prices[index]}
                               </div>
