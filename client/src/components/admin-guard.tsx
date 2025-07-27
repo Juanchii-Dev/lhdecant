@@ -14,19 +14,40 @@ export default function AdminGuard({ children }: AdminGuardProps) {
 
   useEffect(() => {
     const checkAdminAccess = async () => {
-      // Simular verificación de admin
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Verificar si el usuario es admin
-      const isAdmin = localStorage.getItem("isAdmin") === "true";
-      const adminEmail = localStorage.getItem("adminEmail");
-      
-      if (!isAdmin || adminEmail !== "lhdecant@gmail.com") {
-        setLocation("/admin-auth");
-        return;
+      try {
+        // Verificar estado de admin en el servidor
+        const response = await fetch("/api/admin/status", {
+          credentials: "include"
+        });
+        const data = await response.json();
+        
+        if (response.ok && data.isAdmin && data.email === "lhdecant@gmail.com") {
+          setIsChecking(false);
+        } else {
+          // Verificar localStorage como fallback
+          const isAdmin = localStorage.getItem("isAdmin") === "true";
+          const adminEmail = localStorage.getItem("adminEmail");
+          
+          if (!isAdmin || adminEmail !== "lhdecant@gmail.com") {
+            setLocation("/admin-auth");
+            return;
+          }
+          
+          setIsChecking(false);
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        // Fallback a localStorage
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        const adminEmail = localStorage.getItem("adminEmail");
+        
+        if (!isAdmin || adminEmail !== "lhdecant@gmail.com") {
+          setLocation("/admin-auth");
+          return;
+        }
+        
+        setIsChecking(false);
       }
-      
-      setIsChecking(false);
     };
 
     checkAdminAccess();

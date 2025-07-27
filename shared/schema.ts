@@ -12,7 +12,7 @@ export interface Perfume {
   isOnOffer: boolean;
   discountPercentage: string;
   offerDescription?: string;
-  notes?: string;
+  notes?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -25,7 +25,8 @@ export interface InsertPerfume {
   prices: string[];
   category: string;
   imageUrl: string;
-  notes?: string;
+  notes?: string[];
+  inStock?: boolean;
 }
 
 export interface Collection {
@@ -36,6 +37,7 @@ export interface Collection {
   theme: string;
   price?: number;
   sizes?: string[];
+  prices?: string[];
   perfumes: Perfume[];
   perfumeIds?: number[];
   createdAt: string;
@@ -48,6 +50,7 @@ export interface InsertCollection {
   imageUrl: string;
   theme: string;
   sizes?: string[];
+  prices?: string[];
   perfumeIds: number[];
 }
 

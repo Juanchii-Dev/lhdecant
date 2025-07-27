@@ -25,6 +25,8 @@ declare global {
 declare module "express-session" {
   interface SessionData {
     cartId: string;
+    isAdmin?: boolean;
+    adminEmail?: string;
   }
 }
 
@@ -372,9 +374,13 @@ export function setupAuth(app: Express) {
   });
 }
 
-// Middleware para proteger rutas de admin solo para lhdecant@gmail.com
+// Middleware para proteger rutas de admin
 export function requireAdmin(req: any, res: any, next: any) {
-  if (!req.isAuthenticated() || !req.user || req.user.email !== 'lhdecant@gmail.com') {
+  // Verificar sesión de admin
+  const isAdmin = req.session.isAdmin === true;
+  const adminEmail = req.session.adminEmail;
+  
+  if (!isAdmin || adminEmail !== 'lhdecant@gmail.com') {
     return res.status(403).json({ message: 'Acceso solo para administrador' });
   }
   next();

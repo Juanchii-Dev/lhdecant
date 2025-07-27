@@ -6,6 +6,9 @@ import Stripe from 'stripe';
 import nodemailer from 'nodemailer';
 import express from 'express';
 import crypto from 'crypto';
+import { admin } from "./storage";
+
+const db = admin.firestore();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2022-11-15' });
 
@@ -23,6 +26,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
 
+  // CORS middleware para admin endpoints
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(200);
+    } else {
+      next();
+    }
+  });
+
   // Middleware to check if user is authenticated for admin routes
   const requireAuth = (req: any, res: any, next: any) => {
     if (!req.isAuthenticated()) {
@@ -30,6 +47,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     next();
   };
+
+  // Admin authentication endpoint
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      // Verificar credenciales de admin
+      if (email === "lhdecant@gmail.com" && password === "11qqaazz") {
+        // Crear sesión de admin
+        req.session.isAdmin = true;
+        req.session.adminEmail = email;
+        
+        res.json({ 
+          success: true, 
+          message: "Admin authentication successful",
+          user: { email, role: "admin" }
+        });
+      } else {
+        res.status(401).json({ 
+          success: false, 
+          message: "Invalid admin credentials" 
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: "Authentication failed" 
+      });
+    }
+  });
+
+  // Check admin status
+  app.get("/api/admin/status", (req, res) => {
+    const isAdmin = req.session.isAdmin === true;
+    const adminEmail = req.session.adminEmail;
+    
+    if (isAdmin && adminEmail === "lhdecant@gmail.com") {
+      res.json({ 
+        isAdmin: true, 
+        email: adminEmail,
+        message: "Admin session active" 
+      });
+    } else {
+      res.status(401).json({ 
+        isAdmin: false, 
+        message: "No admin session" 
+      });
+    }
+  });
   // Get all perfumes
   app.get("/api/perfumes", async (req, res) => {
     try {
@@ -74,9 +140,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Función para validar URL de imagen
+  const isValidImageUrl = (url: string): boolean => {
+    if (!url) return true; // URL opcional
+    try {
+      const urlObj = new URL(url);
+      const validProtocols = ['http:', 'https:'];
+      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff'];
+      
+      if (!validProtocols.includes(urlObj.protocol)) {
+        return false;
+      }
+      
+      const pathname = urlObj.pathname.toLowerCase();
+      return validExtensions.some(ext => pathname.endsWith(ext));
+    } catch {
+      return false;
+    }
+  };
+
   // Create perfume (admin only)
   app.post("/api/perfumes", requireAuth, async (req, res) => {
     try {
+      // Validar URL de imagen si se proporciona
+      if (req.body.imageUrl && !isValidImageUrl(req.body.imageUrl)) {
+        return res.status(400).json({ 
+          message: "URL de imagen inválida. Debe ser una URL válida con extensión de imagen (.jpg, .png, .gif, etc.)" 
+        });
+      }
+      
       const perfume = await storage.createPerfume(req.body);
       res.status(201).json(perfume);
     } catch (error) {
@@ -88,6 +180,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/perfumes/:id", requireAuth, async (req, res) => {
     try {
       const id = req.params.id;
+      
+      // Validar URL de imagen si se proporciona
+      if (req.body.imageUrl && !isValidImageUrl(req.body.imageUrl)) {
+        return res.status(400).json({ 
+          message: "URL de imagen inválida. Debe ser una URL válida con extensión de imagen (.jpg, .png, .gif, etc.)" 
+        });
+      }
+      
       const perfume = await storage.updatePerfume(id, req.body);
       res.json(perfume);
     } catch (error) {
@@ -163,6 +263,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create collection (admin only)
   app.post("/api/collections", requireAuth, async (req, res) => {
     try {
+      // Validar URL de imagen si se proporciona
+      if (req.body.imageUrl && !isValidImageUrl(req.body.imageUrl)) {
+        return res.status(400).json({ 
+          message: "URL de imagen inválida. Debe ser una URL válida con extensión de imagen (.jpg, .png, .gif, etc.)" 
+        });
+      }
+      
       const collection = await storage.createCollection(req.body);
       res.status(201).json(collection);
     } catch (error) {
@@ -531,6 +638,236 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(order);
     } catch (error) {
       res.status(500).json({ message: 'Error al obtener la orden' });
+    }
+  });
+
+  // Endpoints para estadísticas del dashboard
+  app.get('/api/admin/dashboard-stats', requireAdmin, async (req, res) => {
+    try {
+      const perfumes = await storage.getPerfumes();
+      const orders = await storage.getOrders();
+      const collections = await storage.getCollections();
+      
+      // Calcular estadísticas
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const ordersToday = orders.filter(order => {
+        const orderDate = new Date(order.createdAt);
+        orderDate.setHours(0, 0, 0, 0);
+        return orderDate.getTime() === today.getTime();
+      });
+
+      const perfumesOnOffer = perfumes.filter(p => p.isOnOffer);
+      
+      const stats = {
+        totalPerfumes: perfumes.length,
+        ordersToday: ordersToday.length,
+        totalCollections: collections.length,
+        perfumesOnOffer: perfumesOnOffer.length,
+        totalOrders: orders.length,
+        totalRevenue: orders.reduce((sum, order) => sum + (order.amount_total || 0), 0)
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al obtener estadísticas' });
+    }
+  });
+
+  // Endpoint para obtener pedidos recientes
+  app.get('/api/admin/recent-orders', requireAdmin, async (req, res) => {
+    try {
+      const orders = await storage.getOrders();
+      const recentOrders = orders
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 10);
+      
+      res.json(recentOrders);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al obtener pedidos recientes' });
+    }
+  });
+
+  // Endpoint para obtener perfumes populares
+  app.get('/api/admin/popular-perfumes', requireAdmin, async (req, res) => {
+    try {
+      const perfumes = await storage.getPerfumes();
+      // Por ahora retornamos los primeros 5, pero aquí se podría implementar
+      // lógica basada en ventas reales
+      const popularPerfumes = perfumes.slice(0, 5);
+      
+      res.json(popularPerfumes);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al obtener perfumes populares' });
+    }
+  });
+
+  // Endpoint para estadísticas de usuarios
+  app.get('/api/admin/user-stats', requireAdmin, async (req, res) => {
+    try {
+      // Obtener todos los usuarios
+      const usersRef = db.collection('users');
+      const usersSnapshot = await usersRef.get();
+      const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const newUsersToday = users.filter(user => {
+        const userDate = new Date(user.createdAt);
+        userDate.setHours(0, 0, 0, 0);
+        return userDate.getTime() === today.getTime();
+      });
+
+      const stats = {
+        totalUsers: users.length,
+        newUsersToday: newUsersToday.length,
+        activeUsers: users.filter(u => u.lastLoginAt && 
+          new Date(u.lastLoginAt).getTime() > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).getTime()
+        ).length
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al obtener estadísticas de usuarios' });
+    }
+  });
+
+  // Endpoint para estadísticas de ventas
+  app.get('/api/admin/sales-stats', requireAdmin, async (req, res) => {
+    try {
+      const orders = await storage.getOrders();
+      
+      const now = new Date();
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      
+      const ordersThisMonth = orders.filter(order => 
+        new Date(order.createdAt) >= thisMonth
+      );
+      
+      const ordersLastMonth = orders.filter(order => {
+        const orderDate = new Date(order.createdAt);
+        return orderDate >= lastMonth && orderDate < thisMonth;
+      });
+      
+      const totalRevenueThisMonth = ordersThisMonth.reduce((sum, order) => 
+        sum + (order.amount_total || 0), 0
+      );
+      
+      const totalRevenueLastMonth = ordersLastMonth.reduce((sum, order) => 
+        sum + (order.amount_total || 0), 0
+      );
+      
+      const avgOrderValue = orders.length > 0 ? 
+        orders.reduce((sum, order) => sum + (order.amount_total || 0), 0) / orders.length : 0;
+      
+      const stats = {
+        totalRevenue: orders.reduce((sum, order) => sum + (order.amount_total || 0), 0),
+        totalOrders: orders.length,
+        avgOrderValue: avgOrderValue,
+        revenueThisMonth: totalRevenueThisMonth,
+        ordersThisMonth: ordersThisMonth.length,
+        revenueLastMonth: totalRevenueLastMonth,
+        ordersLastMonth: ordersLastMonth.length
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al obtener estadísticas de ventas' });
+    }
+  });
+
+  // Endpoint para obtener mensajes de contacto
+  app.get('/api/admin/contact-messages', requireAdmin, async (req, res) => {
+    try {
+      const messagesRef = db.collection('contactMessages');
+      const messagesSnapshot = await messagesRef.orderBy('createdAt', 'desc').get();
+      const messages = messagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      res.json(messages);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al obtener mensajes de contacto' });
+    }
+  });
+
+  // Endpoint para marcar mensaje como leído
+  app.patch('/api/admin/contact-messages/:id/read', requireAdmin, async (req, res) => {
+    try {
+      const messageRef = db.collection('contactMessages').doc(req.params.id);
+      await messageRef.update({ 
+        isRead: true, 
+        readAt: new Date(),
+        readBy: req.user.id 
+      });
+      
+      res.json({ message: 'Mensaje marcado como leído' });
+    } catch (error) {
+      res.status(500).json({ message: 'Error al marcar mensaje como leído' });
+    }
+  });
+
+  // Endpoint para obtener todos los usuarios
+  app.get('/api/admin/users', requireAdmin, async (req, res) => {
+    try {
+      const usersRef = db.collection('users');
+      const usersSnapshot = await usersRef.orderBy('createdAt', 'desc').get();
+      const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al obtener usuarios' });
+    }
+  });
+
+  // Endpoint para actualizar estado de usuario
+  app.patch('/api/admin/users/:id/status', requireAdmin, async (req, res) => {
+    try {
+      const { status } = req.body;
+      const userRef = db.collection('users').doc(req.params.id);
+      await userRef.update({ 
+        status, 
+        updatedAt: new Date(),
+        updatedBy: req.user.id 
+      });
+      
+      res.json({ message: 'Estado de usuario actualizado' });
+    } catch (error) {
+      res.status(500).json({ message: 'Error al actualizar estado de usuario' });
+    }
+  });
+
+  // Endpoint para exportar datos
+  app.get('/api/admin/export-data', requireAdmin, async (req, res) => {
+    try {
+      const { type } = req.query;
+      
+      let data;
+      switch (type) {
+        case 'perfumes':
+          data = await storage.getPerfumes();
+          break;
+        case 'orders':
+          data = await storage.getOrders();
+          break;
+        case 'users':
+          const usersRef = db.collection('users');
+          const usersSnapshot = await usersRef.get();
+          data = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          break;
+        case 'collections':
+          data = await storage.getCollections();
+          break;
+        default:
+          return res.status(400).json({ message: 'Tipo de exportación no válido' });
+      }
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${type}-${new Date().toISOString().split('T')[0]}.json"`);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al exportar datos' });
     }
   });
 

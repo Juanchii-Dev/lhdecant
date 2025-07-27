@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useAuth } from "../hooks/use-auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Perfume, InsertPerfume, Collection, InsertCollection, Settings } from "../../../shared/schema.ts";
+import { useToast } from "../hooks/use-toast";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -13,266 +14,420 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "../components/ui/badge";
 import { Switch } from "../components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { Loader2, Plus, Edit, Trash2, LogOut, Settings as SettingsIcon, Package } from "lucide-react";
-import { useToast } from "../hooks/use-toast";
-import { apiRequest, queryClient, getQueryFn } from "../lib/queryClient";
-import { useLocation } from "wouter";
-import ImageUpload from "../components/ui/image-upload";
+import { 
+  Package, ShoppingCart, ShoppingBag, Percent, Plus, Edit, Trash2, 
+  Download, UserCheck, BarChart3, Eye, CheckCircle, Grid, List,
+  TrendingUp, Database, Loader2, Users, MessageSquare,
+  FileText, Bell, Mail
+} from "lucide-react";
+import "../styles/admin-panel.css";
+
+// Tipos
+interface Perfume {
+  id: string;
+  name: string;
+  brand: string;
+  description: string;
+  sizes: string[];
+  prices: string[];
+  category: string;
+  notes: string[];
+  imageUrl?: string;
+  inStock?: boolean;
+  isOnOffer?: boolean;
+  discountPercentage?: string;
+  offerDescription?: string;
+}
+
+interface InsertPerfume {
+  name: string;
+  brand: string;
+  description: string;
+  sizes: string[];
+  prices: string[];
+  category: string;
+  notes: string[];
+  imageUrl?: string;
+  inStock?: boolean;
+}
+
+interface Collection {
+  id: string;
+  name: string;
+  description: string;
+  theme: string;
+  perfumeIds: string[];
+  sizes?: string[];
+  prices?: string[];
+  imageUrl?: string;
+}
+
+interface InsertCollection {
+  name: string;
+  description: string;
+  theme: string;
+  perfumeIds: string[];
+  sizes?: string[];
+  prices?: string[];
+  imageUrl?: string;
+}
+
+interface Order {
+  id: string;
+  customer_email: string;
+  amount_total: number;
+  status: string;
+  createdAt: string;
+}
+
+interface DashboardStats {
+  totalPerfumes: number;
+  ordersToday: number;
+  totalCollections: number;
+  perfumesOnOffer: number;
+  totalOrders: number;
+  totalRevenue: number;
+}
+
+interface UserStats {
+  totalUsers: number;
+  newUsersToday: number;
+  activeUsers: number;
+}
+
+interface SalesStats {
+  totalRevenue: number;
+  totalOrders: number;
+  averageOrderValue: number;
+  monthlyRevenue: number;
+  monthlyOrders: number;
+}
+
+interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  createdAt: string;
+  isRead: boolean;
+}
 
 export default function AdminPage() {
-  const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Estados
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("name");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingPerfume, setEditingPerfume] = useState<Perfume | null>(null);
   const [isCreateCollectionDialogOpen, setIsCreateCollectionDialogOpen] = useState(false);
   const [isEditCollectionDialogOpen, setIsEditCollectionDialogOpen] = useState(false);
+  const [editingPerfume, setEditingPerfume] = useState<Perfume | null>(null);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
-  const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
-  const [editingOffer, setEditingOffer] = useState<Perfume | null>(null);
-  const [activeTab, setActiveTab] = useState("perfumes");
 
-  const { data: perfumes, isLoading } = useQuery<Perfume[]>({
-    queryKey: ["/api/perfumes"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+  // Verificar autenticación de admin
+  useEffect(() => {
+    const checkAdminAuth = async () => {
+      try {
+        // Verificar estado de admin en el servidor
+        const response = await fetch("/api/admin/status", {
+          credentials: "include"
+        });
+        const data = await response.json();
+        
+        if (!response.ok || !data.isAdmin || data.email !== "lhdecant@gmail.com") {
+          // Verificar localStorage como fallback
+          const isAdmin = localStorage.getItem("isAdmin") === "true";
+          const adminEmail = localStorage.getItem("adminEmail");
+          
+          if (!isAdmin || adminEmail !== "lhdecant@gmail.com") {
+            setLocation("/admin-auth");
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        // Fallback a localStorage
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        const adminEmail = localStorage.getItem("adminEmail");
+        
+        if (!isAdmin || adminEmail !== "lhdecant@gmail.com") {
+          setLocation("/admin-auth");
+          return;
+        }
+      }
+    };
+
+    checkAdminAuth();
+  }, [setLocation]);
+
+  // Verificar autenticación de admin usando localStorage como fallback
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
+  const adminEmail = localStorage.getItem("adminEmail");
+  
+  if (!isAdmin || adminEmail !== "lhdecant@gmail.com") {
+    return null;
+  }
+
+  // Queries
+  const { data: perfumes = [] } = useQuery<Perfume[]>({
+    queryKey: ["perfumes"],
+    queryFn: async () => {
+      const response = await fetch("/api/perfumes");
+      if (!response.ok) throw new Error("Error fetching perfumes");
+      return response.json();
+    }
   });
 
-  const { data: collections } = useQuery<Collection[]>({
-    queryKey: ["/api/collections"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+  const { data: collections = [] } = useQuery<Collection[]>({
+    queryKey: ["collections"],
+    queryFn: async () => {
+      const response = await fetch("/api/collections");
+      if (!response.ok) throw new Error("Error fetching collections");
+      return response.json();
+    }
   });
 
-  const { data: settings } = useQuery<Settings[]>({
-    queryKey: ["/api/settings"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+  const { data: dashboardStats } = useQuery<DashboardStats>({
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/dashboard-stats");
+      if (!response.ok) throw new Error("Error fetching dashboard stats");
+      return response.json();
+    }
   });
 
+  const { data: recentOrders } = useQuery<Order[]>({
+    queryKey: ["recent-orders"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/recent-orders");
+      if (!response.ok) throw new Error("Error fetching recent orders");
+      return response.json();
+    }
+  });
+
+  const { data: popularPerfumes } = useQuery<Perfume[]>({
+    queryKey: ["popular-perfumes"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/popular-perfumes");
+      if (!response.ok) throw new Error("Error fetching popular perfumes");
+      return response.json();
+    }
+  });
+
+  const { data: contactMessages } = useQuery<ContactMessage[]>({
+    queryKey: ["contact-messages"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/contact-messages");
+      if (!response.ok) throw new Error("Error fetching contact messages");
+      return response.json();
+    }
+  });
+
+  const { data: userStats } = useQuery<UserStats>({
+    queryKey: ["user-stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/user-stats");
+      if (!response.ok) throw new Error("Error fetching user stats");
+      return response.json();
+    }
+  });
+
+  const { data: salesStats } = useQuery<SalesStats>({
+    queryKey: ["sales-stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/sales-stats");
+      if (!response.ok) throw new Error("Error fetching sales stats");
+      return response.json();
+    }
+  });
+
+  // Mutations
   const createPerfumeMutation = useMutation({
-    mutationFn: async (perfume: InsertPerfume) => {
-      const res = await apiRequest("POST", "/api/perfumes", perfume);
-      return await res.json();
+    mutationFn: async (data: InsertPerfume) => {
+      const response = await fetch("/api/perfumes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error("Error creating perfume");
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/perfumes"] });
+      queryClient.invalidateQueries({ queryKey: ["perfumes"] });
       setIsCreateDialogOpen(false);
-      toast({
-        title: "Perfume creado",
-        description: "El perfume se ha creado exitosamente.",
-      });
+      toast({ title: "Perfume creado exitosamente", variant: "default" });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    onError: () => {
+      toast({ title: "Error al crear perfume", variant: "destructive" });
+    }
   });
 
   const updatePerfumeMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertPerfume> }) => {
-      const res = await apiRequest("PATCH", `/api/perfumes/${id}`, data);
-      return await res.json();
+    mutationFn: async (data: { id: string } & Partial<InsertPerfume>) => {
+      const response = await fetch(`/api/perfumes/${data.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error("Error updating perfume");
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/perfumes"] });
+      queryClient.invalidateQueries({ queryKey: ["perfumes"] });
       setIsEditDialogOpen(false);
       setEditingPerfume(null);
-      toast({
-        title: "Perfume actualizado",
-        description: "El perfume se ha actualizado exitosamente.",
-      });
+      toast({ title: "Perfume actualizado exitosamente", variant: "default" });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    onError: () => {
+      toast({ title: "Error al actualizar perfume", variant: "destructive" });
+    }
   });
 
   const deletePerfumeMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/perfumes/${id}`);
-      return await res.json();
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/perfumes/${id}`, {
+        method: "DELETE"
+      });
+      if (!response.ok) throw new Error("Error deleting perfume");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/perfumes"] });
-      toast({
-        title: "Perfume eliminado",
-        description: "El perfume se ha eliminado exitosamente.",
-      });
+      queryClient.invalidateQueries({ queryKey: ["perfumes"] });
+      toast({ title: "Perfume eliminado exitosamente", variant: "default" });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const toggleHomepageMutation = useMutation({
-    mutationFn: async ({ id, showOnHomepage }: { id: number, showOnHomepage: boolean }) => {
-      const res = await apiRequest("PATCH", `/api/perfumes/${id}/homepage`, { showOnHomepage });
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/perfumes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/perfumes/homepage"] });
-      toast({
-        title: "Actualizado",
-        description: "Estado de página principal actualizado",
-      });
-    },
-  });
-
-  const updateOfferMutation = useMutation({
-    mutationFn: async ({ id, isOnOffer, discountPercentage, offerDescription }: { 
-      id: number, 
-      isOnOffer: boolean, 
-      discountPercentage?: string, 
-      offerDescription?: string 
-    }) => {
-      const res = await apiRequest("PATCH", `/api/perfumes/${id}/offer`, { 
-        isOnOffer, 
-        discountPercentage, 
-        offerDescription 
-      });
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/perfumes"] });
-      toast({
-        title: "Oferta actualizada",
-        description: "Estado de oferta actualizado correctamente",
-      });
-    },
+    onError: () => {
+      toast({ title: "Error al eliminar perfume", variant: "destructive" });
+    }
   });
 
   const createCollectionMutation = useMutation({
-    mutationFn: async (collection: InsertCollection) => {
-      const res = await apiRequest("POST", "/api/collections", collection);
-      return await res.json();
+    mutationFn: async (data: InsertCollection) => {
+      const response = await fetch("/api/collections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error("Error creating collection");
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
       setIsCreateCollectionDialogOpen(false);
-      toast({
-        title: "Colección creada",
-        description: "La colección se ha creado exitosamente.",
-      });
+      toast({ title: "Colección creada exitosamente", variant: "default" });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    onError: () => {
+      toast({ title: "Error al crear colección", variant: "destructive" });
+    }
   });
 
   const updateCollectionMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertCollection> }) => {
-      const res = await apiRequest("PUT", `/api/collections/${id}`, data);
-      return await res.json();
+    mutationFn: async (data: { id: string } & Partial<InsertCollection>) => {
+      const response = await fetch(`/api/collections/${data.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error("Error updating collection");
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
       setIsEditCollectionDialogOpen(false);
       setEditingCollection(null);
-      toast({
-        title: "Colección actualizada",
-        description: "La colección se ha actualizado exitosamente.",
-      });
+      toast({ title: "Colección actualizada exitosamente", variant: "default" });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteCollectionMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/collections/${id}`);
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
-      toast({
-        title: "Colección eliminada",
-        description: "La colección se ha eliminado exitosamente.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    onError: () => {
+      toast({ title: "Error al actualizar colección", variant: "destructive" });
+    }
   });
 
   const updateSettingMutation = useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: string }) => {
-      const res = await apiRequest("POST", "/api/settings", { key, value });
-      return await res.json();
+    mutationFn: async (data: { key: string; value: string }) => {
+      const response = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error("Error updating setting");
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
-      toast({
-        title: "Configuración actualizada",
-        description: "La configuración se ha actualizado exitosamente.",
-      });
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      toast({ title: "Configuración actualizada", variant: "default" });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    onError: () => {
+      toast({ title: "Error al actualizar configuración", variant: "destructive" });
+    }
   });
 
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: async (data: { id: string; status: string }) => {
+      const response = await fetch(`/api/admin/orders/${data.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: data.status })
+      });
+      if (!response.ok) throw new Error("Error updating order status");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recent-orders"] });
+      toast({ title: "Estado del pedido actualizado", variant: "default" });
+    },
+    onError: () => {
+      toast({ title: "Error al actualizar estado del pedido", variant: "destructive" });
+    }
+  });
+
+  const markMessageAsReadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/admin/contact-messages/${id}/read`, {
+        method: "PATCH"
+      });
+      if (!response.ok) throw new Error("Error marking message as read");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contact-messages"] });
+      toast({ title: "Mensaje marcado como leído", variant: "default" });
+    },
+    onError: () => {
+      toast({ title: "Error al marcar mensaje como leído", variant: "destructive" });
+    }
+  });
+
+  // Handlers
   const handleLogout = () => {
-    // Limpiar datos de admin
+    // Limpiar sesión de admin
     localStorage.removeItem("isAdmin");
     localStorage.removeItem("adminEmail");
-    
-    // Logout del usuario normal si existe
-    if (user) {
-      logoutMutation.mutate();
-    }
+    setLocation("/");
   };
 
   const handleCreatePerfume = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
-    // Parse sizes and prices from form
-    const sizesStr = formData.get("sizes") as string;
-    const pricesStr = formData.get("prices") as string;
-    const sizes = sizesStr.split(",").map(s => s.trim());
-    const prices = pricesStr.split(",").map(p => p.trim());
-    
-    const perfume: InsertPerfume = {
+    const sizes = formData.get("sizes") as string;
+    const prices = formData.get("prices") as string;
+    const notes = formData.get("notes") as string;
+    const inStock = formData.get("inStock") === "true";
+
+    createPerfumeMutation.mutate({
       name: formData.get("name") as string,
       brand: formData.get("brand") as string,
       description: formData.get("description") as string,
-      sizes,
-      prices,
+      sizes: sizes.split(",").map((s: string) => s.trim()).filter((s: string) => s),
+      prices: prices.split(",").map((p: string) => p.trim()).filter((p: string) => p),
       category: formData.get("category") as string,
-      notes: (formData.get("notes") as string).split(",").map(note => note.trim()),
+      notes: notes ? notes.split(",").map((n: string) => n.trim()).filter((n: string) => n) : [],
       imageUrl: formData.get("imageUrl") as string,
-      inStock: formData.get("inStock") === "true",
-    };
-    createPerfumeMutation.mutate(perfume);
+      inStock
+    });
   };
 
   const handleUpdatePerfume = (e: React.FormEvent<HTMLFormElement>) => {
@@ -280,49 +435,41 @@ export default function AdminPage() {
     if (!editingPerfume) return;
     
     const formData = new FormData(e.currentTarget);
-    
-    // Parse sizes and prices from form
-    const sizesStr = formData.get("sizes") as string;
-    const pricesStr = formData.get("prices") as string;
-    const sizes = sizesStr.split(",").map(s => s.trim());
-    const prices = pricesStr.split(",").map(p => p.trim());
-    
-    const updates: Partial<InsertPerfume> = {
+    const sizes = formData.get("sizes") as string;
+    const prices = formData.get("prices") as string;
+    const notes = formData.get("notes") as string;
+    const inStock = formData.get("inStock") === "true";
+
+    updatePerfumeMutation.mutate({
+      id: editingPerfume.id,
       name: formData.get("name") as string,
       brand: formData.get("brand") as string,
       description: formData.get("description") as string,
-      sizes,
-      prices,
+      sizes: sizes.split(",").map((s: string) => s.trim()).filter((s: string) => s),
+      prices: prices.split(",").map((p: string) => p.trim()).filter((p: string) => p),
       category: formData.get("category") as string,
-      notes: (formData.get("notes") as string).split(",").map(note => note.trim()),
+      notes: notes ? notes.split(",").map((n: string) => n.trim()).filter((n: string) => n) : [],
       imageUrl: formData.get("imageUrl") as string,
-      inStock: formData.get("inStock") === "true",
-    };
-    updatePerfumeMutation.mutate({ id: editingPerfume.id, data: updates });
+      inStock
+    });
   };
 
   const handleCreateCollection = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
-    // Parse collection sizes and prices
-    const sizesStr = formData.get("sizes") as string;
-    const pricesStr = formData.get("prices") as string;
-    const sizes = sizesStr.split(",").map(s => s.trim());
-    const prices = pricesStr.split(",").map(p => p.trim());
-    
-    const collection: InsertCollection = {
+    const perfumeIds = formData.get("perfumeIds") as string;
+    const sizes = formData.get("sizes") as string;
+    const prices = formData.get("prices") as string;
+
+    createCollectionMutation.mutate({
       name: formData.get("name") as string,
       description: formData.get("description") as string,
       theme: formData.get("theme") as string,
-      sizes,
-      prices,
-      perfumeIds: (formData.get("perfumeIds") as string).split(",").map(id => parseInt(id.trim())),
-      perfumeSizes: sizes, // Use collection sizes for perfume sizes
-      price: prices[0], // Use first price as base price
-      imageUrl: formData.get("imageUrl") as string || "",
-    };
-    createCollectionMutation.mutate(collection);
+      perfumeIds: perfumeIds ? perfumeIds.split(",").map((id: string) => id.trim()).filter((id: string) => id) : [],
+      sizes: sizes ? sizes.split(",").map((s: string) => s.trim()).filter((s: string) => s) : [],
+      prices: prices ? prices.split(",").map((p: string) => p.trim()).filter((p: string) => p) : [],
+      imageUrl: formData.get("imageUrl") as string
+    });
   };
 
   const handleUpdateCollection = (e: React.FormEvent<HTMLFormElement>) => {
@@ -330,79 +477,230 @@ export default function AdminPage() {
     if (!editingCollection) return;
     
     const formData = new FormData(e.currentTarget);
-    
-    // Parse collection sizes and prices
-    const sizesStr = formData.get("sizes") as string;
-    const pricesStr = formData.get("prices") as string;
-    const sizes = sizesStr.split(",").map(s => s.trim());
-    const prices = pricesStr.split(",").map(p => p.trim());
-    
-    const updates: Partial<InsertCollection> = {
+    const perfumeIds = formData.get("perfumeIds") as string;
+    const sizes = formData.get("sizes") as string;
+    const prices = formData.get("prices") as string;
+
+    updateCollectionMutation.mutate({
+      id: editingCollection.id,
       name: formData.get("name") as string,
       description: formData.get("description") as string,
       theme: formData.get("theme") as string,
-      sizes,
-      prices,
-      perfumeIds: (formData.get("perfumeIds") as string).split(",").map(id => parseInt(id.trim())),
-      perfumeSizes: sizes, // Use collection sizes for perfume sizes
-      price: prices[0], // Use first price as base price
-      imageUrl: formData.get("imageUrl") as string || "",
-    };
-    updateCollectionMutation.mutate({ id: editingCollection.id, data: updates });
+      perfumeIds: perfumeIds ? perfumeIds.split(",").map((id: string) => id.trim()).filter((id: string) => id) : [],
+      sizes: sizes ? sizes.split(",").map((s: string) => s.trim()).filter((s: string) => s) : [],
+      prices: prices ? prices.split(",").map((p: string) => p.trim()).filter((p: string) => p) : [],
+      imageUrl: formData.get("imageUrl") as string
+    });
   };
 
-  if (!user) {
-    setLocation("/auth");
-    return null;
-  }
-
-  const collectionsEnabled = Array.isArray(settings) ? settings.find(s => s.key === 'collections_enabled')?.value === 'true' : false;
+  // Configuraciones
+  const collectionsEnabled = true; // Placeholder - debería venir de settings
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen admin-gradient-bg admin-dark-theme admin-scrollbar text-white">
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-[#D4AF37]">Panel de Administrador</h1>
-            <p className="text-gray-400">Gestión de perfumes - LH Decants</p>
+            <h1 className="text-4xl font-bold admin-gradient-text">Panel de Administración</h1>
+            <p className="text-gray-400">Gestión completa de LhDecant</p>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-[#D4AF37]">Bienvenido, {user.username}</span>
-            <Button onClick={() => setLocation("/")} variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37]">
-              <Package className="w-4 h-4 mr-2" />
-              Ver Tienda
-            </Button>
+            <div className="text-right">
+              <p className="text-[#D4AF37] font-medium">lhdecant@gmail.com</p>
+              <p className="text-gray-400 text-sm">Administrador</p>
+            </div>
             <Button onClick={handleLogout} variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37]">
-              <LogOut className="w-4 h-4 mr-2" />
               Cerrar Sesión
             </Button>
           </div>
         </div>
 
-        {/* Tabbed Interface */}
+        {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full bg-black/50 border border-[#D4AF37]/20">
-            <TabsTrigger value="perfumes" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">
-              <Package className="w-4 h-4 mr-2" />
-              Perfumes
-            </TabsTrigger>
-            <TabsTrigger value="collections" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">
-              <Package className="w-4 h-4 mr-2" />
-              Colecciones
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-black">
-              <SettingsIcon className="w-4 h-4 mr-2" />
-              Configuración
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-9 bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+            <TabsTrigger value="dashboard" className="admin-nav-item">Dashboard</TabsTrigger>
+            <TabsTrigger value="perfumes" className="admin-nav-item">Perfumes</TabsTrigger>
+            <TabsTrigger value="orders" className="admin-nav-item">Pedidos</TabsTrigger>
+            <TabsTrigger value="users" className="admin-nav-item">Usuarios</TabsTrigger>
+            <TabsTrigger value="analytics" className="admin-nav-item">Analytics</TabsTrigger>
+            <TabsTrigger value="messages" className="admin-nav-item">Mensajes</TabsTrigger>
+            <TabsTrigger value="content" className="admin-nav-item">Contenido</TabsTrigger>
+            <TabsTrigger value="collections" className="admin-nav-item">Colecciones</TabsTrigger>
+            <TabsTrigger value="settings" className="admin-nav-item">Configuración</TabsTrigger>
           </TabsList>
+          {/* Dashboard Avanzado */}
+          <TabsContent value="dashboard">
+            <div className="space-y-6">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="admin-stat-card admin-card-glow admin-card-hover">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400">Total Perfumes</p>
+                        <p className="text-2xl font-bold text-[#D4AF37]">{dashboardStats?.totalPerfumes || 0}</p>
+                      </div>
+                      <Package className="h-8 w-8 text-[#D4AF37]" />
+                    </div>
+                  </CardContent>
+                </Card>
 
+                <Card className="admin-stat-card admin-card-glow admin-card-hover border-green-500/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400">Pedidos Hoy</p>
+                        <p className="text-2xl font-bold text-green-400">{dashboardStats?.ordersToday || 0}</p>
+                      </div>
+                      <ShoppingCart className="h-8 w-8 text-green-400 admin-icon-glow" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="admin-stat-card admin-card-glow admin-card-hover border-blue-500/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400">Colecciones</p>
+                        <p className="text-2xl font-bold text-blue-400">{dashboardStats?.totalCollections || 0}</p>
+                      </div>
+                      <ShoppingBag className="h-8 w-8 text-blue-400 admin-icon-glow" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="admin-stat-card admin-card-glow admin-card-hover border-purple-500/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400">En Oferta</p>
+                        <p className="text-2xl font-bold text-purple-400">{dashboardStats?.perfumesOnOffer || 0}</p>
+                      </div>
+                      <Percent className="h-8 w-8 text-purple-400 admin-icon-glow" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Quick Actions */}
+              <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                <CardHeader>
+                  <CardTitle className="text-[#D4AF37]">Acciones Rápidas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Button 
+                      onClick={() => setActiveTab("perfumes")} 
+                      className="luxury-button admin-smooth-transition"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Agregar Perfume
+                    </Button>
+                    <Button 
+                      onClick={() => setActiveTab("collections")} 
+                      variant="outline" 
+                      className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+                    >
+                      <ShoppingBag className="w-4 h-4 mr-2" />
+                      Nueva Colección
+                    </Button>
+                    <Button 
+                      onClick={() => setActiveTab("orders")} 
+                      variant="outline" 
+                      className="border-green-500/30 text-green-400 hover:bg-green-500 hover:text-black"
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Ver Pedidos
+                    </Button>
+                    <Button 
+                      onClick={() => setActiveTab("analytics")} 
+                      variant="outline" 
+                      className="border-blue-500/30 text-blue-400 hover:bg-blue-500 hover:text-black"
+                    >
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      Analytics
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Pedidos Recientes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {recentOrders?.slice(0, 5).map((order: Order, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-black/30 rounded-lg">
+                          <div>
+                            <p className="text-white font-medium">#{order.id}</p>
+                            <p className="text-gray-400 text-sm">{order.customer_email}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[#D4AF37] font-bold">${order.amount_total}</p>
+                            <Badge variant="outline" className="border-green-500/30 text-green-400">
+                              {order.status || 'Pendiente'}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Perfumes Populares</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {popularPerfumes?.slice(0, 5).map((perfume: Perfume, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-black/30 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-lg flex items-center justify-center">
+                              <Package className="w-5 h-5 text-black" />
+                            </div>
+                            <div>
+                              <p className="text-white font-medium">{perfume.name}</p>
+                              <p className="text-gray-400 text-sm">{perfume.brand}</p>
+                            </div>
+                          </div>
+                          <Badge variant={perfume.inStock ? "default" : "destructive"}>
+                            {perfume.inStock ? "En Stock" : "Agotado"}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Sección de Perfumes */}
           <TabsContent value="perfumes">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-[#D4AF37]">Gestión de Perfumes</h2>
+            <div className="space-y-6">
+              {/* Header con filtros avanzados */}
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#D4AF37]">Gestión de Perfumes</h2>
+                  <p className="text-gray-400">Administra el catálogo completo de perfumes</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
+                    className="border-[#D4AF37]/30 text-[#D4AF37]"
+                  >
+                    {viewMode === "list" ? <Grid className="w-4 h-4" /> : <List className="w-4 h-4" />}
+                  </Button>
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="luxury-button">
+                      <Button className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black hover:from-[#FFD700] hover:to-[#D4AF37] transition-all">
                     <Plus className="w-4 h-4 mr-2" />
                     Agregar Perfume
                   </Button>
@@ -459,7 +757,15 @@ export default function AdminPage() {
                     </div>
                     <div>
                       <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
-                      <Input name="imageUrl" type="url" className="bg-black/50 border-[#D4AF37]/30 text-white" />
+                      <Input 
+                        name="imageUrl" 
+                        type="url" 
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                        className="bg-black/50 border-[#D4AF37]/30 text-white" 
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Acepta URLs de imágenes (.jpg, .png, .gif, .webp, etc.)
+                      </p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input type="checkbox" name="inStock" value="true" id="inStock" className="rounded border-[#D4AF37]/30" />
@@ -478,88 +784,136 @@ export default function AdminPage() {
                   </form>
                 </DialogContent>
               </Dialog>
+                </div>
             </div>
 
-            {/* Perfumes Table */}
-            <Card className="bg-black/80 border-[#D4AF37]/20 backdrop-blur-md">
-              <CardContent className="p-0">
-                {isLoading ? (
-                  <div className="flex items-center justify-center p-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#D4AF37]" />
+              {/* Filtros y búsqueda avanzada */}
+              <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="search" className="text-[#D4AF37]">Buscar</Label>
+                      <Input 
+                        id="search"
+                        placeholder="Buscar perfumes..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-black/50 border-[#D4AF37]/30 text-white"
+                      />
                   </div>
-                ) : (
+                    <div>
+                      <Label htmlFor="category-filter" className="text-[#D4AF37]">Categoría</Label>
+                      <Select value={filterCategory} onValueChange={setFilterCategory}>
+                        <SelectTrigger className="bg-black/50 border-[#D4AF37]/30 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-black border-[#D4AF37]/30">
+                          <SelectItem value="all">Todas</SelectItem>
+                          <SelectItem value="masculine">Masculino</SelectItem>
+                          <SelectItem value="feminine">Femenino</SelectItem>
+                          <SelectItem value="unisex">Unisex</SelectItem>
+                          <SelectItem value="niche">Nicho</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div>
+                      <Label htmlFor="sort" className="text-[#D4AF37]">Ordenar por</Label>
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className="bg-black/50 border-[#D4AF37]/30 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-black border-[#D4AF37]/30">
+                          <SelectItem value="name">Nombre</SelectItem>
+                          <SelectItem value="brand">Marca</SelectItem>
+                          <SelectItem value="category">Categoría</SelectItem>
+                          <SelectItem value="price">Precio</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-[#D4AF37]">Stock</Label>
+                      <div className="flex items-center space-x-2 mt-2">
+                        <Switch id="stock-filter" />
+                        <Label htmlFor="stock-filter" className="text-sm">Solo en stock</Label>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-[#D4AF37]">Ofertas</Label>
+                      <div className="flex items-center space-x-2 mt-2">
+                        <Switch id="offer-filter" />
+                        <Label htmlFor="offer-filter" className="text-sm">Solo ofertas</Label>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Lista de Perfumes */}
+              {viewMode === "list" ? (
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardContent className="p-0">
                   <Table>
                     <TableHeader>
                       <TableRow className="border-[#D4AF37]/20">
-                        <TableHead className="text-[#D4AF37]">ID</TableHead>
-                        <TableHead className="text-[#D4AF37]">Nombre</TableHead>
+                          <TableHead className="text-[#D4AF37]">Perfume</TableHead>
                         <TableHead className="text-[#D4AF37]">Marca</TableHead>
                         <TableHead className="text-[#D4AF37]">Categoría</TableHead>
-                        <TableHead className="text-[#D4AF37]">Precios & Tamaños</TableHead>
+                          <TableHead className="text-[#D4AF37]">Tamaños</TableHead>
+                          <TableHead className="text-[#D4AF37]">Precios</TableHead>
                         <TableHead className="text-[#D4AF37]">Stock</TableHead>
-                        <TableHead className="text-[#D4AF37]">Página Principal</TableHead>
-                        <TableHead className="text-[#D4AF37]">Oferta</TableHead>
                         <TableHead className="text-[#D4AF37]">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {perfumes?.map((perfume) => (
-                        <TableRow key={perfume.id} className="border-[#D4AF37]/10">
-                          <TableCell className="font-medium text-[#D4AF37]">#{perfume.id}</TableCell>
-                          <TableCell className="font-medium text-white">{perfume.name}</TableCell>
-                          <TableCell className="text-gray-300">{perfume.brand}</TableCell>
+                        {perfumes
+                          .filter(perfume => 
+                            perfume.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            perfume.brand.toLowerCase().includes(searchTerm.toLowerCase())
+                          )
+                          .filter(perfume => filterCategory === "all" || perfume.category === filterCategory)
+                          .map((perfume) => (
+                            <TableRow key={perfume.id} className="border-[#D4AF37]/10 admin-table-row">
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-lg flex items-center justify-center">
+                                    <Package className="w-5 h-5 text-black" />
+                                  </div>
+                                  <div>
+                                    <p className="text-white font-medium">{perfume.name}</p>
+                                    <p className="text-gray-400 text-sm">{perfume.description}</p>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-white">{perfume.brand}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37]">
                               {perfume.category}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-gray-300">
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1">
                             {perfume.sizes.map((size: string, index: number) => (
-                              <div key={size} className="text-xs">
-                                {size}: ${perfume.prices[index]}
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                      {size}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  {perfume.prices.map((price: string, index: number) => (
+                                    <div key={index} className="text-sm text-[#D4AF37] font-medium">
+                                      ${price}
                               </div>
                             ))}
+                                </div>
                           </TableCell>
                           <TableCell>
                             <Badge variant={perfume.inStock ? "default" : "destructive"}>
                               {perfume.inStock ? "En Stock" : "Agotado"}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Switch
-                              checked={perfume.showOnHomepage || false}
-                              onCheckedChange={(checked) => 
-                                toggleHomepageMutation.mutate({ id: perfume.id, showOnHomepage: checked })
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-2">
-                              <Switch
-                                checked={perfume.isOnOffer || false}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    // Show offer configuration dialog
-                                    setEditingOffer(perfume);
-                                    setIsOfferDialogOpen(true);
-                                  } else {
-                                    updateOfferMutation.mutate({ 
-                                      id: perfume.id, 
-                                      isOnOffer: false,
-                                      discountPercentage: "0"
-                                    });
-                                  }
-                                }}
-                              />
-                              {perfume.isOnOffer && (
-                                <div className="text-xs text-[#D4AF37]">
-                                  {perfume.discountPercentage}% OFF
-                                  {perfume.offerDescription && (
-                                    <div className="text-gray-400">{perfume.offerDescription}</div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
@@ -588,9 +942,55 @@ export default function AdminPage() {
                       ))}
                     </TableBody>
                   </Table>
-                )}
               </CardContent>
             </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {perfumes
+                    .filter(perfume => 
+                      perfume.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      perfume.brand.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .filter(perfume => filterCategory === "all" || perfume.category === filterCategory)
+                    .map((perfume) => (
+                      <Card key={perfume.id} className="admin-card-hover bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-center p-4 mb-4">
+                            <div className="w-16 h-16 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-lg flex items-center justify-center">
+                              <Package className="w-8 h-8 text-black" />
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <h3 className="text-lg font-semibold text-white mb-2">{perfume.name}</h3>
+                            <p className="text-gray-400 text-sm mb-3">{perfume.brand}</p>
+                            <Badge variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37] mb-3">
+                              {perfume.category}
+                            </Badge>
+                            <div className="space-y-2 mb-4">
+                              <div className="text-xs text-[#D4AF37]">
+                                Tamaños: {perfume.sizes.join(", ")}
+                              </div>
+                              <div className="text-gray-400">{perfume.description}</div>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <Badge variant={perfume.inStock ? "default" : "destructive"}>
+                                {perfume.inStock ? "En Stock" : "Agotado"}
+                              </Badge>
+                              <div className="flex gap-1">
+                                <Button size="sm" variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37]">
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button size="sm" variant="destructive">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              )}
 
             {/* Edit Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -643,11 +1043,20 @@ export default function AdminPage() {
                     </div>
                     <div>
                       <Label htmlFor="notes" className="text-[#D4AF37]">Notas (separadas por coma)</Label>
-                      <Input name="notes" defaultValue={editingPerfume.notes.join(", ")} className="bg-black/50 border-[#D4AF37]/30 text-white" />
+                        <Input name="notes" defaultValue={editingPerfume.notes?.join(", ") || ""} className="bg-black/50 border-[#D4AF37]/30 text-white" />
                     </div>
                     <div>
                       <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
-                      <Input name="imageUrl" type="url" defaultValue={editingPerfume.imageUrl} className="bg-black/50 border-[#D4AF37]/30 text-white" />
+                      <Input 
+                        name="imageUrl" 
+                        type="url" 
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                        defaultValue={editingPerfume.imageUrl} 
+                        className="bg-black/50 border-[#D4AF37]/30 text-white" 
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Acepta URLs de imágenes (.jpg, .png, .gif, .webp, etc.)
+                      </p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input type="checkbox" name="inStock" value="true" id="inStockEdit" defaultChecked={editingPerfume.inStock || false} className="rounded border-[#D4AF37]/30" />
@@ -667,21 +1076,426 @@ export default function AdminPage() {
                 )}
               </DialogContent>
             </Dialog>
+            </div>
           </TabsContent>
 
-          <TabsContent value="collections">
-            <Card className="bg-black/50 border-[#D4AF37]/20">
+          {/* Sección de Pedidos */}
+          <TabsContent value="orders">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#D4AF37]">Gestión de Pedidos</h2>
+                  <p className="text-gray-400">Administra todos los pedidos de la tienda</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar Pedidos
+                </Button>
+              </div>
+
+              <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-[#D4AF37]/20">
+                        <TableHead className="text-[#D4AF37]">ID</TableHead>
+                        <TableHead className="text-[#D4AF37]">Cliente</TableHead>
+                        <TableHead className="text-[#D4AF37]">Total</TableHead>
+                        <TableHead className="text-[#D4AF37]">Estado</TableHead>
+                        <TableHead className="text-[#D4AF37]">Fecha</TableHead>
+                        <TableHead className="text-[#D4AF37]">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                                             {recentOrders?.map((order: Order, index: number) => (
+                        <TableRow key={index} className="border-[#D4AF37]/10">
+                          <TableCell className="font-medium text-[#D4AF37]">#{order.id}</TableCell>
+                          <TableCell className="text-white">{order.customer_email}</TableCell>
+                          <TableCell className="text-white font-bold">${order.amount_total}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="border-green-500/30 text-green-400">
+                              {order.status || 'Pendiente'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-gray-300">
+                            {new Date(order.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37]">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="border-green-500/30 text-green-400"
+                                onClick={() => updateOrderStatusMutation.mutate({ 
+                                  id: order.id, 
+                                  status: 'Completado' 
+                                })}
+                                disabled={updateOrderStatusMutation.isPending}
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Sección de Usuarios */}
+          <TabsContent value="users">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#D4AF37]">Gestión de Usuarios</h2>
+                  <p className="text-gray-400">Administra los usuarios registrados</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+                >
+                  <UserCheck className="w-4 h-4 mr-2" />
+                  Ver Estadísticas
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20 backdrop-blur-md">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400">Total Usuarios</p>
+                        <p className="text-2xl font-bold text-green-400">{userStats?.totalUsers || 0}</p>
+                      </div>
+                      <Users className="h-8 w-8 text-green-400" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20 backdrop-blur-md">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400">Nuevos Hoy</p>
+                        <p className="text-2xl font-bold text-blue-400">{userStats?.newUsersToday || 0}</p>
+                      </div>
+                      <UserCheck className="h-8 w-8 text-blue-400" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20 backdrop-blur-md">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400">Usuarios Activos</p>
+                        <p className="text-2xl font-bold text-purple-400">{userStats?.activeUsers || 0}</p>
+                      </div>
+                      <TrendingUp className="h-8 w-8 text-purple-400" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
               <CardHeader>
+                  <CardTitle className="text-[#D4AF37]">Actividad Reciente</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-black/30 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded flex items-center justify-center">
+                          <Users className="w-4 h-4 text-black" />
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Nuevo registro</p>
+                          <p className="text-gray-400 text-sm">usuario@ejemplo.com</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[#D4AF37] text-sm">Hace 2 horas</p>
+                        <Badge variant="outline" className="border-green-500/30 text-green-400">
+                          Activo
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Sección de Analytics */}
+          <TabsContent value="analytics">
+            <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle className="text-[#D4AF37]">Gestión de Colecciones</CardTitle>
-                    <CardDescription className="text-gray-400">
-                      Administra las colecciones de perfumes
-                    </CardDescription>
+                  <h2 className="text-2xl font-bold text-[#D4AF37]">Analytics y Reportes</h2>
+                  <p className="text-gray-400">Análisis detallado de ventas y rendimiento</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Exportar Reporte
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Estadísticas de Ventas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Ingresos Totales</span>
+                        <span className="text-[#D4AF37] font-bold">${salesStats?.totalRevenue || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Pedidos Totales</span>
+                        <span className="text-green-400 font-bold">{salesStats?.totalOrders || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Valor Promedio</span>
+                        <span className="text-blue-400 font-bold">${salesStats?.averageOrderValue || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Ingresos Mensuales</span>
+                        <span className="text-purple-400 font-bold">${salesStats?.monthlyRevenue || 0}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Productos Más Vendidos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                                             {popularPerfumes?.slice(0, 5).map((perfume: Perfume, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-black/30 rounded">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded flex items-center justify-center">
+                              <Package className="w-4 h-4 text-black" />
+                            </div>
+                            <div>
+                              <p className="text-white font-medium">{perfume.name}</p>
+                              <p className="text-gray-400 text-sm">{perfume.brand}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[#D4AF37] font-bold">${perfume.prices?.[0] || 0}</p>
+                            <p className="text-gray-400 text-sm">Vendido</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Sección de Mensajes */}
+          <TabsContent value="messages">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#D4AF37]">Mensajes de Contacto</h2>
+                  <p className="text-gray-400">Gestiona las consultas de los clientes</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Responder Todos
+                </Button>
+              </div>
+
+              <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-[#D4AF37]/20">
+                        <TableHead className="text-[#D4AF37]">Cliente</TableHead>
+                        <TableHead className="text-[#D4AF37]">Email</TableHead>
+                        <TableHead className="text-[#D4AF37]">Mensaje</TableHead>
+                        <TableHead className="text-[#D4AF37]">Fecha</TableHead>
+                        <TableHead className="text-[#D4AF37]">Estado</TableHead>
+                        <TableHead className="text-[#D4AF37]">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                                             {contactMessages?.map((message: ContactMessage, index: number) => (
+                        <TableRow key={index} className="border-[#D4AF37]/10">
+                          <TableCell className="text-white font-medium">{message.name}</TableCell>
+                          <TableCell className="text-white">{message.email}</TableCell>
+                          <TableCell className="text-gray-300 max-w-xs truncate">
+                            {message.message}
+                          </TableCell>
+                          <TableCell className="text-gray-300">
+                            {new Date(message.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={message.isRead ? "outline" : "default"} className={message.isRead ? "border-green-500/30 text-green-400" : "bg-[#D4AF37] text-black"}>
+                              {message.isRead ? "Leído" : "Nuevo"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="border-[#D4AF37]/30 text-[#D4AF37]"
+                                onClick={() => markMessageAsReadMutation.mutate(message.id)}
+                                disabled={markMessageAsReadMutation.isPending}
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" className="border-green-500/30 text-green-400">
+                                <Mail className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Sección de Contenido */}
+          <TabsContent value="content">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#D4AF37]">Gestión de Contenido</h2>
+                  <p className="text-gray-400">Administra páginas, newsletter y notificaciones</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Crear Contenido
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card className="admin-card-hover bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-lg flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-black" />
+                      </div>
+                      <div>
+                        <h3 className="text-[#D4AF37] font-semibold">Páginas</h3>
+                        <p className="text-gray-400 text-sm">Gestiona el contenido</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Página de Inicio</span>
+                        <Badge variant="outline" className="border-green-500/30 text-green-400">Activa</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Sobre Nosotros</span>
+                        <Badge variant="outline" className="border-green-500/30 text-green-400">Activa</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Contacto</span>
+                        <Badge variant="outline" className="border-green-500/30 text-green-400">Activa</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="admin-card-hover bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-lg flex items-center justify-center">
+                        <Mail className="w-6 h-6 text-black" />
+                      </div>
+                      <div>
+                        <h3 className="text-[#D4AF37] font-semibold">Newsletter</h3>
+                        <p className="text-gray-400 text-sm">Suscripciones activas</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Suscriptores</span>
+                        <span className="text-[#D4AF37] font-bold">1,247</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Esta semana</span>
+                        <span className="text-green-400 font-bold">+23</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Tasa de apertura</span>
+                        <span className="text-blue-400 font-bold">68%</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="admin-card-hover bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-lg flex items-center justify-center">
+                        <Bell className="w-6 h-6 text-black" />
+                      </div>
+                      <div>
+                        <h3 className="text-[#D4AF37] font-semibold">Notificaciones</h3>
+                        <p className="text-gray-400 text-sm">Configura alertas</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Email</span>
+                        <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">Push</span>
+                        <Switch />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400">SMS</span>
+                        <Switch />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Sección de Colecciones */}
+          <TabsContent value="collections">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#D4AF37]">Gestión de Colecciones</h2>
+                  <p className="text-gray-400">Administra las colecciones de perfumes</p>
                   </div>
                   <Dialog open={isCreateCollectionDialogOpen} onOpenChange={setIsCreateCollectionDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="luxury-button">
+                    <Button className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black hover:from-[#FFD700] hover:to-[#D4AF37] transition-all">
                         <Plus className="w-4 h-4 mr-2" />
                         Nueva Colección
                       </Button>
@@ -690,7 +1504,7 @@ export default function AdminPage() {
                       <DialogHeader>
                         <DialogTitle className="text-[#D4AF37]">Crear Nueva Colección</DialogTitle>
                         <DialogDescription className="text-gray-400">
-                          Completa la información de la colección
+                        Crea una nueva colección de perfumes
                         </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleCreateCollection} className="space-y-4">
@@ -708,24 +1522,30 @@ export default function AdminPage() {
                         </div>
                         <div>
                           <Label htmlFor="perfumeIds" className="text-[#D4AF37]">IDs de Perfumes (separados por coma)</Label>
-                          <Input name="perfumeIds" required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="1, 2, 3" />
+                        <Input name="perfumeIds" className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="1, 2, 3" />
                         </div>
-                        
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="sizes" className="text-[#D4AF37]">Tamaños (separados por coma)</Label>
-                            <Input name="sizes" required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="5ml, 10ml" />
+                          <Input name="sizes" className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="5ml, 10ml" />
                           </div>
                           <div>
                             <Label htmlFor="prices" className="text-[#D4AF37]">Precios por Tamaño (separados por coma)</Label>
-                            <Input name="prices" required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="25, 45" />
+                          <Input name="prices" className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="25, 45" />
                           </div>
                         </div>
-                        
-                        <div>
-                          <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
-                          <Input name="imageUrl" type="url" className="bg-black/50 border-[#D4AF37]/30 text-white" />
-                        </div>
+                                            <div>
+                      <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
+                      <Input 
+                        name="imageUrl" 
+                        type="url" 
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                        className="bg-black/50 border-[#D4AF37]/30 text-white" 
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Acepta URLs de imágenes (.jpg, .png, .gif, .webp, etc.)
+                      </p>
+                    </div>
                         <Button type="submit" disabled={createCollectionMutation.isPending} className="w-full luxury-button">
                           {createCollectionMutation.isPending ? (
                             <>
@@ -740,26 +1560,31 @@ export default function AdminPage() {
                     </DialogContent>
                   </Dialog>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {collections && collections.length > 0 ? (
-                  <div className="grid gap-4">
-                    {collections.map((collection) => (
-                      <div key={collection.id} className="border border-[#D4AF37]/20 rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h3 className="text-[#D4AF37] font-medium">{collection.name}</h3>
-                              <span className="text-xs text-gray-500">#{collection.id}</span>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                 {collections.map((collection: Collection) => (
+                  <Card key={collection.id} className="admin-card-hover bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-lg flex items-center justify-center">
+                          <ShoppingBag className="w-6 h-6 text-black" />
                             </div>
-                            <p className="text-gray-400 text-sm mb-2">{collection.description}</p>
-                            <div className="flex items-center gap-4 text-sm">
-                              <p className="text-white">Precio base: ${collection.price}</p>
-                              <p className="text-gray-400">Tamaños: {collection.sizes.join(", ")}</p>
+                        <div>
+                          <h3 className="text-[#D4AF37] font-semibold">{collection.name}</h3>
+                          <p className="text-gray-400 text-sm">{collection.theme}</p>
                             </div>
-                            <p className="text-gray-400 text-xs mt-1">
-                              Perfumes: [{collection.perfumeIds.join(", ")}]
-                            </p>
+                      </div>
+                      <p className="text-gray-300 mb-4">{collection.description}</p>
+                      <div className="space-y-2 mb-4">
+                        <div className="text-xs text-[#D4AF37]">
+                          Perfumes: {collection.perfumeIds?.join(", ") || "Ninguno"}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          Tamaños: {collection.sizes?.join(", ") || "No especificados"}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          Precios: {collection.prices?.join(", ") || "No especificados"}
+                        </div>
                           </div>
                           <div className="flex gap-2">
                             <Button
@@ -773,41 +1598,48 @@ export default function AdminPage() {
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => deleteCollectionMutation.mutate(collection.id)}
-                              disabled={deleteCollectionMutation.isPending}
-                            >
+                        <Button size="sm" variant="destructive">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
-                        </div>
-                      </div>
+                    </CardContent>
+                  </Card>
                     ))}
                   </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-400">
-                    No hay colecciones creadas. Crea tu primera colección.
                   </div>
-                )}
-              </CardContent>
-            </Card>
           </TabsContent>
 
+          {/* Sección de Configuración */}
           <TabsContent value="settings">
-            <Card className="bg-black/50 border-[#D4AF37]/20">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#D4AF37]">Configuración del Sistema</h2>
+                  <p className="text-gray-400">Ajustes generales de la plataforma</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+                >
+                  <Database className="w-4 h-4 mr-2" />
+                  Backup del Sistema
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Configuración General */}
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
               <CardHeader>
-                <CardTitle className="text-[#D4AF37]">Configuración del Sistema</CardTitle>
+                    <CardTitle className="text-[#D4AF37]">Configuración General</CardTitle>
                 <CardDescription className="text-gray-400">
-                  Ajustes generales de la plataforma
+                      Ajustes básicos de la plataforma
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
                   <div>
                     <h3 className="text-[#D4AF37] font-medium">Mostrar Sección Colecciones</h3>
-                    <p className="text-gray-400 text-sm">Controla la visibilidad de las colecciones en el sitio web</p>
+                        <p className="text-gray-400 text-sm">Controla la visibilidad de las colecciones</p>
                   </div>
                   <Switch 
                     checked={collectionsEnabled}
@@ -819,92 +1651,201 @@ export default function AdminPage() {
                     }}
                   />
                 </div>
+
+                    <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
+                      <div>
+                        <h3 className="text-[#D4AF37] font-medium">Modo Mantenimiento</h3>
+                        <p className="text-gray-400 text-sm">Activa el modo mantenimiento del sitio</p>
+                      </div>
+                      <Switch 
+                        checked={false}
+                        onCheckedChange={(checked) => {
+                          updateSettingMutation.mutate({ 
+                            key: 'maintenance_mode', 
+                            value: checked.toString() 
+                          });
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
+                      <div>
+                        <h3 className="text-[#D4AF37] font-medium">Notificaciones por Email</h3>
+                        <p className="text-gray-400 text-sm">Recibir notificaciones de pedidos</p>
+                      </div>
+                      <Switch 
+                        checked={true}
+                        onCheckedChange={(checked) => {
+                          updateSettingMutation.mutate({ 
+                            key: 'email_notifications', 
+                            value: checked.toString() 
+                          });
+                        }}
+                      />
+                    </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+
+                {/* Configuración de Pagos */}
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Configuración de Pagos</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Ajustes de métodos de pago
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
+                      <div>
+                        <h3 className="text-[#D4AF37] font-medium">Stripe</h3>
+                        <p className="text-gray-400 text-sm">Procesador de pagos principal</p>
+                      </div>
+                      <Badge variant="outline" className="border-green-500/30 text-green-400">
+                        Activo
+                      </Badge>
       </div>
 
-      {/* Offer Configuration Dialog */}
-      <Dialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
-        <DialogContent className="bg-black border-[#D4AF37]/30 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-[#D4AF37]">Configurar Oferta</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Configure los detalles de la oferta para {editingOffer?.name}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const discountPercentage = formData.get('discountPercentage') as string;
-            const offerDescription = formData.get('offerDescription') as string;
-            
-            if (editingOffer) {
-              updateOfferMutation.mutate({
-                id: editingOffer.id,
-                isOnOffer: true,
-                discountPercentage,
-                offerDescription
-              });
-              setIsOfferDialogOpen(false);
-              setEditingOffer(null);
-            }
-          }} className="space-y-4">
-            <div>
-              <Label htmlFor="discountPercentage" className="text-[#D4AF37]">
-                Porcentaje de Descuento (%)
-              </Label>
-              <Input
-                id="discountPercentage"
-                name="discountPercentage"
-                type="number"
-                min="1"
-                max="99"
-                defaultValue={editingOffer?.discountPercentage || "10"}
-                className="bg-gray-900 border-[#D4AF37]/30 text-white"
-                required
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="offerDescription" className="text-[#D4AF37]">
-                Descripción de Oferta (opcional)
-              </Label>
-              <Input
-                id="offerDescription"
-                name="offerDescription"
-                defaultValue={editingOffer?.offerDescription || ""}
-                placeholder="Ej: Oferta por tiempo limitado"
-                className="bg-gray-900 border-[#D4AF37]/30 text-white"
-              />
-            </div>
-            
-            <div className="flex gap-2">
-              <Button
-                type="submit"
-                className="flex-1 bg-[#D4AF37] text-black hover:bg-[#D4AF37]/80"
-              >
-                Guardar Oferta
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setIsOfferDialogOpen(false);
-                  setEditingOffer(null);
-                }}
-                className="border-[#D4AF37]/30 text-[#D4AF37]"
-              >
-                Cancelar
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+                    <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
+                      <div>
+                        <h3 className="text-[#D4AF37] font-medium">PayPal</h3>
+                        <p className="text-gray-400 text-sm">Método de pago alternativo</p>
+                      </div>
+                      <Switch 
+                        checked={false}
+                        onCheckedChange={(checked) => {
+                          updateSettingMutation.mutate({ 
+                            key: 'paypal_enabled', 
+                            value: checked.toString() 
+                          });
+                        }}
+                      />
+                    </div>
 
-      {/* Edit Collection Dialog */}
+                    <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
+                      <div>
+                        <h3 className="text-[#D4AF37] font-medium">Transferencia Bancaria</h3>
+                        <p className="text-gray-400 text-sm">Pago por transferencia</p>
+                      </div>
+                      <Switch 
+                        checked={true}
+                        onCheckedChange={(checked) => {
+                          updateSettingMutation.mutate({ 
+                            key: 'bank_transfer_enabled', 
+                            value: checked.toString() 
+                          });
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Configuración de Envíos */}
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Configuración de Envíos</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Ajustes de envío y logística
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
+                      <div>
+                        <h3 className="text-[#D4AF37] font-medium">Envío Gratis</h3>
+                        <p className="text-gray-400 text-sm">En pedidos superiores a $50</p>
+                      </div>
+                      <Switch 
+                        checked={true}
+                        onCheckedChange={(checked) => {
+                          updateSettingMutation.mutate({ 
+                            key: 'free_shipping_enabled', 
+                            value: checked.toString() 
+                          });
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
+            <div>
+                        <h3 className="text-[#D4AF37] font-medium">Seguimiento de Pedidos</h3>
+                        <p className="text-gray-400 text-sm">Notificaciones de seguimiento</p>
+                      </div>
+                      <Switch 
+                        checked={true}
+                        onCheckedChange={(checked) => {
+                          updateSettingMutation.mutate({ 
+                            key: 'order_tracking_enabled', 
+                            value: checked.toString() 
+                          });
+                        }}
+              />
+            </div>
+                  </CardContent>
+                </Card>
+
+                {/* Configuración de Marketing */}
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Configuración de Marketing</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Herramientas de marketing y promoción
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
+            <div>
+                        <h3 className="text-[#D4AF37] font-medium">Cupones de Descuento</h3>
+                        <p className="text-gray-400 text-sm">Sistema de cupones activo</p>
+                      </div>
+                      <Switch 
+                        checked={true}
+                        onCheckedChange={(checked) => {
+                          updateSettingMutation.mutate({ 
+                            key: 'coupons_enabled', 
+                            value: checked.toString() 
+                          });
+                        }}
+              />
+            </div>
+            
+                    <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
+                      <div>
+                        <h3 className="text-[#D4AF37] font-medium">Programa de Fidelidad</h3>
+                        <p className="text-gray-400 text-sm">Puntos por compras</p>
+                      </div>
+                      <Switch 
+                        checked={false}
+                        onCheckedChange={(checked) => {
+                          updateSettingMutation.mutate({ 
+                            key: 'loyalty_program_enabled', 
+                            value: checked.toString() 
+                          });
+                        }}
+                      />
+            </div>
+
+                    <div className="flex items-center justify-between p-4 border border-[#D4AF37]/20 rounded-lg">
+                      <div>
+                        <h3 className="text-[#D4AF37] font-medium">Email Marketing</h3>
+                        <p className="text-gray-400 text-sm">Campañas de email</p>
+                      </div>
+                      <Switch 
+                        checked={true}
+                        onCheckedChange={(checked) => {
+                          updateSettingMutation.mutate({ 
+                            key: 'email_marketing_enabled', 
+                            value: checked.toString() 
+                          });
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Diálogos adicionales */}
       <Dialog open={isEditCollectionDialogOpen} onOpenChange={setIsEditCollectionDialogOpen}>
         <DialogContent className="bg-black border-[#D4AF37]/20 text-white max-w-2xl">
           <DialogHeader>
@@ -929,24 +1870,33 @@ export default function AdminPage() {
               </div>
               <div>
                 <Label htmlFor="perfumeIds" className="text-[#D4AF37]">IDs de Perfumes (separados por coma)</Label>
-                <Input name="perfumeIds" defaultValue={editingCollection.perfumeIds.join(", ")} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="1, 2, 3" />
+                  <Input name="perfumeIds" defaultValue={editingCollection.perfumeIds?.join(", ") || ""} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="1, 2, 3" />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="sizes" className="text-[#D4AF37]">Tamaños (separados por coma)</Label>
-                  <Input name="sizes" defaultValue={editingCollection.sizes.join(", ")} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="5ml, 10ml" />
+                    <Input name="sizes" defaultValue={editingCollection.sizes?.join(", ") || ""} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="5ml, 10ml" />
                 </div>
                 <div>
                   <Label htmlFor="prices" className="text-[#D4AF37]">Precios por Tamaño (separados por coma)</Label>
-                  <Input name="prices" defaultValue={editingCollection.prices.join(", ")} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="25, 45" />
+                    <Input name="prices" defaultValue={editingCollection.prices?.join(", ") || ""} required className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="25, 45" />
                 </div>
               </div>
               
-              <div>
-                <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
-                <Input name="imageUrl" type="url" defaultValue={editingCollection.imageUrl} className="bg-black/50 border-[#D4AF37]/30 text-white" />
-              </div>
+                                  <div>
+                      <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
+                      <Input 
+                        name="imageUrl" 
+                        type="url" 
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                        defaultValue={editingCollection.imageUrl} 
+                        className="bg-black/50 border-[#D4AF37]/30 text-white" 
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Acepta URLs de imágenes (.jpg, .png, .gif, .webp, etc.)
+                      </p>
+                    </div>
               <Button type="submit" disabled={updateCollectionMutation.isPending} className="w-full luxury-button">
                 {updateCollectionMutation.isPending ? (
                   <>
@@ -961,6 +1911,7 @@ export default function AdminPage() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

@@ -28,26 +28,30 @@ export default function AdminAuthPage() {
     setError("");
     setSuccess("");
 
-    // Credenciales específicas del administrador
-    const adminEmail = "lhdecant@gmail.com";
-    const adminPassword = "11qqaazz";
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
 
-    // Simular delay para mejor UX
-    await new Promise(resolve => setTimeout(resolve, 1000));
+      const data = await response.json();
 
-    if (email === adminEmail && password === adminPassword) {
-      setSuccess("¡Acceso autorizado! Redirigiendo al panel de administración...");
-      
-      // Guardar estado de admin en localStorage
-      localStorage.setItem("isAdmin", "true");
-      localStorage.setItem("adminEmail", email);
-      
-      // Simular redirección
-      setTimeout(() => {
+      if (response.ok && data.success) {
+        // Guardar estado de admin en localStorage
+        localStorage.setItem("isAdmin", "true");
+        localStorage.setItem("adminEmail", email);
+        
+        // Redirección inmediata
         setLocation("/admin");
-      }, 2000);
-    } else {
-      setError("Credenciales incorrectas. Solo el administrador autorizado puede acceder.");
+      } else {
+        setError(data.message || "Credenciales incorrectas. Solo el administrador autorizado puede acceder.");
+      }
+    } catch (error) {
+      setError("Error de conexión. Verifica tu conexión a internet.");
     }
 
     setIsLoading(false);
