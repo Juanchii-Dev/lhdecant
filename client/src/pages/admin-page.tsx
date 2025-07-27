@@ -241,7 +241,14 @@ export default function AdminPage() {
   });
 
   const handleLogout = () => {
-    logoutMutation.mutate();
+    // Limpiar datos de admin
+    localStorage.removeItem("isAdmin");
+    localStorage.removeItem("adminEmail");
+    
+    // Logout del usuario normal si existe
+    if (user) {
+      logoutMutation.mutate();
+    }
   };
 
   const handleCreatePerfume = (e: React.FormEvent<HTMLFormElement>) => {

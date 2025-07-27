@@ -11,6 +11,7 @@ import CatalogPage from "./pages/catalog-page";
 import AuthPage from "./pages/auth-page";
 import AdminAuthPage from "./pages/admin-auth-page";
 import AdminPage from "./pages/admin-page";
+import AdminGuard from "./components/admin-guard";
 import NotFound from "./pages/not-found";
 import ProfilePage from "./pages/profile-page";
 import FavoritesPage from "./pages/favorites-page";
@@ -45,7 +46,11 @@ export default function App() {
                 <Route path="/catalogo" component={CatalogPage} />
                 <Route path="/auth" component={AuthPage} />
                 <Route path="/admin-auth" component={AdminAuthPage} />
-                <Route path="/admin" component={AdminPage} />
+                <Route path="/admin" component={() => (
+                  <AdminGuard>
+                    <AdminPage />
+                  </AdminGuard>
+                )} />
                 <Route path="/profile" component={ProfilePage} />
                 <Route path="/favorites" component={FavoritesPage} />
                 <Route path="/orders" component={OrdersPage} />

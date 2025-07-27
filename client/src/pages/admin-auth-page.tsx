@@ -38,6 +38,10 @@ export default function AdminAuthPage() {
     if (email === adminEmail && password === adminPassword) {
       setSuccess("¡Acceso autorizado! Redirigiendo al panel de administración...");
       
+      // Guardar estado de admin en localStorage
+      localStorage.setItem("isAdmin", "true");
+      localStorage.setItem("adminEmail", email);
+      
       // Simular redirección
       setTimeout(() => {
         setLocation("/admin");
