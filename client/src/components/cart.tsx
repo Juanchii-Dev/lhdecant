@@ -1,13 +1,13 @@
 
 import { useState } from "react";
-import { useCart } from "../hooks/use-cart";
+import { useCartSync } from "../hooks/use-cart-sync";
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function CartIcon() {
-  const { totalItems } = useCart();
+  const { totalItems } = useCartSync();
 
   return (
     <div className="relative">
@@ -26,15 +26,11 @@ export function CartIcon() {
 }
 
 export function CartDrawer() {
-  const { items, totalItems, totalAmount, updateQuantity, removeItem, clearCart, goToCheckout } = useCart();
+  const { items, totalItems, totalAmount, updateQuantity, removeItem, clearCart, goToCheckout } = useCartSync();
   const [open, setOpen] = useState(false);
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeItem(itemId);
-    } else {
-      updateQuantity(itemId, newQuantity);
-    }
+    updateQuantity(itemId, newQuantity);
   };
 
   return (

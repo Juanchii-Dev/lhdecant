@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { useToast } from "../hooks/use-toast";
-import { useCart } from "../hooks/use-cart";
+import { useCartSync } from "../hooks/use-cart-sync";
 import type { Perfume } from "../../../shared/schema";
 
 interface PerfumeCardProps {
@@ -20,7 +20,7 @@ export default function PerfumeCard({
 }: PerfumeCardProps) {
   const [localSelectedSize, setLocalSelectedSize] = useState(perfume.sizes[0]);
   const { toast } = useToast();
-  const { addToCart } = useCart();
+  const { addToCart } = useCartSync();
 
   // Use external size state if provided, otherwise use local state
   const selectedSize = selectedSizes[perfume.id] || localSelectedSize;

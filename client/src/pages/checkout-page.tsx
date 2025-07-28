@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { useCart } from "../hooks/use-cart";
+import { useCartSync } from "../hooks/use-cart-sync";
 import { useAuth } from "../hooks/use-auth";
 import { useToast } from "../hooks/use-toast";
 import { Button } from "../components/ui/button";
@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { ShoppingCart, CreditCard, Shield, Truck } from "lucide-react";
 
 export default function CheckoutPage() {
-  const { items, totalAmount, isLoading: cartLoading } = useCart();
+  const { items, totalAmount, isLoading: cartLoading } = useCartSync();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +67,20 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
+      // Preparar los datos del carrito para Stripe
+      const lineItems = items.map(item => ({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: item.perfume?.name || `Perfume ${item.perfumeId}`,
+            description: `${item.perfume?.brand || 'Marca'} - ${item.size}`,
+            images: item.perfume?.imageUrl ? [item.perfume.imageUrl] : [],
+          },
+          unit_amount: Math.round(parseFloat(item.price) * 100), // Stripe espera centavos
+        },
+        quantity: item.quantity,
+      }));
+
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -74,7 +88,7 @@ export default function CheckoutPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          items: items,
+          items: lineItems,
           currency: 'usd',
           customerEmail: user.email,
         }),
@@ -87,7 +101,7 @@ export default function CheckoutPage() {
 
       const { sessionId } = await response.json();
       
-      // Redirigir a Stripe Checkout usando import.meta.env
+      // Redirigir a Stripe Checkout
       const stripe = await loadStripe('pk_test_placeholder');
       if (stripe) {
         const { error } = await stripe.redirectToCheckout({ sessionId });
