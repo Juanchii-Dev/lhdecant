@@ -66,9 +66,14 @@ export function useCartSync() {
     onSuccess: async (data) => {
       console.log('🛒 Add to cart success:', data);
       
-      // Solo sincronizar con backend, no actualizar store local
+      // Actualización inmediata y agresiva
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      
+      // Refetch adicional para asegurar
+      setTimeout(async () => {
+        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      }, 100);
       
       toast({
         title: "Agregado al carrito",
@@ -105,9 +110,14 @@ export function useCartSync() {
       return await res.json();
     },
     onSuccess: async () => {
-      // Solo sincronizar con backend
+      // Actualización inmediata y agresiva
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      
+      // Refetch adicional para asegurar
+      setTimeout(async () => {
+        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      }, 100);
     },
     onError: (error) => {
       console.error('Error updating quantity:', error);
@@ -129,9 +139,14 @@ export function useCartSync() {
       }
     },
     onSuccess: async () => {
-      // Solo sincronizar con backend
+      // Actualización inmediata y agresiva
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      
+      // Refetch adicional para asegurar
+      setTimeout(async () => {
+        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      }, 100);
       
       toast({
         title: "Producto eliminado",
@@ -154,9 +169,14 @@ export function useCartSync() {
       await apiRequest("DELETE", "/api/cart");
     },
     onSuccess: async () => {
-      // Solo sincronizar con backend
+      // Actualización inmediata y agresiva
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      
+      // Refetch adicional para asegurar
+      setTimeout(async () => {
+        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      }, 100);
       
       toast({
         title: "Carrito vacío",
