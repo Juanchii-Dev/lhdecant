@@ -63,25 +63,21 @@ export default function CheckoutPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          items: items.map(item => ({
-            perfumeId: item.perfumeId,
-            size: item.size,
-            quantity: item.quantity,
-            price: item.price
-          })),
-          successUrl: `${window.location.origin}/success`,
-          cancelUrl: `${window.location.origin}/checkout`,
+          sessionId: document.cookie.split(';').find(c => c.trim().startsWith('connect.sid='))?.split('=')[1] || '',
+          currency: 'usd',
+          customerEmail: user.email,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Error al crear la sesión de pago');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al crear la sesión de pago');
       }
 
       const { sessionId } = await response.json();
       
       // Redirigir a Stripe Checkout
-      const stripe = await loadStripe('pk_test_placeholder');
+      const stripe = await loadStripe(process.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
       if (stripe) {
         const { error } = await stripe.redirectToCheckout({ sessionId });
         if (error) {
@@ -95,7 +91,7 @@ export default function CheckoutPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo procesar el pago",
+        description: error.message || "No se pudo procesar el pago",
         variant: "destructive",
       });
     } finally {
