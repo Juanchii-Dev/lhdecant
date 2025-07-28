@@ -66,29 +66,9 @@ export function useCartSync() {
     onSuccess: async (data) => {
       console.log('🛒 Add to cart success:', data);
       
-      // Actualizar store local con el ID real del backend
-      addItem({
-        id: data.id, // Usar el ID real del backend
-        perfumeId: data.perfumeId,
-        size: data.size,
-        price: data.price,
-        quantity: data.quantity,
-        perfume: data.perfume,
-      });
-      
-      // Sincronizar con backend
+      // Solo sincronizar con backend, no actualizar store local
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
-      
-      // Refetch adicional después de un delay
-      setTimeout(async () => {
-        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
-      }, 50);
-      
-      // Refetch final para asegurar
-      setTimeout(async () => {
-        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
-      }, 200);
       
       toast({
         title: "Agregado al carrito",
@@ -125,6 +105,7 @@ export function useCartSync() {
       return await res.json();
     },
     onSuccess: async () => {
+      // Solo sincronizar con backend
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
     },
@@ -148,6 +129,7 @@ export function useCartSync() {
       }
     },
     onSuccess: async () => {
+      // Solo sincronizar con backend
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
       
@@ -172,6 +154,7 @@ export function useCartSync() {
       await apiRequest("DELETE", "/api/cart");
     },
     onSuccess: async () => {
+      // Solo sincronizar con backend
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
       
@@ -215,26 +198,17 @@ export function useCartSync() {
       return;
     }
     
-    // Actualizar store local inmediatamente
-    updateQuantity(id, quantity);
-    
-    // Sincronizar con backend
+    // Solo sincronizar con backend
     updateQuantityMutation.mutate({ id, quantity });
   };
 
   const removeItemSync = (id: string) => {
-    // Actualizar store local inmediatamente
-    removeItem(id);
-    
-    // Sincronizar con backend
+    // Solo sincronizar con backend
     removeItemMutation.mutate(id);
   };
 
   const clearCartSync = () => {
-    // Actualizar store local inmediatamente
-    clearCart();
-    
-    // Sincronizar con backend
+    // Solo sincronizar con backend
     clearCartMutation.mutate();
   };
 
