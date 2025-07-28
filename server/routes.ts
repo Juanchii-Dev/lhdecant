@@ -419,7 +419,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = req.params.id;
       const { quantity } = req.body;
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+      
       const updatedItem = await storage.updateCartItemQuantity(id, quantity, userId);
       res.json(updatedItem);
     } catch (error) {
@@ -431,7 +436,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/cart/:id", requireAuth, async (req, res) => {
     try {
       const id = req.params.id;
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+      
       await storage.removeFromCart(id, userId);
       res.sendStatus(204);
     } catch (error) {
@@ -442,7 +452,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart", requireAuth, async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+      
       await storage.clearCart(userId);
       res.status(204).send();
     } catch (error) {
