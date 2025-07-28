@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useCart } from "../hooks/use-cart";
 import { Button } from "./ui/button";
@@ -5,11 +6,9 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
-import { ShoppingCart, Plus, Minus, Trash2, Package } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingCart } from "lucide-react";
+import { motion } from "framer-motion";
 import { useToast } from "../hooks/use-toast";
 import { apiRequest } from "../lib/queryClient";
 
@@ -33,13 +32,9 @@ export function CartIcon() {
 }
 
 export function CartDrawer() {
-  const { items, totalItems, totalAmount, updateQuantity, removeItem, clearCart, goToCheckout } = useCart();
+  const { items, totalItems, totalAmount, updateQuantity, goToCheckout } = useCart();
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
-
-  const handleQuantityChange = (id: number, newQuantity: number) => {
-    updateQuantity(id, newQuantity);
-  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -142,152 +137,5 @@ export function CartDrawer() {
         </div>
       </SheetContent>
     </Sheet>
-  );
-}
-
-function CheckoutForm({ 
-  items, 
-  totalAmount, 
-  onClose 
-}: { 
-  items: any[]; 
-  totalAmount: number; 
-  onClose: () => void; 
-}) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const { clearCart } = useCart();
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const formData = new FormData(e.currentTarget);
-      
-      const orderData = {
-        customerName: formData.get("customerName") as string,
-        customerEmail: formData.get("customerEmail") as string,
-        customerPhone: formData.get("customerPhone") as string,
-        shippingAddress: formData.get("shippingAddress") as string,
-        totalAmount: totalAmount.toString(),
-      };
-
-      const orderItems = items.map(item => ({
-        perfumeId: item.perfumeId,
-        perfumeName: item.perfume.name,
-        perfumeBrand: item.perfume.brand,
-        size: item.size,
-        quantity: item.quantity,
-        unitPrice: item.price,
-        totalPrice: (parseFloat(item.price) * item.quantity).toString(),
-      }));
-
-      const res = await apiRequest("POST", "/api/orders", { orderData, orderItems });
-      
-      if (res.ok) {
-        toast({
-          title: "¡Pedido realizado!",
-          description: "Tu pedido ha sido procesado exitosamente. Te contactaremos pronto.",
-        });
-        clearCart();
-        onClose();
-      } else {
-        throw new Error("Error al procesar el pedido");
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo procesar el pedido. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <>
-      <DialogHeader>
-        <DialogTitle className="text-[#D4AF37]">Finalizar Compra</DialogTitle>
-        <DialogDescription className="text-gray-400">
-          Completa tus datos para procesar el pedido
-        </DialogDescription>
-      </DialogHeader>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="customerName" className="text-[#D4AF37]">Nombre completo</Label>
-          <Input
-            id="customerName"
-            name="customerName"
-            required
-            className="bg-black/50 border-[#D4AF37]/30 text-white"
-            placeholder="Tu nombre completo"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="customerEmail" className="text-[#D4AF37]">Email</Label>
-          <Input
-            id="customerEmail"
-            name="customerEmail"
-            type="email"
-            required
-            className="bg-black/50 border-[#D4AF37]/30 text-white"
-            placeholder="tu@email.com"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="customerPhone" className="text-[#D4AF37]">Teléfono</Label>
-          <Input
-            id="customerPhone"
-            name="customerPhone"
-            type="tel"
-            className="bg-black/50 border-[#D4AF37]/30 text-white"
-            placeholder="Tu número de teléfono"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="shippingAddress" className="text-[#D4AF37]">Dirección de envío</Label>
-          <Textarea
-            id="shippingAddress"
-            name="shippingAddress"
-            required
-            className="bg-black/50 border-[#D4AF37]/30 text-white"
-            placeholder="Tu dirección completa"
-            rows={3}
-          />
-        </div>
-
-        <Separator className="bg-[#D4AF37]/20" />
-
-        <div className="flex justify-between items-center">
-          <span className="text-white font-semibold">Total a pagar:</span>
-          <span className="text-[#D4AF37] font-bold text-lg">${totalAmount.toFixed(2)}</span>
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1 border-[#D4AF37]/30 text-[#D4AF37]"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            className="flex-1 luxury-button"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Procesando..." : "Confirmar Pedido"}
-          </Button>
-        </div>
-      </form>
-    </>
   );
 }
