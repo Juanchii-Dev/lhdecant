@@ -369,11 +369,23 @@ export class FirestoreStorage {
     const items = itemsSnap.docs.map(i => ({ id: i.id, ...i.data() }));
     return { id, ...data, items };
   }
-  async updateOrderStatus(id: string, status: string) {
+  async updateOrderStatus(id: string, updates: any): Promise<any> {
     const orderRef = db.collection('orders').doc(id);
-    await orderRef.update({ status });
     const orderSnap = await orderRef.get();
-    const data = orderSnap.data();
+    
+    if (!orderSnap.exists) {
+      throw new Error('Order not found');
+    }
+    
+    const updateData = {
+      ...updates,
+      updatedAt: new Date()
+    };
+    
+    await orderRef.update(updateData);
+    
+    const updatedSnap = await orderRef.get();
+    const data = updatedSnap.data();
     const itemsSnap = await orderRef.collection('items').get();
     const items = itemsSnap.docs.map(i => ({ id: i.id, ...i.data() }));
     return { id, ...data, items };
@@ -1248,6 +1260,52 @@ export class FirestoreStorage {
 
     // Retornar solo las 10 actividades más recientes
     return activities.slice(0, 10);
+  }
+
+  // Tracking methods
+  async getOrderById(orderId: string): Promise<any> {
+    const orderRef = db.collection('orders').doc(orderId);
+    const orderSnap = await orderRef.get();
+    
+    if (!orderSnap.exists) {
+      return null;
+    }
+    
+    return { id: orderSnap.id, ...orderSnap.data() };
+  }
+
+  async getOrdersByEmail(email: string): Promise<any[]> {
+    const ordersRef = db.collection('orders');
+    const query = await ordersRef.where('customer_email', '==', email).get();
+    
+    return query.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  }
+
+  async getOrderTrackingHistory(orderId: string): Promise<any[]> {
+    const trackingRef = db.collection('orderTracking').doc(orderId).collection('history');
+    const historySnap = await trackingRef.orderBy('timestamp', 'desc').get();
+    
+    return historySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  }
+
+  async addOrderTrackingEntry(orderId: string, entry: any): Promise<void> {
+    const trackingRef = db.collection('orderTracking').doc(orderId).collection('history');
+    await trackingRef.add({
+      ...entry,
+      timestamp: new Date(),
+      createdAt: new Date()
+    });
+  }
+
+  async getPerfumeById(perfumeId: string): Promise<any> {
+    const perfumeRef = db.collection('perfumes').doc(perfumeId);
+    const perfumeSnap = await perfumeRef.get();
+    
+    if (!perfumeSnap.exists) {
+      return null;
+    }
+    
+    return { id: perfumeSnap.id, ...perfumeSnap.data() };
   }
 }
 

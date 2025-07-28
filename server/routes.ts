@@ -962,25 +962,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sistema completo de tracking de pedidos
+  app.get('/api/tracking/:orderId', async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const { email } = req.query;
+      
+      if (!orderId) {
+        return res.status(400).json({ message: 'ID de orden requerido' });
+      }
+
+      // Obtener orden desde Firebase
+      const order = await storage.getOrderById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: 'Orden no encontrada' });
+      }
+
+      // Verificar que el email coincida (seguridad)
+      if (email && order.customer_email !== email) {
+        return res.status(403).json({ message: 'No autorizado para ver esta orden' });
+      }
+
+      // Obtener historial de tracking
+      const trackingHistory = await storage.getOrderTrackingHistory(orderId);
+      
+      const trackingInfo = {
+        orderId: order.id,
+        customerEmail: order.customer_email,
+        status: order.status,
+        amount: order.amount_total,
+        currency: order.currency,
+        createdAt: order.createdAt,
+        estimatedDelivery: order.estimatedDelivery,
+        trackingNumber: order.trackingNumber,
+        shippingCarrier: order.shippingCarrier,
+        history: trackingHistory,
+        items: order.items || []
+      };
+
+      res.json(trackingInfo);
+    } catch (error) {
+      console.error('Error obteniendo tracking:', error);
+      res.status(500).json({ message: 'Error obteniendo información de tracking' });
+    }
+  });
+
+  // Endpoint para obtener tracking por email (sin orden ID)
+  app.get('/api/tracking', async (req, res) => {
+    try {
+      const { email } = req.query;
+      
+      if (!email) {
+        return res.status(400).json({ message: 'Email requerido' });
+      }
+
+      // Obtener todas las órdenes del cliente
+      const orders = await storage.getOrdersByEmail(email);
+      
+      const trackingList = orders.map(order => ({
+        orderId: order.id,
+        status: order.status,
+        amount: order.amount_total,
+        currency: order.currency,
+        createdAt: order.createdAt,
+        estimatedDelivery: order.estimatedDelivery,
+        trackingNumber: order.trackingNumber,
+        shippingCarrier: order.shippingCarrier,
+        itemCount: order.items?.length || 0
+      }));
+
+      res.json(trackingList);
+    } catch (error) {
+      console.error('Error obteniendo tracking por email:', error);
+      res.status(500).json({ message: 'Error obteniendo información de tracking' });
+    }
+  });
+
+  // Endpoint para actualizar estado de orden (admin)
   app.patch('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
     try {
-      const { status } = req.body;
-      if (!status) return res.status(400).json({ message: 'Estado requerido' });
-      const order = await storage.updateOrderStatus(req.params.id, status);
-      // Notificar al cliente por email
+      const { status, trackingNumber, shippingCarrier, estimatedDelivery, notes } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: 'Estado requerido' });
+      }
+
+      // Validar estado válido
+      const validStatuses = [
+        'pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'
+      ];
+      
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ 
+          message: 'Estado inválido. Estados válidos: ' + validStatuses.join(', ') 
+        });
+      }
+
+      // Actualizar orden con información de tracking
+      const order = await storage.updateOrderStatus(req.params.id, {
+        status,
+        trackingNumber,
+        shippingCarrier,
+        estimatedDelivery,
+        notes,
+        updatedAt: new Date().toISOString()
+      });
+
+      // Agregar entrada al historial de tracking
+      await storage.addOrderTrackingEntry(req.params.id, {
+        status,
+        timestamp: new Date().toISOString(),
+        notes: notes || `Estado actualizado a: ${status}`,
+        updatedBy: 'admin'
+      });
+
+      // Enviar email de notificación al cliente
       try {
+        const statusMessages = {
+          'pending': 'Tu pedido está pendiente de confirmación',
+          'paid': 'Tu pago ha sido confirmado',
+          'processing': 'Tu pedido está siendo procesado',
+          'shipped': 'Tu pedido ha sido enviado',
+          'delivered': 'Tu pedido ha sido entregado',
+          'cancelled': 'Tu pedido ha sido cancelado',
+          'refunded': 'Tu pedido ha sido reembolsado'
+        };
+
+        const trackingInfo = trackingNumber ? 
+          `<p><strong>Número de seguimiento:</strong> ${trackingNumber}</p>` : '';
+        
+        const carrierInfo = shippingCarrier ? 
+          `<p><strong>Transportista:</strong> ${shippingCarrier}</p>` : '';
+        
+        const deliveryInfo = estimatedDelivery ? 
+          `<p><strong>Entrega estimada:</strong> ${estimatedDelivery}</p>` : '';
+
         await transporter.sendMail({
           from: process.env.SMTP_FROM,
           to: order.customer_email,
-          subject: 'Actualización de tu pedido',
-          html: `<b>El estado de tu pedido ha cambiado a:</b> ${status}`
+          subject: `Actualización de tu pedido #${order.id}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #D4AF37;">Actualización de tu pedido</h2>
+              <p><strong>Número de orden:</strong> ${order.id}</p>
+              <p><strong>Estado actual:</strong> ${statusMessages[status] || status}</p>
+              ${trackingInfo}
+              ${carrierInfo}
+              ${deliveryInfo}
+              ${notes ? `<p><strong>Notas:</strong> ${notes}</p>` : ''}
+              <p>Puedes hacer seguimiento de tu pedido en: ${process.env.FRONTEND_URL}/tracking/${order.id}</p>
+              <p>Gracias por elegir LhDecant!</p>
+            </div>
+          `
         });
       } catch (err) {
         console.error('Error enviando email de estado:', err);
       }
+
       res.json(order);
     } catch (error) {
+      console.error('Error actualizando estado de orden:', error);
       res.status(500).json({ message: 'Error al actualizar el estado de la orden' });
+    }
+  });
+
+  // Endpoint para obtener estadísticas de tracking (admin)
+  app.get('/api/admin/tracking-stats', requireAdmin, async (req, res) => {
+    try {
+      const orders = await storage.getOrders();
+      
+      const stats = {
+        total: orders.length,
+        byStatus: {
+          pending: orders.filter(o => o.status === 'pending').length,
+          paid: orders.filter(o => o.status === 'paid').length,
+          processing: orders.filter(o => o.status === 'processing').length,
+          shipped: orders.filter(o => o.status === 'shipped').length,
+          delivered: orders.filter(o => o.status === 'delivered').length,
+          cancelled: orders.filter(o => o.status === 'cancelled').length,
+          refunded: orders.filter(o => o.status === 'refunded').length
+        },
+        averageProcessingTime: 0, // Se calcularía basado en timestamps
+        recentUpdates: [] // Últimas actualizaciones de tracking
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error obteniendo estadísticas de tracking:', error);
+      res.status(500).json({ message: 'Error obteniendo estadísticas de tracking' });
     }
   });
 
