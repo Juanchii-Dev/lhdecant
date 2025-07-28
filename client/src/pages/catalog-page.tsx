@@ -25,7 +25,13 @@ export default function CatalogPage() {
 
   const { data: perfumes, isLoading } = useQuery<any[]>({
     queryKey: ["/api/perfumes"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/perfumes', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching perfumes');
+      return response.json();
+    },
   });
 
   // Filter and sort perfumes
@@ -37,7 +43,7 @@ export default function CatalogPage() {
     
     const matchesSearch = perfume.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          perfume.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         perfume.notes.some(note => note.toLowerCase().includes(searchTerm.toLowerCase()));
+                         perfume.notes.some((note: string) => note.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = selectedCategory === "all" || perfume.category === selectedCategory;
     const matchesBrand = selectedBrand === "all" || perfume.brand === selectedBrand;
     

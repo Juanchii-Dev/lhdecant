@@ -56,13 +56,25 @@ export default function CouponsPage() {
   // Obtener cupones disponibles
   const { data: availableCoupons = [], isLoading: couponsLoading } = useQuery<Coupon[]>({
     queryKey: ['coupons', 'available'],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/coupons', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching available coupons');
+      return response.json();
+    },
   });
 
   // Obtener cupones del usuario
   const { data: userCoupons = [], isLoading: userCouponsLoading } = useQuery<UserCoupon[]>({
     queryKey: ['user-coupons', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/coupons/user', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching user coupons');
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 

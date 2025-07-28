@@ -43,14 +43,26 @@ export default function TrackingPage() {
   // Obtener pedidos del usuario
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch(`/api/tracking?email=${user?.email}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching orders');
+      return response.json();
+    },
     enabled: !!user?.id,
   }) as { data: Order[], isLoading: boolean };
 
   // Buscar por número de seguimiento
   const { data: trackingData, isLoading: trackingLoading } = useQuery({
     queryKey: ['tracking', trackingNumber],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch(`/api/tracking/${trackingNumber}?email=${user?.email}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching tracking data');
+      return response.json();
+    },
     enabled: !!trackingNumber && searchPerformed,
   }) as { data: TrackingEvent[], isLoading: boolean };
 

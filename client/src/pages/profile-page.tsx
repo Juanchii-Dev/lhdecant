@@ -39,14 +39,26 @@ export default function ProfilePage() {
   // Obtener estadísticas reales del usuario
   const { data: userStats, isLoading: statsLoading } = useQuery<UserStats>({
     queryKey: ['user-stats', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/user-stats', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching user stats');
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 
   // Obtener actividad reciente real
   const { data: recentActivity = [], isLoading: activityLoading } = useQuery<RecentActivity[]>({
     queryKey: ['user-activity', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/user-activity', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching user activity');
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 

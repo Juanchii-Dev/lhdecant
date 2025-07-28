@@ -32,7 +32,13 @@ export default function FavoritesPage() {
   // Obtener favoritos del usuario
   const { data: favorites = [], isLoading } = useQuery({
     queryKey: ['favorites', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/favorites', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching favorites');
+      return response.json();
+    },
     enabled: !!user?.id,
   }) as { data: Favorite[], isLoading: boolean };
 

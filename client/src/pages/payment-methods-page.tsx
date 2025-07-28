@@ -44,7 +44,13 @@ export default function PaymentMethodsPage() {
   // Obtener métodos de pago del usuario
   const { data: paymentMethods = [], isLoading } = useQuery({
     queryKey: ['payment-methods', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/payment-methods', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching payment methods');
+      return response.json();
+    },
     enabled: !!user?.id,
   }) as { data: PaymentMethod[], isLoading: boolean };
 

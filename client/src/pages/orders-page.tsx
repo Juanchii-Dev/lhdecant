@@ -64,7 +64,13 @@ export default function OrdersPage() {
   // Obtener pedidos del usuario
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/orders', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching orders');
+      return response.json();
+    },
     enabled: !!user?.id,
   }) as { data: Order[], isLoading: boolean };
 

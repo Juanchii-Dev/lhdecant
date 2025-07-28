@@ -56,7 +56,13 @@ export default function AddressesPage() {
   // Obtener direcciones del usuario
   const { data: addresses = [], isLoading } = useQuery({
     queryKey: ['addresses', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/addresses', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching addresses');
+      return response.json();
+    },
     enabled: !!user?.id,
   }) as { data: Address[], isLoading: boolean };
 

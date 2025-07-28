@@ -58,14 +58,31 @@ export default function NotificationsPage() {
   // Obtener notificaciones del usuario
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['notifications', user?.id, filterType, showRead, searchTerm],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filterType !== 'all') params.append('filter', filterType);
+      if (!showRead) params.append('showRead', 'false');
+      if (searchTerm) params.append('search', searchTerm);
+      
+      const response = await fetch(`/api/notifications?${params.toString()}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching notifications');
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 
   // Obtener configuración de notificaciones
   const { data: settings } = useQuery<NotificationSettings>({
     queryKey: ['notification-settings', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/notification-settings', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching notification settings');
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 

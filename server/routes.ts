@@ -1228,6 +1228,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para configuraciones de colecciones
+  app.get('/api/admin/settings/collections', requireAdmin, async (req, res) => {
+    try {
+      const setting = await storage.getSetting('collections_enabled');
+      res.json({ enabled: setting === 'true' || setting === null });
+    } catch (error) {
+      console.error('Error obteniendo configuración de colecciones:', error);
+      res.status(500).json({ message: 'Error obteniendo configuración de colecciones' });
+    }
+  });
+
+  app.put('/api/admin/settings/collections', requireAdmin, async (req, res) => {
+    try {
+      const { enabled } = req.body;
+      await storage.setSetting('collections_enabled', enabled.toString());
+      res.json({ enabled });
+    } catch (error) {
+      console.error('Error actualizando configuración de colecciones:', error);
+      res.status(500).json({ message: 'Error actualizando configuración de colecciones' });
+    }
+  });
+
   // Endpoint avanzado para crear sesión de pago con Stripe
   app.post('/api/stripe/create-checkout-session', async (req, res) => {
     try {
@@ -1787,6 +1809,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error marking review helpful:', error);
       res.status(500).json({ error: 'Error marking review helpful' });
+    }
+  });
+
+  // Endpoint para obtener reseñas de usuario específico
+  app.get('/api/reviews/user/:userId', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const reviews = await storage.getUserReviews(userId);
+      res.json(reviews);
+    } catch (error) {
+      console.error('Error obteniendo reseñas de usuario:', error);
+      res.status(500).json({ message: 'Error obteniendo reseñas de usuario' });
+    }
+  });
+
+  // Endpoint para obtener cupones del usuario
+  app.get('/api/coupons/user', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userCoupons = await storage.getUserCoupons(req.user.id);
+      res.json(userCoupons);
+    } catch (error) {
+      console.error('Error obteniendo cupones de usuario:', error);
+      res.status(500).json({ message: 'Error obteniendo cupones de usuario' });
     }
   });
 

@@ -86,19 +86,42 @@ export default function ReviewsPage() {
   // Obtener reseñas
   const { data: reviews = [], isLoading } = useQuery<Review[]>({
     queryKey: ['reviews', searchTerm, filterRating, sortBy],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('search', searchTerm);
+      if (filterRating !== 'all') params.append('filter', filterRating);
+      if (sortBy !== 'newest') params.append('sort', sortBy);
+      
+      const response = await fetch(`/api/reviews?${params.toString()}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching reviews');
+      return response.json();
+    },
   });
 
   // Obtener perfumes para el formulario
   const { data: perfumes = [] } = useQuery<any[]>({
     queryKey: ['perfumes'],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/perfumes', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching perfumes');
+      return response.json();
+    },
   });
 
   // Obtener reseñas del usuario
   const { data: userReviews = [] } = useQuery<Review[]>({
     queryKey: ['user-reviews', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch(`/api/reviews/user/${user?.id}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching user reviews');
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 

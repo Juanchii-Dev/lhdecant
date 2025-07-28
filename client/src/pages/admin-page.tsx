@@ -662,7 +662,20 @@ export default function AdminPage() {
   };
 
   // Configuraciones
-  const collectionsEnabled = true; // Placeholder - debería venir de settings
+  // Obtener configuración de colecciones desde settings
+  const { data: collectionsSettings } = useQuery({
+    queryKey: ["collections-settings"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/settings/collections", {
+        credentials: "include"
+      });
+      if (!response.ok) return { enabled: true };
+      return response.json();
+    },
+    enabled: shouldFetch
+  });
+
+  const collectionsEnabled = collectionsSettings?.enabled ?? true;
 
   return (
     <div className="min-h-screen admin-gradient-bg admin-dark-theme admin-scrollbar text-white">
@@ -930,7 +943,7 @@ export default function AdminPage() {
                       <Input 
                         name="imageUrl" 
                         type="url" 
-                        placeholder="https://ejemplo.com/imagen.jpg"
+                        placeholder="https://res.cloudinary.com/tu-cloud/image/upload/v1/lhdecant/perfume.jpg"
                         className="bg-black/50 border-[#D4AF37]/30 text-white" 
                       />
                       <p className="text-xs text-gray-400 mt-1">
@@ -1220,7 +1233,7 @@ export default function AdminPage() {
                       <Input 
                         name="imageUrl" 
                         type="url" 
-                        placeholder="https://ejemplo.com/imagen.jpg"
+                        placeholder="https://res.cloudinary.com/tu-cloud/image/upload/v1/lhdecant/perfume.jpg"
                         defaultValue={editingPerfume.imageUrl} 
                         className="bg-black/50 border-[#D4AF37]/30 text-white" 
                       />
@@ -1709,7 +1722,7 @@ export default function AdminPage() {
                       <Input 
                         name="imageUrl" 
                         type="url" 
-                        placeholder="https://ejemplo.com/imagen.jpg"
+                        placeholder="https://res.cloudinary.com/tu-cloud/image/upload/v1/lhdecant/collection.jpg"
                         className="bg-black/50 border-[#D4AF37]/30 text-white" 
                       />
                       <p className="text-xs text-gray-400 mt-1">
@@ -2329,7 +2342,7 @@ export default function AdminPage() {
                       <Input 
                         name="imageUrl" 
                         type="url" 
-                        placeholder="https://ejemplo.com/imagen.jpg"
+                        placeholder="https://res.cloudinary.com/tu-cloud/image/upload/v1/lhdecant/collection.jpg"
                         defaultValue={editingCollection.imageUrl} 
                         className="bg-black/50 border-[#D4AF37]/30 text-white" 
                       />
@@ -2402,7 +2415,7 @@ export default function AdminPage() {
               <Input 
                 id="imageUrl"
                 type="url" 
-                placeholder="https://ejemplo.com/imagen.jpg"
+                placeholder="https://res.cloudinary.com/tu-cloud/image/upload/v1/lhdecant/perfume.jpg"
                 className="bg-black/50 border-[#D4AF37]/30 text-white mt-2"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}

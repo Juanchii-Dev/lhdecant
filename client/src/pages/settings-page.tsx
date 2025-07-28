@@ -127,7 +127,13 @@ export default function SettingsPage() {
   // Obtener configuraciones del usuario
   const { data: settings = defaultSettings, isLoading } = useQuery({
     queryKey: ['user-settings'],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/user-settings', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Error fetching user settings');
+      return response.json();
+    },
     enabled: !!user,
   });
 
