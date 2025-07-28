@@ -25,27 +25,66 @@ export default function Collections() {
   // Don't render anything if no collections are available or if collections are disabled
   if (!collections || collections.length === 0) {
     return (
-      <section id="colecciones" className="py-24 bg-charcoal">
+      <section id="colecciones" className="py-24 bg-black">
         <div className="container mx-auto px-6">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-luxury-gold mb-4">
-              Colecciones
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <div className="inline-block bg-luxury-gold/10 border border-luxury-gold/30 rounded-full px-6 py-2 mb-6">
+              <span className="luxury-gold-text font-medium">Colecciones Exclusivas</span>
+            </div>
+            
+            <h2 className="text-4xl md:text-5xl font-playfair font-bold mb-6">
+              <span className="text-white">🎁 Descubrí Nuestras</span>
+              <br />
+              <span className="luxury-gold-text">Colecciones</span>
             </h2>
-            <p className="text-gray-400 text-lg mb-8">
-              Descubre nuestras colecciones exclusivas de perfumes
+            <h3 className="text-2xl md:text-3xl font-light mb-6 text-gray-200">
+              Curadas para cada momento, diseñadas para sorprender.
+            </h3>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              Explorá sets temáticos de 3 decants seleccionados con criterio experto, pensados para distintas ocasiones, estaciones o estilos personales.
             </p>
-            <div className="bg-black/50 border border-luxury-gold/20 rounded-lg p-8">
+          </motion.div>
+
+          <motion.div 
+            className="flex justify-center"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            <div className="glass-card rounded-2xl overflow-hidden relative border border-luxury-gold/20 p-12 max-w-2xl">
               <div className="text-center">
-                <div className="text-luxury-gold text-6xl mb-4">📦</div>
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  No hay colecciones disponibles
-                </h3>
-                <p className="text-gray-400">
-                  Pronto tendremos colecciones exclusivas para ti.
-                </p>
+                <motion.div 
+                  className="animate-spin rounded-full h-16 w-16 border-b-2 border-luxury-gold mx-auto mb-6"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                />
+                <motion.h3 
+                  className="text-2xl font-semibold text-white mb-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
+                >
+                  Cargando colecciones...
+                </motion.h3>
+                <motion.p 
+                  className="text-gray-400 text-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                >
+                  Preparando las mejores colecciones para ti.
+                </motion.p>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
     );
@@ -135,12 +174,66 @@ export default function Collections() {
 
   if (isLoading) {
     return (
-      <section id="colecciones" className="py-24 bg-charcoal">
+      <section id="colecciones" className="py-24 bg-black">
         <div className="container mx-auto px-6">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
-            <p className="text-gray-400 mt-4">Cargando colecciones...</p>
-          </div>
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <div className="inline-block bg-luxury-gold/10 border border-luxury-gold/30 rounded-full px-6 py-2 mb-6">
+              <span className="luxury-gold-text font-medium">Colecciones Exclusivas</span>
+            </div>
+            
+            <h2 className="text-4xl md:text-5xl font-playfair font-bold mb-6">
+              <span className="text-white">🎁 Descubrí Nuestras</span>
+              <br />
+              <span className="luxury-gold-text">Colecciones</span>
+            </h2>
+            <h3 className="text-2xl md:text-3xl font-light mb-6 text-gray-200">
+              Curadas para cada momento, diseñadas para sorprender.
+            </h3>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              Explorá sets temáticos de 3 decants seleccionados con criterio experto, pensados para distintas ocasiones, estaciones o estilos personales.
+            </p>
+          </motion.div>
+
+          <motion.div 
+            className="flex justify-center"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            <div className="glass-card rounded-2xl overflow-hidden relative border border-luxury-gold/20 p-12 max-w-2xl">
+              <div className="text-center">
+                <motion.div 
+                  className="animate-spin rounded-full h-16 w-16 border-b-2 border-luxury-gold mx-auto mb-6"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                />
+                <motion.h3 
+                  className="text-2xl font-semibold text-white mb-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
+                >
+                  Cargando colecciones...
+                </motion.h3>
+                <motion.p 
+                  className="text-gray-400 text-lg"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                >
+                  Preparando las mejores colecciones para ti.
+                </motion.p>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
     );
