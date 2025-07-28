@@ -851,23 +851,32 @@ export default function AdminPage() {
                     <CardTitle className="text-[#D4AF37]">Perfumes Populares</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {popularPerfumes?.slice(0, 5).map((perfume: Perfume, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-black/30 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-lg flex items-center justify-center">
-                              <Package className="w-5 h-5 text-black" />
+                    <div className="space-y-3">
+                      {popularPerfumes && popularPerfumes.length > 0 ? (
+                        popularPerfumes.map((perfume: Perfume, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-black/30 rounded">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded flex items-center justify-center">
+                                <Package className="w-4 h-4 text-black" />
+                              </div>
+                              <div>
+                                <p className="text-white font-medium">{perfume.name}</p>
+                                <p className="text-gray-400 text-sm">{perfume.brand}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-white font-medium">{perfume.name}</p>
-                              <p className="text-gray-400 text-sm">{perfume.brand}</p>
+                            <div className="text-right">
+                              <p className="text-[#D4AF37] font-bold">${perfume.prices?.[0] || 0}</p>
+                              <p className="text-gray-400 text-sm">
+                                {salesStats?.totalOrders > 0 ? 'Vendido' : 'Disponible'}
+                              </p>
                             </div>
                           </div>
-                          <Badge variant={perfume.inStock ? "default" : "destructive"}>
-                            {perfume.inStock ? "En Stock" : "Agotado"}
-                          </Badge>
+                        ))
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-gray-400">No hay perfumes disponibles</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -1500,27 +1509,37 @@ export default function AdminPage() {
 
                 <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
                   <CardHeader>
-                    <CardTitle className="text-[#D4AF37]">Productos Más Vendidos</CardTitle>
+                    <CardTitle className="text-[#D4AF37]">
+                      {salesStats?.totalOrders > 0 ? 'Productos Más Vendidos' : 'Productos Destacados'}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                                             {popularPerfumes?.slice(0, 5).map((perfume: Perfume, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-black/30 rounded">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded flex items-center justify-center">
-                              <Package className="w-4 h-4 text-black" />
+                      {popularPerfumes && popularPerfumes.length > 0 ? (
+                        popularPerfumes.map((perfume: Perfume, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-black/30 rounded">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded flex items-center justify-center">
+                                <Package className="w-4 h-4 text-black" />
+                              </div>
+                              <div>
+                                <p className="text-white font-medium">{perfume.name}</p>
+                                <p className="text-gray-400 text-sm">{perfume.brand}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-white font-medium">{perfume.name}</p>
-                              <p className="text-gray-400 text-sm">{perfume.brand}</p>
+                            <div className="text-right">
+                              <p className="text-[#D4AF37] font-bold">${perfume.prices?.[0] || 0}</p>
+                              <p className="text-gray-400 text-sm">
+                                {salesStats?.totalOrders > 0 ? 'Vendido' : 'Disponible'}
+                              </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-[#D4AF37] font-bold">${perfume.prices?.[0] || 0}</p>
-                            <p className="text-gray-400 text-sm">Vendido</p>
-                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-gray-400">No hay perfumes disponibles</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>

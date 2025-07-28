@@ -778,12 +778,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
+      // Si no hay ventas, devolver perfumes destacados en lugar de "populares"
+      if (orders.length === 0) {
+        const featuredPerfumes = perfumes
+          .filter(perfume => perfume.showOnHomepage || perfume.isOnOffer)
+          .slice(0, 5);
+        
+        res.json(featuredPerfumes);
+        return;
+      }
+      
       // Ordenar perfumes por ventas y tomar los top 5
       const popularPerfumes = perfumes
         .map(perfume => ({
           ...perfume,
           salesCount: perfumeSales[perfume.id] || 0
         }))
+        .filter(perfume => perfume.salesCount > 0) // Solo perfumes con ventas
         .sort((a, b) => b.salesCount - a.salesCount)
         .slice(0, 5)
         .map(({ salesCount, ...perfume }) => perfume); // Remover salesCount del resultado
