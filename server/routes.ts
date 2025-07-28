@@ -2033,6 +2033,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete perfume endpoint (admin only)
+  app.delete('/api/admin/perfumes/:id', async (req, res) => {
+    try {
+      // Verificar si es admin
+      const isAdmin = req.headers['x-admin-key'] === 'lhdecant-admin-2024';
+      
+      if (!isAdmin) {
+        return res.status(403).json({ error: "Acceso denegado" });
+      }
+      
+      const { id } = req.params;
+      
+      if (!id) {
+        return res.status(400).json({ error: "Se requiere el ID del perfume" });
+      }
+      
+      console.log(`🗑️  Eliminando perfume con ID: ${id}`);
+      
+      const perfumeRef = admin.firestore().collection("perfumes").doc(id);
+      const perfumeDoc = await perfumeRef.get();
+      
+      if (!perfumeDoc.exists) {
+        return res.status(404).json({ error: "Perfume no encontrado" });
+      }
+      
+      const perfumeData = perfumeDoc.data();
+      await perfumeRef.delete();
+      
+      console.log(`✅ Eliminado: ${perfumeData.name} - ${perfumeData.brand}`);
+      
+      res.json({ 
+        message: "Perfume eliminado exitosamente",
+        deletedPerfume: {
+          id,
+          name: perfumeData.name,
+          brand: perfumeData.brand
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error deleting perfume:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
