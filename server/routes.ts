@@ -1969,6 +1969,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add custom perfumes endpoint (admin only)
+  app.post('/api/add-perfumes', async (req, res) => {
+    try {
+      // Verificar si es admin
+      const isAdmin = req.headers['x-admin-key'] === 'lhdecant-admin-2024';
+      
+      if (!isAdmin) {
+        return res.status(403).json({ error: "Acceso denegado" });
+      }
+      
+      const { perfumes } = req.body;
+      
+      if (!perfumes || !Array.isArray(perfumes)) {
+        return res.status(400).json({ error: "Se requiere un array de perfumes" });
+      }
+      
+      console.log(`🌱 Agregando ${perfumes.length} perfumes...`);
+      
+      const perfumesRef = admin.firestore().collection("perfumes");
+      let addedCount = 0;
+      let skippedCount = 0;
+      
+      for (const perfume of perfumes) {
+        try {
+          // Verificar si el perfume ya existe
+          const existingPerfumes = await perfumesRef
+            .where('name', '==', perfume.name)
+            .where('brand', '==', perfume.brand)
+            .get();
+
+          if (!existingPerfumes.empty) {
+            console.log(`⏭️  Saltando ${perfume.name} - ${perfume.brand} (ya existe)`);
+            skippedCount++;
+            continue;
+          }
+
+          // Agregar el perfume
+          await perfumesRef.add({
+            ...perfume,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          
+          console.log(`✅ Agregado: ${perfume.name} - ${perfume.brand}`);
+          addedCount++;
+          
+        } catch (error) {
+          console.error(`❌ Error con ${perfume.name}:`, error);
+        }
+      }
+      
+      res.json({ 
+        message: "Perfumes procesados exitosamente",
+        added: addedCount,
+        skipped: skippedCount,
+        total: addedCount + skippedCount
+      });
+      
+    } catch (error) {
+      console.error('Error adding perfumes:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -1,4 +1,4 @@
-// Script simple para agregar perfumes usando el servidor local
+// Script para agregar perfumes usando un agente HTTP que maneje cookies
 import fetch from 'node-fetch';
 
 const perfumes = [
@@ -187,7 +187,11 @@ async function addPerfumesToServer() {
       return;
     }
 
+    // Obtener las cookies de la respuesta
+    const cookies = loginResponse.headers.get('set-cookie');
     console.log("✅ Login exitoso como admin");
+    console.log("🍪 Cookies recibidas:", cookies);
+    
   } catch (error) {
     console.log("❌ Error de conexión:", error.message);
     return;

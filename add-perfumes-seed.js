@@ -1,4 +1,4 @@
-// Script simple para agregar perfumes usando el servidor local
+// Script para agregar perfumes usando el endpoint de seed
 import fetch from 'node-fetch';
 
 const perfumes = [
@@ -164,75 +164,34 @@ const perfumes = [
   }
 ];
 
-async function addPerfumesToServer() {
-  console.log("🎯 Iniciando agregado de perfumes al servidor...");
+async function addPerfumesViaSeed() {
+  console.log("🎯 Iniciando agregado de perfumes usando el endpoint de seed...");
   console.log(`📝 Total de perfumes: ${perfumes.length}`);
   
-  // Primero hacer login como admin
   try {
-    const loginResponse = await fetch('http://localhost:5000/api/admin/login', {
+    // Usar el endpoint de seed para agregar los perfumes
+    const response = await fetch('http://localhost:5000/api/seed-perfumes', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-admin-key': 'lhdecant-admin-2024'
       },
-      credentials: 'include',
-      body: JSON.stringify({
-        email: 'lhdecant@gmail.com',
-        password: '11qqaazz'
-      })
+      body: JSON.stringify({ perfumes })
     });
-
-    if (!loginResponse.ok) {
-      console.log("❌ Error en login:", loginResponse.status);
-      return;
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log("✅ Perfumes agregados exitosamente");
+      console.log("📊 Resultado:", result);
+    } else {
+      const errorText = await response.text();
+      console.log(`❌ Error al agregar perfumes (${response.status}): ${errorText}`);
     }
-
-    console.log("✅ Login exitoso como admin");
+    
   } catch (error) {
     console.log("❌ Error de conexión:", error.message);
-    return;
-  }
-  
-  let addedCount = 0;
-  let errorCount = 0;
-
-  for (const perfume of perfumes) {
-    try {
-      console.log(`🔄 Procesando: ${perfume.name} - ${perfume.brand}`);
-      
-      // Agregar el perfume usando el endpoint del servidor
-      const response = await fetch('http://localhost:5000/api/perfumes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(perfume)
-      });
-      
-      if (response.ok) {
-        console.log(`✅ Agregado: ${perfume.name} - ${perfume.brand}`);
-        addedCount++;
-      } else {
-        const errorText = await response.text();
-        console.log(`❌ Error: ${perfume.name} - ${perfume.brand} (${response.status}): ${errorText}`);
-        errorCount++;
-      }
-      
-      // Pequeña pausa para no sobrecargar
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-    } catch (error) {
-      console.log(`💥 Error con ${perfume.name}: ${error.message}`);
-      errorCount++;
-    }
   }
 
-  console.log("\n🎉 ¡Proceso completado!");
-  console.log(`✅ Perfumes agregados: ${addedCount}`);
-  console.log(`❌ Errores: ${errorCount}`);
-  console.log(`📊 Total procesados: ${addedCount + errorCount}`);
-  
   console.log("\n📋 Próximos pasos:");
   console.log("1. 📸 Actualizar las imágenes de los perfumes");
   console.log("2. 💰 Actualizar los precios según tu estrategia");
@@ -241,4 +200,4 @@ async function addPerfumesToServer() {
 }
 
 // Ejecutar el script
-addPerfumesToServer().catch(console.error); 
+addPerfumesViaSeed().catch(console.error); 

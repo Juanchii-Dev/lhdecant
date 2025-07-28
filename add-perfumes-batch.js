@@ -1,7 +1,7 @@
-// Script simple para agregar perfumes usando el servidor local
+// Script para agregar perfumes de a 5 usando el endpoint de seed
 import fetch from 'node-fetch';
 
-const perfumes = [
+const allPerfumes = [
   {
     name: "Fakhar Black",
     brand: "Lattafa",
@@ -164,74 +164,72 @@ const perfumes = [
   }
 ];
 
-async function addPerfumesToServer() {
-  console.log("🎯 Iniciando agregado de perfumes al servidor...");
-  console.log(`📝 Total de perfumes: ${perfumes.length}`);
-  
-  // Primero hacer login como admin
-  try {
-    const loginResponse = await fetch('http://localhost:5000/api/admin/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        email: 'lhdecant@gmail.com',
-        password: '11qqaazz'
-      })
-    });
-
-    if (!loginResponse.ok) {
-      console.log("❌ Error en login:", loginResponse.status);
-      return;
-    }
-
-    console.log("✅ Login exitoso como admin");
-  } catch (error) {
-    console.log("❌ Error de conexión:", error.message);
-    return;
+// Función para dividir el array en lotes de 5
+function chunkArray(array, size) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
   }
-  
-  let addedCount = 0;
-  let errorCount = 0;
+  return chunks;
+}
 
-  for (const perfume of perfumes) {
+async function addPerfumesInBatches() {
+  console.log("🎯 Iniciando agregado de perfumes en lotes de 5...");
+  console.log(`📝 Total de perfumes: ${allPerfumes.length}`);
+  
+  // Dividir perfumes en lotes de 5
+  const batches = chunkArray(allPerfumes, 5);
+  console.log(`📦 Total de lotes: ${batches.length}`);
+  
+  let totalAdded = 0;
+  let totalErrors = 0;
+  
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    console.log(`\n🔄 Procesando lote ${i + 1}/${batches.length} (${batch.length} perfumes)`);
+    
+    // Mostrar los perfumes del lote actual
+    batch.forEach((perfume, index) => {
+      console.log(`   ${index + 1}. ${perfume.name} - ${perfume.brand}`);
+    });
+    
     try {
-      console.log(`🔄 Procesando: ${perfume.name} - ${perfume.brand}`);
-      
-      // Agregar el perfume usando el endpoint del servidor
-      const response = await fetch('http://localhost:5000/api/perfumes', {
+             // Agregar el lote usando el nuevo endpoint
+       const response = await fetch('http://localhost:5000/api/add-perfumes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-admin-key': 'lhdecant-admin-2024'
         },
-        credentials: 'include',
-        body: JSON.stringify(perfume)
+        body: JSON.stringify({ perfumes: batch })
       });
       
       if (response.ok) {
-        console.log(`✅ Agregado: ${perfume.name} - ${perfume.brand}`);
-        addedCount++;
+        const result = await response.json();
+        console.log(`✅ Lote ${i + 1} agregado exitosamente`);
+        totalAdded += batch.length;
       } else {
         const errorText = await response.text();
-        console.log(`❌ Error: ${perfume.name} - ${perfume.brand} (${response.status}): ${errorText}`);
-        errorCount++;
+        console.log(`❌ Error en lote ${i + 1} (${response.status}): ${errorText}`);
+        totalErrors += batch.length;
       }
       
-      // Pequeña pausa para no sobrecargar
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Pausa entre lotes
+      if (i < batches.length - 1) {
+        console.log("⏳ Esperando 2 segundos antes del siguiente lote...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
       
     } catch (error) {
-      console.log(`💥 Error con ${perfume.name}: ${error.message}`);
-      errorCount++;
+      console.log(`💥 Error con lote ${i + 1}: ${error.message}`);
+      totalErrors += batch.length;
     }
   }
 
   console.log("\n🎉 ¡Proceso completado!");
-  console.log(`✅ Perfumes agregados: ${addedCount}`);
-  console.log(`❌ Errores: ${errorCount}`);
-  console.log(`📊 Total procesados: ${addedCount + errorCount}`);
+  console.log(`✅ Perfumes agregados: ${totalAdded}`);
+  console.log(`❌ Errores: ${totalErrors}`);
+  console.log(`📊 Total procesados: ${totalAdded + totalErrors}`);
   
   console.log("\n📋 Próximos pasos:");
   console.log("1. 📸 Actualizar las imágenes de los perfumes");
@@ -241,4 +239,4 @@ async function addPerfumesToServer() {
 }
 
 // Ejecutar el script
-addPerfumesToServer().catch(console.error); 
+addPerfumesInBatches().catch(console.error); 
