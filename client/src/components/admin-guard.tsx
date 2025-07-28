@@ -38,15 +38,15 @@ export default function AdminGuard({ children }: AdminGuardProps) {
       } catch (error) {
         console.error("Error checking admin status:", error);
         // Fallback a localStorage
-        const isAdmin = localStorage.getItem("isAdmin") === "true";
-        const adminEmail = localStorage.getItem("adminEmail");
-        
-        if (!isAdmin || adminEmail !== "lhdecant@gmail.com") {
-          setLocation("/admin-auth");
-          return;
-        }
-        
-        setIsChecking(false);
+      const isAdmin = localStorage.getItem("isAdmin") === "true";
+      const adminEmail = localStorage.getItem("adminEmail");
+      
+      if (!isAdmin || adminEmail !== "lhdecant@gmail.com") {
+        setLocation("/admin-auth");
+        return;
+      }
+      
+      setIsChecking(false);
       }
     };
 

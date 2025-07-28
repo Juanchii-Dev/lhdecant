@@ -41,13 +41,13 @@ export default function AdminAuthPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Guardar estado de admin en localStorage
-        localStorage.setItem("isAdmin", "true");
-        localStorage.setItem("adminEmail", email);
-        
+      // Guardar estado de admin en localStorage
+      localStorage.setItem("isAdmin", "true");
+      localStorage.setItem("adminEmail", email);
+      
         // Redirección inmediata
         setLocation("/admin");
-      } else {
+    } else {
         setError(data.message || "Credenciales incorrectas. Solo el administrador autorizado puede acceder.");
       }
     } catch (error) {

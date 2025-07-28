@@ -15,7 +15,7 @@ Una aplicación web moderna y elegante para la venta de perfumes y decants, cons
 
 ### Backend
 - **Node.js** con Express
-- **Firebase Firestore** como base de datos
+- **Firebase Firestore** como base de datos única
 - **Passport.js** para autenticación
 - **Google OAuth2** integrado
 - **Stripe** para pagos
@@ -91,12 +91,13 @@ RESET_PASSWORD_URL=http://localhost:5173/reset-password
 ADMIN_EMAIL=admin@lhdecant.com
 ```
 
-### 4. Configurar Firebase
+### 4. Configurar Firebase (Base de Datos Única)
 
 1. Crear proyecto en [Firebase Console](https://console.firebase.google.com/)
 2. Habilitar Firestore Database
 3. Crear cuenta de servicio y descargar credenciales
 4. Configurar reglas de seguridad en Firestore
+5. **Importante**: Esta es la única base de datos utilizada en la aplicación
 
 ### 5. Configurar Google OAuth2
 
