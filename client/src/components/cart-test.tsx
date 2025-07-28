@@ -1,23 +1,39 @@
 import React from 'react';
 import { useCart } from '../hooks/use-cart';
+import { queryClient } from '../lib/queryClient';
 
 export default function CartTest() {
   const { items, addToCart, totalItems, totalAmount } = useCart();
 
   const handleAddTestItem = () => {
+    console.log('🛒 CartTest - Agregando item de prueba');
     addToCart("0lHbtoskm6Y2fZ4bOHhh", "2ml", "15.99");
   };
+
+  const handleRefreshCart = () => {
+    console.log('🛒 CartTest - Refrescando carrito manualmente');
+    queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+  };
+
+  console.log('🛒 CartTest - Renderizando con items:', items);
+  console.log('🛒 CartTest - Total items:', totalItems);
 
   return (
     <div className="p-4 bg-gray-900 rounded-lg">
       <h2 className="text-xl font-bold text-white mb-4">Test del Carrito</h2>
       
-      <div className="mb-4">
+      <div className="mb-4 space-x-2">
         <button 
           onClick={handleAddTestItem}
           className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           Agregar Item de Prueba
+        </button>
+        <button 
+          onClick={handleRefreshCart}
+          className="bg-green-500 text-white px-4 py-2 rounded"
+        >
+          Refresh Manual
         </button>
       </div>
 

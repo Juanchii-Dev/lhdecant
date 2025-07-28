@@ -45,8 +45,8 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      refetchOnWindowFocus: true,
+      staleTime: 0, // Cambiar de Infinity a 0 para que siempre refetch
       retry: false,
     },
     mutations: {

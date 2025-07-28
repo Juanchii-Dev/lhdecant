@@ -26,19 +26,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
+  console.log('🛒 CartProvider - items:', items);
+  console.log('🛒 CartProvider - items length:', items?.length);
+
   const addToCartMutation = useMutation({
     mutationFn: async (item: any) => {
+      console.log('🛒 addToCartMutation - item:', item);
       const res = await apiRequest("POST", "/api/cart", item);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('🛒 addToCartMutation - success:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Agregado al carrito",
         description: "El producto se ha agregado correctamente",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.log('🛒 addToCartMutation - error:', error);
       toast({
         title: "Error",
         description: "No se pudo agregar el producto al carrito",
