@@ -1098,7 +1098,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `<p><strong>Entrega estimada:</strong> ${estimatedDelivery}</p>` : '';
 
         await transporter.sendMail({
-          from: process.env.SMTP_FROM,
+          from: 'lhdecant@gmail.com',
           to: order.customer_email,
           subject: `Actualización de tu pedido #${order.id}`,
           html: `
@@ -1368,7 +1368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Email al cliente
           await transporter.sendMail({
-            from: process.env.SMTP_FROM,
+            from: 'lhdecant@gmail.com',
             to: session.customer_email,
             subject: '¡Gracias por tu compra en LhDecant!',
             html: `
@@ -1387,7 +1387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Email al admin
           await transporter.sendMail({
-            from: process.env.SMTP_FROM,
+            from: 'lhdecant@gmail.com',
             to: process.env.ADMIN_EMAIL,
             subject: 'Nueva venta realizada - LhDecant',
             html: `
@@ -1513,7 +1513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Enviar email con link
     const resetUrl = `${process.env.RESET_PASSWORD_URL}?token=${token}&email=${encodeURIComponent(email)}`;
     await transporter.sendMail({
-      from: process.env.SMTP_FROM,
+      from: 'lhdecant@gmail.com',
       to: email,
       subject: 'Recupera tu contraseña',
       html: `<b>Recupera tu contraseña</b><br>Haz clic en el siguiente enlace para restablecer tu contraseña:<br><a href="${resetUrl}">${resetUrl}</a><br>Si no solicitaste este cambio, ignora este email.`
