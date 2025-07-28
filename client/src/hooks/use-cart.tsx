@@ -32,6 +32,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     staleTime: 30000, // 30 segundos
     cacheTime: 60000, // 1 minuto
     retry: 1,
+    enabled: !!user, // Solo ejecutar si el usuario está autenticado
     onError: (error) => {
       console.error('Error fetching cart:', error);
       if (error.message.includes('401')) {
@@ -141,8 +142,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+  const totalItems = (items || []).reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalAmount = (items || []).reduce((sum, item) => sum + (parseFloat(item.price || '0') * (item.quantity || 0)), 0);
 
   const addToCart = (perfumeId: string, size: string, price: string) => {
     // Verificar si el usuario está logueado
@@ -178,7 +179,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (items.length === 0) {
+    if ((items || []).length === 0) {
       toast({
         title: "Carrito vacío",
         description: "Agrega productos antes de proceder al pago",
