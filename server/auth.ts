@@ -98,6 +98,22 @@ export function setupAuth(app: Express) {
     console.log('📋 Client ID:', googleClientId);
     console.log('🔗 Redirect URI:', googleRedirectUri);
     
+    // Endpoint de verificación para Google OAuth configurado
+    app.get("/api/auth/google/status", (req, res) => {
+      res.json({
+        configured: true,
+        message: "Google OAuth configurado correctamente",
+        client_id: googleClientId ? "✅ Configurado" : "❌ Faltante",
+        client_secret: googleClientSecret ? "✅ Configurado" : "❌ Faltante",
+        redirect_uri: googleRedirectUri,
+        endpoints: {
+          auth: "/api/auth/google",
+          callback: "/api/auth/google/callback",
+          status: "/api/auth/google/status"
+        }
+      });
+    });
+    
     // Ruta para iniciar el flujo OAuth
     app.get("/api/auth/google", (req, res) => {
       console.log('🚀 Iniciando flujo Google OAuth 2.0...');
