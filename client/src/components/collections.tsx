@@ -22,77 +22,52 @@ export default function Collections() {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  // Don't render anything if no collections are available or if collections are disabled
-  if (!collections || collections.length === 0) {
+  // Estado de carga
+  if (isLoading) {
     return (
       <section id="colecciones" className="py-24 bg-black">
         <div className="container mx-auto px-6">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <div className="inline-block bg-luxury-gold/10 border border-luxury-gold/30 rounded-full px-6 py-2 mb-6">
-              <span className="luxury-gold-text font-medium">Colecciones Exclusivas</span>
-            </div>
-            
-            <h2 className="text-4xl md:text-5xl font-playfair font-bold mb-6">
-              <span className="text-white">🎁 Descubrí Nuestras</span>
-              <br />
-              <span className="luxury-gold-text">Colecciones</span>
-            </h2>
-            <h3 className="text-2xl md:text-3xl font-light mb-6 text-gray-200">
-              Curadas para cada momento, diseñadas para sorprender.
-            </h3>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Explorá sets temáticos de 3 decants seleccionados con criterio experto, pensados para distintas ocasiones, estaciones o estilos personales.
-            </p>
-          </motion.div>
-
-          <motion.div 
-            className="flex justify-center"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            viewport={{ once: true }}
-          >
-            <div className="glass-card rounded-2xl overflow-hidden relative border border-luxury-gold/20 p-12 max-w-2xl">
-              <div className="text-center">
-                <motion.div 
-                  className="animate-spin rounded-full h-16 w-16 border-b-2 border-luxury-gold mx-auto mb-6"
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                />
-                <motion.h3 
-                  className="text-2xl font-semibold text-white mb-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                >
-                  Cargando colecciones...
-                </motion.h3>
-                <motion.p 
-                  className="text-gray-400 text-lg"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                >
-                  Preparando las mejores colecciones para ti.
-                </motion.p>
-              </div>
-            </div>
-          </motion.div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
+            <p className="text-gray-400 mt-4">Cargando colecciones...</p>
+          </div>
         </div>
       </section>
     );
   }
 
+  // No hay colecciones
+  if (!collections || collections.length === 0) {
+    return (
+      <section id="colecciones" className="py-24 bg-black">
+        <div className="container mx-auto px-6">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-yellow-500 mb-4">
+              Colecciones
+            </h2>
+            <p className="text-gray-400 text-lg mb-8">
+              Descubre nuestras colecciones exclusivas de perfumes
+            </p>
+            <div className="bg-gray-900 border border-yellow-500/20 rounded-lg p-8 max-w-2xl mx-auto">
+              <div className="text-center">
+                <div className="text-yellow-500 text-6xl mb-4">📦</div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  No hay colecciones disponibles
+                </h3>
+                <p className="text-gray-400">
+                  Pronto tendremos colecciones exclusivas para ti.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Resto del componente para cuando hay colecciones
   const handleAddToCart = (collection: any, size: string) => {
     const price = getPrice(collection, size);
-    // For collections, we'll add them as a special perfume with negative ID
     addToCart(-collection.id, size, price);
     toast({
       title: "¡Añadido al carrito!",
@@ -116,7 +91,6 @@ export default function Collections() {
       const size = collection.perfumeSizes[index];
       if (!perfume) return null;
       
-      // Find the price for the specific size
       const sizeIndex = perfume.sizes.indexOf(size);
       const price = sizeIndex !== -1 ? parseFloat(perfume.prices[sizeIndex]) : 0;
       
@@ -169,75 +143,8 @@ export default function Collections() {
     return perfumeIds
       .map((id: any) => perfumes.find((p: any) => p.id === id)?.name)
       .filter(Boolean)
-      .slice(0, 3); // Asegurar solo 3 perfumes
+      .slice(0, 3);
   };
-
-  if (isLoading) {
-    return (
-      <section id="colecciones" className="py-24 bg-black">
-        <div className="container mx-auto px-6">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <div className="inline-block bg-luxury-gold/10 border border-luxury-gold/30 rounded-full px-6 py-2 mb-6">
-              <span className="luxury-gold-text font-medium">Colecciones Exclusivas</span>
-            </div>
-            
-            <h2 className="text-4xl md:text-5xl font-playfair font-bold mb-6">
-              <span className="text-white">🎁 Descubrí Nuestras</span>
-              <br />
-              <span className="luxury-gold-text">Colecciones</span>
-            </h2>
-            <h3 className="text-2xl md:text-3xl font-light mb-6 text-gray-200">
-              Curadas para cada momento, diseñadas para sorprender.
-            </h3>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Explorá sets temáticos de 3 decants seleccionados con criterio experto, pensados para distintas ocasiones, estaciones o estilos personales.
-            </p>
-          </motion.div>
-
-          <motion.div 
-            className="flex justify-center"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            viewport={{ once: true }}
-          >
-            <div className="glass-card rounded-2xl overflow-hidden relative border border-luxury-gold/20 p-12 max-w-2xl">
-              <div className="text-center">
-                <motion.div 
-                  className="animate-spin rounded-full h-16 w-16 border-b-2 border-luxury-gold mx-auto mb-6"
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                />
-                <motion.h3 
-                  className="text-2xl font-semibold text-white mb-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                >
-                  Cargando colecciones...
-                </motion.h3>
-                <motion.p 
-                  className="text-gray-400 text-lg"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                >
-                  Preparando las mejores colecciones para ti.
-                </motion.p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section id="colecciones" className="py-24 bg-black">
@@ -249,14 +156,14 @@ export default function Collections() {
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <div className="inline-block bg-luxury-gold/10 border border-luxury-gold/30 rounded-full px-6 py-2 mb-6">
-            <span className="luxury-gold-text font-medium">Colecciones Exclusivas</span>
+          <div className="inline-block bg-yellow-500/10 border border-yellow-500/30 rounded-full px-6 py-2 mb-6">
+            <span className="text-yellow-500 font-medium">Colecciones Exclusivas</span>
           </div>
           
-          <h2 className="text-4xl md:text-5xl font-playfair font-bold mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">
             <span className="text-white">🎁 Descubrí Nuestras</span>
             <br />
-            <span className="luxury-gold-text">Colecciones</span>
+            <span className="text-yellow-500">Colecciones</span>
           </h2>
           <h3 className="text-2xl md:text-3xl font-light mb-6 text-gray-200">
             Curadas para cada momento, diseñadas para sorprender.
@@ -266,7 +173,6 @@ export default function Collections() {
           </p>
         </motion.div>
 
-        {/* Collections Grid */}
         <div className="flex justify-center">
           <motion.div 
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl"
@@ -275,135 +181,99 @@ export default function Collections() {
             transition={{ duration: 0.8, delay: 0.2 }}
             viewport={{ once: true }}
           >
-          {collections?.map((collection, index) => {
-            const perfumeNames = getPerfumeNames(collection.perfumeIds);
-            const { perfumeDetails, totalOriginalPrice } = getCollectionDetails(collection);
-            const savings = totalOriginalPrice - parseFloat(collection.price);
-            
-            return (
-              <motion.div
-                key={collection.id}
-                className="group perspective-1000"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                whileHover={{ 
-                  scale: 1.02, 
-                  y: -8,
-                  transition: { duration: 0.3, ease: "easeOut" }
-                }}
-              >
-                <div className="glass-card rounded-2xl overflow-hidden relative border border-luxury-gold/20 h-[600px] flex flex-col">
-                  <div className="relative overflow-hidden">
-                    <motion.img
-                      src="https://i.imgur.com/Vgwv7Kh.png"
-                      alt={collection.name}
-                      className="w-full h-auto object-contain"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.4, ease: "easeOut" }}
-                    />
-                    
-                    <motion.div 
-                      className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
-                    />
-                    
-                    {/* Perfume Names as Tags */}
-                    <div className="absolute top-3 left-3 right-3">
-                      <div className="flex flex-wrap gap-1">
-                        {perfumeNames.map((name: any, idx: any) => (
-                          <motion.div 
-                            key={idx}
-                            className="bg-black/80 backdrop-blur-sm text-luxury-gold border border-luxury-gold/50 px-2 py-1 rounded-full text-xs font-bold"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.4 + (index * 0.1) + (idx * 0.1) }}
-                            whileHover={{ scale: 1.05 }}
-                          >
-                            {name}
-                          </motion.div>
-                        ))}
+            {collections?.map((collection, index) => {
+              const perfumeNames = getPerfumeNames(collection.perfumeIds);
+              const { perfumeDetails, totalOriginalPrice } = getCollectionDetails(collection);
+              const savings = totalOriginalPrice - parseFloat(collection.price);
+              
+              return (
+                <motion.div
+                  key={collection.id}
+                  className="group"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: index * 0.2 }}
+                  viewport={{ once: true }}
+                  whileHover={{ 
+                    scale: 1.02, 
+                    y: -8,
+                    transition: { duration: 0.3, ease: "easeOut" }
+                  }}
+                >
+                  <div className="bg-gray-900 rounded-2xl overflow-hidden relative border border-yellow-500/20 h-[600px] flex flex-col">
+                    <div className="relative overflow-hidden">
+                      <img
+                        src="https://i.imgur.com/Vgwv7Kh.png"
+                        alt={collection.name}
+                        className="w-full h-auto object-contain"
+                      />
+                      
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                      
+                      <div className="absolute top-3 left-3 right-3">
+                        <div className="flex flex-wrap gap-1">
+                          {perfumeNames.map((name: any, idx: any) => (
+                            <div 
+                              key={idx}
+                              className="bg-black/80 backdrop-blur-sm text-yellow-500 border border-yellow-500/50 px-2 py-1 rounded-full text-xs font-bold"
+                            >
+                              {name}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <div className="flex items-center justify-between">
-                        <span className="luxury-gold-text text-xs font-medium uppercase tracking-wide">
-                          {getThemeLabel(collection.theme)}
-                        </span>
-                        <i className={`${getThemeIcon(collection.theme)} luxury-gold-text text-sm`}></i>
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-bold text-white">{collection.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <i className={`ri ${getThemeIcon(collection.theme)} text-yellow-500`}></i>
+                          <span className="text-sm text-gray-400">{getThemeLabel(collection.theme)}</span>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-5 flex-1 flex flex-col justify-between">
-                    <h3 className="text-white font-playfair font-bold text-xl mb-2">
-                      {collection.name}
-                    </h3>
-                    
-                    <p className="text-gray-300 text-sm mb-4 leading-relaxed line-clamp-2">
-                      {collection.description}
-                    </p>
-                    
-                    {/* Show included perfumes with sizes */}
-                    <div className="mb-4">
-                      <h4 className="text-xs text-gray-400 mb-2">Incluye:</h4>
-                      <div className="space-y-1">
-                        {perfumeDetails.map((detail: any, idx: any) => (
-                          <div key={idx} className="text-xs text-gray-300 flex justify-between">
-                            <span>{detail.perfume.name}</span>
-                            <span className="text-[#D4AF37]">{detail.size}</span>
+                      
+                      <p className="text-gray-400 text-sm mb-4 flex-1">
+                        {collection.description}
+                      </p>
+                      
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-400">Precio original:</span>
+                          <span className="text-gray-500 line-through">${totalOriginalPrice.toFixed(2)}</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className="text-yellow-500 font-bold">Precio colección:</span>
+                          <span className="text-yellow-500 font-bold text-xl">${collection.price}</span>
+                        </div>
+                        
+                        {savings > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-green-400">Ahorras:</span>
+                            <span className="text-green-400 font-bold">${savings.toFixed(2)}</span>
                           </div>
-                        ))}
+                        )}
+                        
+                        <div className="flex gap-2">
+                          {collection.sizes?.map((size: string, idx: number) => (
+                            <Button
+                              key={size}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 border-yellow-500/30 text-yellow-500 hover:bg-yellow-500 hover:text-black"
+                              onClick={() => handleAddToCart(collection, size)}
+                            >
+                              {size} - ${getPrice(collection, size)}
+                            </Button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    
-                    {/* Size selection buttons */}
-                    <motion.div 
-                      className="mb-4"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 + index * 0.1 }}
-                    >
-                      <div className="flex gap-2 mb-3">
-                        {(collection.sizes || ['2ml', '4ml', '6ml']).map((size: any) => (
-                          <Button
-                            key={size}
-                            variant={selectedSizes[collection.id] === size ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedSizes(prev => ({ ...prev, [collection.id]: size }))}
-                            className={`text-xs ${
-                              selectedSizes[collection.id] === size 
-                                ? "bg-[#D4AF37] text-black border-[#D4AF37]" 
-                                : "border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37]/10"
-                            }`}
-                          >
-                            {size}
-                          </Button>
-                        ))}
-                      </div>
-                    </motion.div>
-
-                    {/* Price and add to cart */}
-                    <div className="flex items-center justify-between pt-2">
-                      <div>
-                        <span className="text-2xl font-bold luxury-gold-text">
-                          ${getPrice(collection, selectedSizes[collection.id] || (collection.sizes?.[0] || '2ml'))}
-                        </span>
-                        <span className="text-sm text-gray-400 ml-2">/ {selectedSizes[collection.id] || (collection.sizes?.[0] || '2ml')}</span>
-                      </div>
-                      <Button
-                        onClick={() => handleAddToCart(collection, selectedSizes[collection.id] || (collection.sizes?.[0] || '2ml'))}
-                        className="luxury-button font-montserrat font-semibold px-6 py-2 rounded-xl"
-                      >
-                        Agregar
-                      </Button>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            );
-          })}
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
       </div>
