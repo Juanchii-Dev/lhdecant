@@ -1,9 +1,9 @@
 import React from "react";
 import { createContext, ReactNode, useContext } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-// import { CartItem, Perfume, InsertCartItem } from "../../../shared/schema"; // ELIMINADO
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "./use-toast";
+import { useAuth } from "./use-auth";
 
 type CartContextType = {
   items: (any & { perfume: any })[];
@@ -14,12 +14,14 @@ type CartContextType = {
   updateQuantity: (id: number, quantity: number) => void;
   removeItem: (id: number) => void;
   clearCart: () => void;
+  goToCheckout: () => void;
 };
 
 export const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: items = [], isLoading } = useQuery<(any & { perfume: any })[]>({
     queryKey: ["/api/cart"],
@@ -37,7 +39,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: async (data) => {
-      // Forzar invalidación y refetch inmediato
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
       
@@ -116,12 +117,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
   const addToCart = (perfumeId: string, size: string, price: string) => {
+    // Verificar si el usuario está logueado
+    if (!user) {
+      toast({
+        title: "Inicia sesión para continuar",
+        description: "Necesitas estar registrado para agregar productos al carrito",
+        variant: "destructive",
+      });
+      
+      // Redirigir a la página de registro
+      window.location.href = '/auth?message=login-required';
+      return;
+    }
+
+    // Si está logueado, agregar al carrito
     addToCartMutation.mutate({
       perfumeId,
       size,
       price,
       quantity: 1,
     });
+  };
+
+  const goToCheckout = () => {
+    if (!user) {
+      toast({
+        title: "Inicia sesión para continuar",
+        description: "Necesitas estar registrado para realizar la compra",
+        variant: "destructive",
+      });
+      window.location.href = '/auth?message=login-required';
+      return;
+    }
+
+    if (items.length === 0) {
+      toast({
+        title: "Carrito vacío",
+        description: "Agrega productos antes de proceder al pago",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Redirigir a la página de checkout
+    window.location.href = '/checkout';
   };
 
   const updateQuantity = (id: number, quantity: number) => {
@@ -151,6 +190,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         updateQuantity,
         removeItem,
         clearCart,
+        goToCheckout,
       }}
     >
       {children}

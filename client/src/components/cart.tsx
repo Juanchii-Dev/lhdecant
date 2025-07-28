@@ -33,8 +33,8 @@ export function CartIcon() {
 }
 
 export function CartDrawer() {
-  const { items, totalItems, totalAmount, updateQuantity, removeItem, clearCart } = useCart();
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const { items, totalItems, totalAmount, updateQuantity, removeItem, clearCart, goToCheckout } = useCart();
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
   const handleQuantityChange = (id: number, newQuantity: number) => {
@@ -42,7 +42,7 @@ export function CartDrawer() {
   };
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10">
           <CartIcon />
@@ -63,99 +63,79 @@ export function CartDrawer() {
         <div className="mt-6 space-y-4">
           {items.length === 0 ? (
             <div className="text-center py-8">
-              <Package className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400">Tu carrito está vacío</p>
+              <p className="text-gray-400 mb-4">Tu carrito está vacío</p>
+              <Button onClick={() => setOpen(false)}>
+                Continuar comprando
+              </Button>
             </div>
           ) : (
             <>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                <AnimatePresence>
-                  {items.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      className="flex items-center gap-4 p-4 bg-black/50 rounded-lg border border-[#D4AF37]/20"
-                    >
-                      <img
-                        src={item.perfume?.imageUrl}
-                        alt={item.perfume?.name || 'Perfume'}
-                        className="w-16 h-16 object-cover rounded-lg"
-                      />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-white">{item.perfume?.name || `Perfume ${item.perfumeId}`}</h4>
-                        <p className="text-sm text-gray-400">{item.size}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37]">
-                            {item.size}
-                          </Badge>
-                          <span className="text-[#D4AF37] font-semibold">${item.price}</span>
+              <div className="flex-1 overflow-y-auto">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-4 py-4 border-b border-gray-700">
+                    <div className="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center">
+                      {item.perfume?.imageUrl ? (
+                        <img
+                          src={item.perfume.imageUrl}
+                          alt={item.perfume?.name || 'Perfume'}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="text-gray-400 text-xs text-center">
+                          <div className="text-2xl">🧴</div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-8 h-8 p-0 border-[#D4AF37]/30"
-                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                        >
-                          <Minus className="w-3 h-3" />
-                        </Button>
-                        <span className="w-8 text-center text-white">{item.quantity}</span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-8 h-8 p-0 border-[#D4AF37]/30"
-                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                        >
-                          <Plus className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="w-8 h-8 p-0 ml-2"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-white font-medium">
+                        {item.perfume?.name || `Perfume ${item.perfumeId}`}
+                      </h3>
+                      <p className="text-gray-400 text-sm">{item.size}</p>
+                      <p className="text-yellow-500 font-bold">${item.price}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600"
+                      >
+                        -
+                      </button>
+                      <span className="text-white w-8 text-center">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              <Separator className="bg-[#D4AF37]/20" />
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-white">
-                  <span>Total ({totalItems} {totalItems === 1 ? 'producto' : 'productos'})</span>
-                  <span className="font-bold text-[#D4AF37]">${totalAmount.toFixed(2)}</span>
+              
+              <div className="border-t border-gray-700 pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-white font-bold">Total:</span>
+                  <span className="text-yellow-500 font-bold text-xl">
+                    ${totalAmount.toFixed(2)}
+                  </span>
                 </div>
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  className="flex-1 border-[#D4AF37]/30 text-[#D4AF37]"
-                  onClick={clearCart}
-                >
-                  Vaciar
-                </Button>
-                <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="flex-1 luxury-button">
-                      Finalizar Compra
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-black border-[#D4AF37]/20 text-white max-w-md">
-                    <CheckoutForm 
-                      items={items} 
-                      totalAmount={totalAmount} 
-                      onClose={() => setIsCheckoutOpen(false)} 
-                    />
-                  </DialogContent>
-                </Dialog>
+                
+                <div className="space-y-2">
+                  <Button
+                    onClick={goToCheckout}
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+                  >
+                    Proceder al pago
+                  </Button>
+                  
+                  <Button
+                    onClick={() => setOpen(false)}
+                    variant="outline"
+                    className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
+                  >
+                    Continuar comprando
+                  </Button>
+                </div>
               </div>
             </>
           )}

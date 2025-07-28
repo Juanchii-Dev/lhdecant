@@ -24,6 +24,7 @@ import CouponsPage from "./pages/coupons-page";
 import ReviewsPage from "./pages/reviews-page";
 import NotificationsPage from "./pages/notifications-page";
 import CollectionsPage from "./pages/collections-page";
+import CheckoutPage from "./pages/checkout-page";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,7 @@ export default function App() {
                 <Route path="/notifications" component={NotificationsPage} />
                 <Route path="/settings" component={SettingsPage} />
                 <Route path="/colecciones" component={CollectionsPage} />
+                <Route path="/checkout" component={CheckoutPage} />
                 <Route component={NotFound} />
               </Switch>
               <Toaster />
