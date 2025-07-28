@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { useCart } from "../hooks/use-cart";
 import { useAuth } from "../hooks/use-auth";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { motion } from "framer-motion";
 
 export default function CheckoutPage() {
-  const { items, totalAmount, goToCheckout } = useCart();
+  const { items, totalAmount } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);

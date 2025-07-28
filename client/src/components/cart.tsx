@@ -2,15 +2,9 @@
 import { useState } from "react";
 import { useCart } from "../hooks/use-cart";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
-import { Separator } from "./ui/separator";
 import { ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
-import { useToast } from "../hooks/use-toast";
-import { apiRequest } from "../lib/queryClient";
 
 export function CartIcon() {
   const { totalItems } = useCart();
@@ -34,7 +28,6 @@ export function CartIcon() {
 export function CartDrawer() {
   const { items, totalItems, totalAmount, updateQuantity, goToCheckout } = useCart();
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
