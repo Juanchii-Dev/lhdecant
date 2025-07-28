@@ -24,7 +24,31 @@ export default function Collections() {
 
   // Don't render anything if no collections are available or if collections are disabled
   if (!collections || collections.length === 0) {
-    return null;
+    return (
+      <section id="colecciones" className="py-24 bg-charcoal">
+        <div className="container mx-auto px-6">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-luxury-gold mb-4">
+              Colecciones
+            </h2>
+            <p className="text-gray-400 text-lg mb-8">
+              Descubre nuestras colecciones exclusivas de perfumes
+            </p>
+            <div className="bg-black/50 border border-luxury-gold/20 rounded-lg p-8">
+              <div className="text-center">
+                <div className="text-luxury-gold text-6xl mb-4">📦</div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  No hay colecciones disponibles
+                </h3>
+                <p className="text-gray-400">
+                  Pronto tendremos colecciones exclusivas para ti.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   const handleAddToCart = (collection: any, size: string) => {
