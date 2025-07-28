@@ -21,7 +21,10 @@ export default function CheckoutPage() {
         description: "Necesitas estar logueado para acceder al checkout",
         variant: "destructive",
       });
-      window.location.href = '/auth?message=login-required';
+      // Usar setTimeout para evitar múltiples redirecciones
+      setTimeout(() => {
+        window.location.href = '/auth?message=login-required';
+      }, 1000);
       return;
     }
 
@@ -32,10 +35,13 @@ export default function CheckoutPage() {
         description: "Agrega productos antes de proceder al pago",
         variant: "destructive",
       });
-      window.location.href = '/';
+      // Usar setTimeout para evitar múltiples redirecciones
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
       return;
     }
-  }, [user, items, toast]);
+  }, [user, items.length]); // Solo dependencias necesarias
 
   const handleCheckout = async () => {
     if (!user) {
