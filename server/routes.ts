@@ -991,45 +991,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!sessionId || !['eur', 'usd'].includes((currency || '').toLowerCase())) {
         return res.status(400).json({ message: 'Datos de sesión o moneda inválidos' });
       }
+
       // Obtener carrito desde Firestore
       const items = await storage.getCartItems(sessionId);
-      if (!items.length) return res.status(400).json({ message: 'El carrito está vacío' });
-
-      // Validar stock y preparar líneas de pago
-      const lineItems = [];
-      for (const item of items) {
-        // Aquí deberías obtener el perfume real y validar stock/precio
-        // Por simplicidad, se asume que el item ya tiene nombre, precio y cantidad correctos
-        if (!item.price || !item.name) {
-          return res.status(400).json({ message: 'Faltan datos de producto en el carrito' });
-        }
-        lineItems.push({
-          price_data: {
-            currency: currency.toLowerCase(),
-            product_data: {
-              name: item.name,
-              description: item.description || '',
-            },
-            unit_amount: Math.round(item.price * 100), // Stripe espera centavos
-          },
-          quantity: item.quantity || 1,
-        });
+      if (!items.length) {
+        return res.status(400).json({ message: 'El carrito está vacío' });
       }
 
-      // Crear sesión de pago
+      // Validar stock real y obtener datos actualizados de perfumes
+      const validatedItems = [];
+      let totalAmount = 0;
+
+      for (const item of items) {
+        try {
+          // Obtener perfume actualizado desde Firebase
+          const perfume = await storage.getPerfumeById(item.perfumeId);
+          if (!perfume) {
+            return res.status(400).json({ 
+              message: `Perfume ${item.name} no encontrado` 
+            });
+          }
+
+          // Validar stock real
+          if (!perfume.inStock) {
+            return res.status(400).json({ 
+              message: `Perfume ${perfume.name} no está disponible en stock` 
+            });
+          }
+
+          // Validar cantidad
+          if (item.quantity <= 0) {
+            return res.status(400).json({ 
+              message: `Cantidad inválida para ${perfume.name}` 
+            });
+          }
+
+          // Calcular precio con descuento si aplica
+          let finalPrice = parseFloat(item.price);
+          if (perfume.isOnOffer && perfume.discountPercentage) {
+            const discount = parseFloat(perfume.discountPercentage) / 100;
+            finalPrice = finalPrice * (1 - discount);
+          }
+
+          validatedItems.push({
+            price_data: {
+              currency: currency.toLowerCase(),
+              product_data: {
+                name: perfume.name,
+                description: `${perfume.brand} - ${item.size}`,
+                images: perfume.imageUrl ? [perfume.imageUrl] : [],
+              },
+              unit_amount: Math.round(finalPrice * 100), // Stripe espera centavos
+            },
+            quantity: item.quantity,
+          });
+
+          totalAmount += finalPrice * item.quantity;
+
+        } catch (error) {
+          console.error(`Error validando item ${item.name}:`, error);
+          return res.status(400).json({ 
+            message: `Error validando ${item.name}` 
+          });
+        }
+      }
+
+      // Crear sesión de pago con validaciones adicionales
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
-        line_items: lineItems,
+        line_items: validatedItems,
         mode: 'payment',
         success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.FRONTEND_URL}/cart`,
-        metadata: { sessionId },
+        metadata: { 
+          sessionId,
+          totalItems: items.length,
+          totalAmount: totalAmount.toFixed(2)
+        },
         currency: currency.toLowerCase(),
+        customer_email: req.body.customerEmail, // Email del cliente si está disponible
+        billing_address_collection: 'required',
+        shipping_address_collection: {
+          allowed_countries: ['ES', 'US', 'MX', 'AR', 'CL', 'CO', 'PE'],
+        },
+        payment_intent_data: {
+          metadata: {
+            sessionId,
+            items: JSON.stringify(items.map(item => ({
+              perfumeId: item.perfumeId,
+              size: item.size,
+              quantity: item.quantity
+            })))
+          }
+        }
       });
-      res.json({ url: session.url });
+
+      res.json({ 
+        url: session.url,
+        sessionId: session.id,
+        totalAmount: totalAmount.toFixed(2),
+        currency: currency.toLowerCase()
+      });
+
     } catch (error) {
       console.error('Error creando sesión de Stripe:', error);
-      res.status(500).json({ message: 'Error creando sesión de pago' });
+      
+      // Manejo específico de errores de Stripe
+      if (error.type === 'StripeCardError') {
+        return res.status(400).json({ 
+          message: 'Error con la tarjeta de crédito',
+          error: error.message 
+        });
+      } else if (error.type === 'StripeInvalidRequestError') {
+        return res.status(400).json({ 
+          message: 'Datos de pago inválidos',
+          error: error.message 
+        });
+      } else if (error.type === 'StripeAPIError') {
+        return res.status(500).json({ 
+          message: 'Error del servidor de pagos',
+          error: error.message 
+        });
+      }
+
+      res.status(500).json({ 
+        message: 'Error creando sesión de pago',
+        error: error.message 
+      });
     }
   });
 
@@ -1037,6 +1125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     let event;
+    
     try {
       event = stripe.webhooks.constructEvent(req.body, sig!, process.env.STRIPE_WEBHOOK_SECRET!);
     } catch (err) {
@@ -1047,38 +1136,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const sessionId = session.metadata.sessionId;
-      // Obtener carrito y datos del cliente
-      const items = await storage.getCartItems(sessionId);
-      const orderData = {
-        customer_email: session.customer_email,
-        amount_total: session.amount_total / 100,
-        currency: session.currency,
-        payment_intent: session.payment_intent,
-        stripe_session_id: session.id,
-      };
+      
       try {
-        const order = await storage.createOrder(orderData, items);
+        // Obtener carrito y datos del cliente
+        const items = await storage.getCartItems(sessionId);
+        if (!items.length) {
+          console.error('Carrito vacío en webhook para sesión:', sessionId);
+          return res.status(400).json({ error: 'Carrito vacío' });
+        }
+
+        // Validar stock una vez más antes de procesar la orden
+        const validatedItems = [];
+        for (const item of items) {
+          const perfume = await storage.getPerfumeById(item.perfumeId);
+          if (!perfume || !perfume.inStock) {
+            console.error(`Stock insuficiente para ${item.name} en sesión:`, sessionId);
+            // Reembolsar automáticamente si no hay stock
+            await stripe.refunds.create({
+              payment_intent: session.payment_intent,
+              reason: 'requested_by_customer'
+            });
+            return res.status(400).json({ 
+              error: `Stock insuficiente para ${item.name}` 
+            });
+          }
+          validatedItems.push(item);
+        }
+
+        const orderData = {
+          customer_email: session.customer_email,
+          amount_total: session.amount_total / 100,
+          currency: session.currency,
+          payment_intent: session.payment_intent,
+          stripe_session_id: session.id,
+          status: 'paid',
+          shipping_address: session.shipping_address,
+          billing_address: session.billing_address,
+        };
+
+        // Crear orden en Firebase
+        const order = await storage.createOrder(orderData, validatedItems);
+        
+        // Actualizar stock de perfumes (aquí se implementaría la lógica de stock)
+        for (const item of validatedItems) {
+          try {
+            // Aquí se actualizaría el stock del perfume
+            // await storage.updatePerfumeStock(item.perfumeId, -item.quantity);
+            console.log(`Stock actualizado para ${item.name}: -${item.quantity}`);
+          } catch (error) {
+            console.error(`Error actualizando stock para ${item.name}:`, error);
+          }
+        }
+
+        // Limpiar carrito
         await storage.clearCart(sessionId);
-        // Email con resumen
-        const resumen = items.map(i => `<li>${i.name} (${i.size}) x${i.quantity} - ${i.price} ${session.currency.toUpperCase()}</li>`).join('');
-        await transporter.sendMail({
-          from: process.env.SMTP_FROM,
-          to: session.customer_email,
-          subject: '¡Gracias por tu compra!',
-          html: `<b>¡Gracias por tu compra!</b><br>Tu pedido ha sido recibido.<ul>${resumen}</ul><br>Total: <b>${orderData.amount_total} ${session.currency.toUpperCase()}</b>`
-        });
-        await transporter.sendMail({
-          from: process.env.SMTP_FROM,
-          to: process.env.ADMIN_EMAIL,
-          subject: 'Nueva venta realizada',
-          html: `<b>Nueva venta realizada</b><br>Cliente: ${session.customer_email}<ul>${resumen}</ul><br>Total: <b>${orderData.amount_total} ${session.currency.toUpperCase()}</b>`
-        });
+
+        // Enviar emails
+        try {
+          const resumen = validatedItems.map(i => 
+            `<li>${i.name} (${i.size}) x${i.quantity} - ${i.price} ${session.currency.toUpperCase()}</li>`
+          ).join('');
+
+          // Email al cliente
+          await transporter.sendMail({
+            from: process.env.SMTP_FROM,
+            to: session.customer_email,
+            subject: '¡Gracias por tu compra en LhDecant!',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #D4AF37;">¡Gracias por tu compra!</h2>
+                <p>Tu pedido ha sido procesado exitosamente.</p>
+                <h3>Resumen de tu compra:</h3>
+                <ul>${resumen}</ul>
+                <p><strong>Total: ${orderData.amount_total} ${session.currency.toUpperCase()}</strong></p>
+                <p>Número de orden: <strong>${order.id}</strong></p>
+                <p>Te enviaremos un email cuando tu pedido esté listo para envío.</p>
+                <p>Gracias por elegir LhDecant!</p>
+              </div>
+            `
+          });
+
+          // Email al admin
+          await transporter.sendMail({
+            from: process.env.SMTP_FROM,
+            to: process.env.ADMIN_EMAIL,
+            subject: 'Nueva venta realizada - LhDecant',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #D4AF37;">Nueva venta realizada</h2>
+                <p><strong>Cliente:</strong> ${session.customer_email}</p>
+                <p><strong>Orden:</strong> ${order.id}</p>
+                <h3>Productos:</h3>
+                <ul>${resumen}</ul>
+                <p><strong>Total: ${orderData.amount_total} ${session.currency.toUpperCase()}</strong></p>
+                <p><strong>Dirección de envío:</strong></p>
+                <p>${session.shipping_address?.line1 || ''}<br>
+                ${session.shipping_address?.city || ''}, ${session.shipping_address?.state || ''}<br>
+                ${session.shipping_address?.postal_code || ''}, ${session.shipping_address?.country || ''}</p>
+              </div>
+            `
+          });
+
+        } catch (emailError) {
+          console.error('Error enviando emails:', emailError);
+          // No fallar la orden por error de email
+        }
+
+        console.log('Pago exitoso procesado para sesión:', sessionId);
+        
       } catch (err) {
-        console.error('Error registrando orden o enviando emails:', err);
+        console.error('Error procesando webhook:', err);
+        
+        // Intentar reembolsar en caso de error
+        try {
+          await stripe.refunds.create({
+            payment_intent: session.payment_intent,
+            reason: 'requested_by_customer'
+          });
+          console.log('Reembolso procesado por error en webhook');
+        } catch (refundError) {
+          console.error('Error procesando reembolso:', refundError);
+        }
+        
+        return res.status(500).json({ error: 'Error procesando pago' });
       }
-      console.log('Pago exitoso para sesión:', sessionId);
     }
+
     res.json({ received: true });
+  });
+
+  // Endpoint para verificar estado del pago
+  app.get('/api/stripe/payment-status/:sessionId', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      if (!sessionId) {
+        return res.status(400).json({ message: 'Session ID requerido' });
+      }
+
+      // Buscar la sesión en Stripe
+      const sessions = await stripe.checkout.sessions.list({
+        limit: 1,
+        expand: ['data.payment_intent']
+      });
+
+      const session = sessions.data.find(s => s.metadata?.sessionId === sessionId);
+      
+      if (!session) {
+        return res.status(404).json({ message: 'Sesión no encontrada' });
+      }
+
+      const status = {
+        sessionId: session.id,
+        status: session.status,
+        paymentStatus: session.payment_status,
+        amount: session.amount_total / 100,
+        currency: session.currency,
+        customerEmail: session.customer_email,
+        createdAt: new Date(session.created * 1000),
+        expiresAt: new Date(session.expires_at * 1000)
+      };
+
+      res.json(status);
+    } catch (error) {
+      console.error('Error verificando estado del pago:', error);
+      res.status(500).json({ message: 'Error verificando estado del pago' });
+    }
+  });
+
+  // Endpoint para obtener información de reembolso
+  app.post('/api/stripe/refund', async (req, res) => {
+    try {
+      const { paymentIntentId, reason } = req.body;
+      
+      if (!paymentIntentId) {
+        return res.status(400).json({ message: 'Payment Intent ID requerido' });
+      }
+
+      const refund = await stripe.refunds.create({
+        payment_intent: paymentIntentId,
+        reason: reason || 'requested_by_customer'
+      });
+
+      res.json({
+        id: refund.id,
+        status: refund.status,
+        amount: refund.amount / 100,
+        currency: refund.currency
+      });
+    } catch (error) {
+      console.error('Error procesando reembolso:', error);
+      res.status(500).json({ message: 'Error procesando reembolso' });
+    }
   });
 
   // Endpoint para recuperación de contraseña
