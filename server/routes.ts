@@ -228,8 +228,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Image upload endpoints
-  app.post("/api/images/upload", requireAdmin, async (req, res) => {
+  // Admin image upload endpoints (solo para administradores)
+  app.post("/api/admin/images/upload", requireAdmin, async (req, res) => {
     try {
       const { imageUrl } = req.body;
       
@@ -260,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/images/:publicId", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/images/:publicId", requireAdmin, async (req, res) => {
     try {
       const { publicId } = req.params;
       

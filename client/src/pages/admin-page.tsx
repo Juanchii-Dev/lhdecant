@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 // Removido useAuth para evitar conflictos con autenticación de admin
 import { useToast } from "../hooks/use-toast";
 import { Button } from "../components/ui/button";
+import { Upload } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
@@ -127,6 +128,7 @@ export default function AdminPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateCollectionDialogOpen, setIsCreateCollectionDialogOpen] = useState(false);
   const [isEditCollectionDialogOpen, setIsEditCollectionDialogOpen] = useState(false);
+  const [isImageUploadDialogOpen, setIsImageUploadDialogOpen] = useState(false);
   const [editingPerfume, setEditingPerfume] = useState<Perfume | null>(null);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
 
@@ -559,7 +561,7 @@ export default function AdminPage() {
 
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9 bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+          <TabsList className="grid w-full grid-cols-10 bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
             <TabsTrigger value="dashboard" className="admin-nav-item">Dashboard</TabsTrigger>
             <TabsTrigger value="perfumes" className="admin-nav-item">Perfumes</TabsTrigger>
             <TabsTrigger value="orders" className="admin-nav-item">Pedidos</TabsTrigger>
@@ -568,6 +570,7 @@ export default function AdminPage() {
             <TabsTrigger value="messages" className="admin-nav-item">Mensajes</TabsTrigger>
             <TabsTrigger value="content" className="admin-nav-item">Contenido</TabsTrigger>
             <TabsTrigger value="collections" className="admin-nav-item">Colecciones</TabsTrigger>
+            <TabsTrigger value="images" className="admin-nav-item">Imágenes</TabsTrigger>
             <TabsTrigger value="settings" className="admin-nav-item">Configuración</TabsTrigger>
           </TabsList>
           {/* Dashboard Avanzado */}
@@ -1650,6 +1653,91 @@ export default function AdminPage() {
                   </div>
           </TabsContent>
 
+          {/* Sección de Gestión de Imágenes */}
+          <TabsContent value="images">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#D4AF37]">Gestión de Imágenes</h2>
+                  <p className="text-gray-400">Sube y gestiona imágenes para perfumes y colecciones</p>
+                </div>
+                <Button
+                  onClick={() => setIsImageUploadDialogOpen(true)}
+                  className="luxury-button admin-smooth-transition"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Subir Nueva Imagen
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Subida de Imágenes */}
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Subir Imágenes</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Sube imágenes desde tu computadora o URL
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 border border-[#D4AF37]/20 rounded-lg">
+                      <h3 className="text-[#D4AF37] font-medium mb-2">Instrucciones</h3>
+                      <ul className="text-gray-400 text-sm space-y-1">
+                        <li>• Formatos soportados: JPG, PNG, GIF, WebP</li>
+                        <li>• Tamaño máximo: 5MB por imagen</li>
+                        <li>• Las imágenes se optimizan automáticamente</li>
+                        <li>• Se almacenan en Cloudinary (gratuito)</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="p-4 border border-green-500/20 rounded-lg bg-green-500/5">
+                      <h3 className="text-green-400 font-medium mb-2">Ventajas de Cloudinary</h3>
+                      <ul className="text-gray-400 text-sm space-y-1">
+                        <li>• 25 GB de almacenamiento gratuito</li>
+                        <li>• Optimización automática de imágenes</li>
+                        <li>• CDN global para entrega rápida</li>
+                        <li>• Transformaciones en tiempo real</li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Estadísticas de Imágenes */}
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Estadísticas</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Información sobre el uso de imágenes
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 border border-[#D4AF37]/20 rounded-lg text-center">
+                        <p className="text-2xl font-bold text-[#D4AF37]">
+                          {perfumes?.filter(p => p.imageUrl).length || 0}
+                        </p>
+                        <p className="text-gray-400 text-sm">Perfumes con imagen</p>
+                      </div>
+                      <div className="p-4 border border-[#D4AF37]/20 rounded-lg text-center">
+                        <p className="text-2xl font-bold text-[#D4AF37]">
+                          {collections?.filter(c => c.imageUrl).length || 0}
+                        </p>
+                        <p className="text-gray-400 text-sm">Colecciones con imagen</p>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 border border-blue-500/20 rounded-lg bg-blue-500/5">
+                      <h3 className="text-blue-400 font-medium mb-2">Uso de Cloudinary</h3>
+                      <p className="text-gray-400 text-sm">
+                        Plan gratuito: 25 GB almacenamiento + 25 GB/mes ancho de banda
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
           {/* Sección de Configuración */}
           <TabsContent value="settings">
             <div className="space-y-6">
@@ -1950,6 +2038,81 @@ export default function AdminPage() {
               </Button>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de Subida de Imágenes */}
+      <Dialog open={isImageUploadDialogOpen} onOpenChange={setIsImageUploadDialogOpen}>
+        <DialogContent className="bg-black border-[#D4AF37]/20 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-[#D4AF37]">Subir Nueva Imagen</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Sube una imagen desde tu computadora o ingresa una URL
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Subida desde archivo */}
+            <div>
+              <Label className="text-[#D4AF37] mb-2 block">Subir desde archivo</Label>
+              <div className="border-2 border-dashed border-[#D4AF37]/30 rounded-lg p-6 text-center hover:border-[#D4AF37]/50 transition-colors">
+                <Upload className="mx-auto h-12 w-12 text-[#D4AF37] mb-4" />
+                <p className="text-gray-400 mb-2">Arrastra una imagen aquí o haz clic para seleccionar</p>
+                <p className="text-xs text-gray-500">Formatos: JPG, PNG, GIF, WebP (máx. 5MB)</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      // Aquí se procesaría la subida
+                      console.log('Archivo seleccionado:', file.name);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Subida desde URL */}
+            <div>
+              <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de imagen</Label>
+              <Input 
+                id="imageUrl"
+                type="url" 
+                placeholder="https://ejemplo.com/imagen.jpg"
+                className="bg-black/50 border-[#D4AF37]/30 text-white mt-2" 
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Ingresa una URL válida de imagen (.jpg, .png, .gif, .webp, etc.)
+              </p>
+            </div>
+
+            {/* Información de Cloudinary */}
+            <div className="p-4 border border-green-500/20 rounded-lg bg-green-500/5">
+              <h3 className="text-green-400 font-medium mb-2">Cloudinary - Almacenamiento Gratuito</h3>
+              <ul className="text-gray-400 text-sm space-y-1">
+                <li>• 25 GB de almacenamiento gratuito</li>
+                <li>• Optimización automática de imágenes</li>
+                <li>• CDN global para entrega rápida</li>
+                <li>• Transformaciones en tiempo real</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsImageUploadDialogOpen(false)}
+                className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
+              >
+                Cancelar
+              </Button>
+              <Button className="luxury-button">
+                <Upload className="w-4 h-4 mr-2" />
+                Subir Imagen
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
       </div>

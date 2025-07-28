@@ -31,8 +31,8 @@ export default function ImageUpload({ onImageUpload, currentImage, className = "
         try {
           const dataUrl = reader.result as string;
           
-          // Enviar al servidor para subir a Cloudinary
-          const response = await fetch('/api/images/upload', {
+          // Enviar al servidor para subir a Cloudinary (solo admin)
+          const response = await fetch('/api/admin/images/upload', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ export default function ImageUpload({ onImageUpload, currentImage, className = "
           });
 
           if (!response.ok) {
-            throw new Error('Error al subir imagen');
+            throw new Error('Error al subir imagen. Solo administradores pueden subir imágenes.');
           }
 
           const result = await response.json();
