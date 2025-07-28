@@ -259,17 +259,56 @@ export class FirestoreStorage {
     return items;
   }
 
-  async updateCartItemQuantity(id: string, quantity: number) {
-    // id es el id del item en la subcolección
-    // Buscar el carrito del usuario (por ahora, solo uno por sesión)
-    // Se asume que el frontend envía el sessionId en el body
-    throw new Error('Debes implementar la lógica para actualizar la cantidad de un item en el carrito usando sessionId e id del item.');
+  async updateCartItemQuantity(id: string, quantity: number, sessionId: string) {
+    try {
+      // Buscar el item en el carrito del usuario
+      const cartRef = db.collection('carts').doc(sessionId);
+      const itemRef = cartRef.collection('items').doc(id);
+      
+      // Verificar que el item existe
+      const itemSnap = await itemRef.get();
+      if (!itemSnap.exists) {
+        throw new Error('Item no encontrado en el carrito');
+      }
+      
+      // Si la cantidad es 0 o menor, eliminar el item
+      if (quantity <= 0) {
+        await itemRef.delete();
+        return { id, deleted: true };
+      }
+      
+      // Actualizar la cantidad
+      await itemRef.update({ quantity });
+      
+      // Retornar el item actualizado
+      const updatedSnap = await itemRef.get();
+      return { id: updatedSnap.id, ...updatedSnap.data() };
+    } catch (error) {
+      console.error('Error updating cart item quantity:', error);
+      throw error;
+    }
   }
 
-  async removeFromCart(id: string) {
-    // id es el id del item en la subcolección
-    // Se asume que el frontend envía el sessionId en el body
-    throw new Error('Debes implementar la lógica para eliminar un item del carrito usando sessionId e id del item.');
+  async removeFromCart(id: string, sessionId: string) {
+    try {
+      // Buscar el item en el carrito del usuario
+      const cartRef = db.collection('carts').doc(sessionId);
+      const itemRef = cartRef.collection('items').doc(id);
+      
+      // Verificar que el item existe
+      const itemSnap = await itemRef.get();
+      if (!itemSnap.exists) {
+        throw new Error('Item no encontrado en el carrito');
+      }
+      
+      // Eliminar el item
+      await itemRef.delete();
+      
+      return { id, deleted: true };
+    } catch (error) {
+      console.error('Error removing cart item:', error);
+      throw error;
+    }
   }
 
   async clearCart(sessionId: string) {

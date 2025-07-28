@@ -363,9 +363,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = req.params.id;
       const { quantity } = req.body;
-      const updatedItem = await storage.updateCartItemQuantity(id, quantity);
+      const sessionId = req.sessionID;
+      const updatedItem = await storage.updateCartItemQuantity(id, quantity, sessionId);
       res.json(updatedItem);
     } catch (error) {
+      console.error('Error updating cart item:', error);
       res.status(500).json({ message: "Failed to update cart item" });
     }
   });
@@ -373,9 +375,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/cart/:id", async (req, res) => {
     try {
       const id = req.params.id;
-      await storage.removeFromCart(id);
+      const sessionId = req.sessionID;
+      await storage.removeFromCart(id, sessionId);
       res.sendStatus(204);
     } catch (error) {
+      console.error('Error removing cart item:', error);
       res.status(500).json({ message: "Failed to remove cart item" });
     }
   });
