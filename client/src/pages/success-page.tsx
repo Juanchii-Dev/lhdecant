@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { CheckCircle, Package, Truck, Home } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 
 export default function SuccessPage() {
-  const [searchParams] = useSearchParams();
+  const [location, setLocation] = useLocation();
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const sessionId = searchParams.get('session_id');
+  
+  // Extraer session_id de la URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionId = urlParams.get('session_id');
 
   useEffect(() => {
     if (sessionId) {
