@@ -29,10 +29,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
-    staleTime: 0,
-    cacheTime: 0,
-    refetchInterval: 1000, // Refetch cada segundo
-    refetchIntervalInBackground: true,
+    staleTime: 30000, // 30 segundos
+    cacheTime: 60000, // 1 minuto
   });
 
   const addToCartMutation = useMutation({
