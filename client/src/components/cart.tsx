@@ -3,8 +3,8 @@ import { useState } from "react";
 import { useCart } from "../hooks/use-cart";
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
-import { ShoppingCart } from "lucide-react";
-import { motion } from "framer-motion";
+import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function CartIcon() {
   const { totalItems } = useCart();
@@ -26,8 +26,16 @@ export function CartIcon() {
 }
 
 export function CartDrawer() {
-  const { items, totalItems, totalAmount, updateQuantity, goToCheckout } = useCart();
+  const { items, totalItems, totalAmount, updateQuantity, removeItem, clearCart, goToCheckout } = useCart();
   const [open, setOpen] = useState(false);
+
+  const handleQuantityChange = (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeItem(itemId);
+    } else {
+      updateQuantity(itemId, newQuantity);
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -58,52 +66,76 @@ export function CartDrawer() {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto">
-                {items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4 py-4 border-b border-gray-700">
-                    <div className="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center">
-                      {item.perfume?.imageUrl ? (
-                        <img
-                          src={item.perfume.imageUrl}
-                          alt={item.perfume?.name || 'Perfume'}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="text-gray-400 text-xs text-center">
-                          <div className="text-2xl">🧴</div>
+              <div className="flex-1 overflow-y-auto max-h-96">
+                <AnimatePresence>
+                  {items.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="flex items-center gap-4 py-4 border-b border-gray-700"
+                    >
+                      <div className="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center overflow-hidden">
+                        {item.perfume?.imageUrl ? (
+                          <img
+                            src={item.perfume.imageUrl}
+                            alt={item.perfume?.name || 'Perfume'}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-gray-400 text-xs text-center">
+                            <div className="text-2xl">🧴</div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-white font-medium truncate">
+                          {item.perfume?.name || `Perfume ${item.perfumeId}`}
+                        </h3>
+                        <p className="text-gray-400 text-sm">{item.size}</p>
+                        <p className="text-yellow-500 font-bold">${item.price} c/u</p>
+                        <p className="text-gray-500 text-xs">
+                          Subtotal: ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                        </p>
+                      </div>
+                      
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                            className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
+                            disabled={item.quantity <= 1}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="text-white w-8 text-center font-medium">{item.quantity}</span>
+                          <button
+                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                            className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
                         </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-white font-medium">
-                        {item.perfume?.name || `Perfume ${item.perfumeId}`}
-                      </h3>
-                      <p className="text-gray-400 text-sm">{item.size}</p>
-                      <p className="text-yellow-500 font-bold">${item.price}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600"
-                      >
-                        -
-                      </button>
-                      <span className="text-white w-8 text-center">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                        
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="text-red-400 hover:text-red-300 transition-colors p-1"
+                          title="Eliminar producto"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
               
-              <div className="border-t border-gray-700 pt-4">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-white font-bold">Total:</span>
-                  <span className="text-yellow-500 font-bold text-xl">
+              <div className="border-t border-gray-700 pt-4 space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-white font-bold text-lg">Total:</span>
+                  <span className="text-yellow-500 font-bold text-2xl">
                     ${totalAmount.toFixed(2)}
                   </span>
                 </div>
@@ -111,18 +143,30 @@ export function CartDrawer() {
                 <div className="space-y-2">
                   <Button
                     onClick={goToCheckout}
-                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3"
+                    disabled={totalItems === 0}
                   >
                     Proceder al pago
                   </Button>
                   
-                  <Button
-                    onClick={() => setOpen(false)}
-                    variant="outline"
-                    className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
-                  >
-                    Continuar comprando
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setOpen(false)}
+                      variant="outline"
+                      className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+                    >
+                      Continuar comprando
+                    </Button>
+                    
+                    <Button
+                      onClick={clearCart}
+                      variant="outline"
+                      className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                      disabled={totalItems === 0}
+                    >
+                      Vaciar carrito
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>

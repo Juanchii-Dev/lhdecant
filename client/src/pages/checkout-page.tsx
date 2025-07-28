@@ -6,6 +6,7 @@ import { useToast } from "../hooks/use-toast";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { motion } from "framer-motion";
+import { ShoppingCart, CreditCard, Shield, Truck } from "lucide-react";
 
 export default function CheckoutPage() {
   const { items, totalAmount, isLoading: cartLoading } = useCart();
@@ -87,7 +88,7 @@ export default function CheckoutPage() {
       const { sessionId } = await response.json();
       
       // Redirigir a Stripe Checkout usando import.meta.env
-      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
+      const stripe = await loadStripe('pk_test_placeholder');
       if (stripe) {
         const { error } = await stripe.redirectToCheckout({ sessionId });
         if (error) {
@@ -153,48 +154,149 @@ export default function CheckoutPage() {
       transition={{ duration: 0.8 }}
       className="min-h-screen bg-black text-white py-12"
     >
-      <div className="container mx-auto px-6 max-w-3xl">
+      <div className="container mx-auto px-6 max-w-6xl">
         <h1 className="text-4xl font-bold text-yellow-500 mb-8 text-center">
           Finalizar Compra
         </h1>
 
-        <Card className="bg-gray-900 border-gray-700 mb-6">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              Resumen del Pedido
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {items.map((item: any) => (
-                <div key={item.id} className="flex justify-between items-center border-b border-gray-800 pb-2 last:border-b-0">
-                  <div className="flex items-center gap-3">
-                    {item.perfume?.imageUrl && (
-                      <img src={item.perfume.imageUrl} alt={item.perfume.name} className="w-12 h-12 object-cover rounded-md" />
-                    )}
-                    <div>
-                      <p className="text-white font-medium">{item.perfume?.name || 'Producto desconocido'}</p>
-                      <p className="text-gray-400 text-sm">{item.size} - Cantidad: {item.quantity}</p>
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Resumen del pedido */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="bg-gray-900 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5" />
+                  Resumen del Pedido
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {items.map((item: any, index: number) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg"
+                    >
+                      <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                        {item.perfume?.imageUrl ? (
+                          <img 
+                            src={item.perfume.imageUrl} 
+                            alt={item.perfume.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-gray-400 text-2xl">🧴</div>
+                        )}
+                      </div>
+                      
+                      <div className="flex-1">
+                        <h3 className="text-white font-medium text-lg">
+                          {item.perfume?.name || 'Producto desconocido'}
+                        </h3>
+                        <p className="text-gray-400 text-sm">{item.perfume?.brand || 'Marca'}</p>
+                        <p className="text-gray-400 text-sm">Tamaño: {item.size}</p>
+                        <p className="text-gray-400 text-sm">Cantidad: {item.quantity}</p>
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className="text-yellow-500 font-bold text-lg">
+                          ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          ${item.price} c/u
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Información del cliente */}
+            <Card className="bg-gray-900 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-white">Información del Cliente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Nombre:</span>
+                    <span className="text-white">{user.name || user.username}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Email:</span>
+                    <span className="text-white">{user.email}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Resumen de pago */}
+          <div className="space-y-6">
+            <Card className="bg-gray-900 border-gray-700 sticky top-6">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Resumen de Pago
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Subtotal por items */}
+                  <div className="space-y-2">
+                    {items.map((item: any) => (
+                      <div key={item.id} className="flex justify-between text-sm">
+                        <span className="text-gray-400">
+                          {item.perfume?.name} x{item.quantity}
+                        </span>
+                        <span className="text-white">
+                          ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="border-t border-gray-700 pt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold text-gray-300">Total:</span>
+                      <span className="text-3xl font-bold text-yellow-500">
+                        ${totalAmount.toFixed(2)}
+                      </span>
                     </div>
                   </div>
-                  <span className="text-yellow-500 font-bold">${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between items-center pt-4 border-t border-gray-700">
-                <span className="text-lg font-semibold text-gray-300">Total:</span>
-                <span className="text-3xl font-bold text-yellow-500">${totalAmount.toFixed(2)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        <Button
-          onClick={handleCheckout}
-          className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 rounded-lg text-lg transition-colors duration-300"
-          disabled={isLoading || authLoading || cartLoading || (items || []).length === 0}
-        >
-          {isLoading ? "Procesando..." : "Continuar con el Pago"}
-        </Button>
+                  <Button
+                    onClick={handleCheckout}
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 text-lg transition-colors duration-300"
+                    disabled={isLoading || authLoading || cartLoading || (items || []).length === 0}
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                        Procesando...
+                      </div>
+                    ) : (
+                      `Pagar $${totalAmount.toFixed(2)}`
+                    )}
+                  </Button>
+
+                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                    <Shield className="w-4 h-4" />
+                    <span>Pago seguro con Stripe</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                    <Truck className="w-4 h-4" />
+                    <span>Envío incluido</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
