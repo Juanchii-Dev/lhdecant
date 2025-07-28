@@ -33,6 +33,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     cacheTime: 60000, // 1 minuto
     retry: 1,
     enabled: !!user, // Solo ejecutar si el usuario está autenticado
+    onSuccess: (data) => {
+      console.log('🛒 Cart query success:', data);
+    },
     onError: (error) => {
       console.error('Error fetching cart:', error);
       if (error.message.includes('401')) {
@@ -57,9 +60,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: async (data) => {
+      console.log('🛒 Add to cart success:', data);
+      
       // Invalidar y refetch inmediatamente
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      
+      // Forzar una nueva consulta después de un pequeño delay
+      setTimeout(async () => {
+        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      }, 100);
       
       toast({
         title: "Agregado al carrito",

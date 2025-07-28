@@ -290,8 +290,8 @@ export class FirestoreStorage {
     const newMessageSnap = await newMessageRef.get();
     return { id: newMessageRef.id, ...newMessageSnap.data() };
   }
-  async addToCart(sessionId: string, item: any) {
-    console.log('🛒 addToCart - sessionId:', sessionId);
+  async addToCart(userId: string, item: any) {
+    console.log('🛒 addToCart - userId:', userId);
     console.log('🛒 addToCart - item:', item);
     
     // Obtener la información completa del perfume
@@ -299,7 +299,7 @@ export class FirestoreStorage {
     const perfumeSnap = await perfumeRef.get();
     const perfumeData = perfumeSnap.exists ? perfumeSnap.data() : null;
     
-    const cartRef = db.collection('carts').doc(sessionId);
+    const cartRef = db.collection('carts').doc(userId);
     console.log('🛒 addToCart - cartRef path:', cartRef.path);
     const itemsRef = cartRef.collection('items');
     
@@ -331,9 +331,9 @@ export class FirestoreStorage {
     }
   }
 
-  async getCartItems(sessionId: string) {
-    console.log('🔍 getCartItems - sessionId:', sessionId);
-    const cartRef = db.collection('carts').doc(sessionId);
+  async getCartItems(userId: string) {
+    console.log('🔍 getCartItems - userId:', userId);
+    const cartRef = db.collection('carts').doc(userId);
     console.log('🔍 getCartItems - cartRef path:', cartRef.path);
     const itemsSnap = await cartRef.collection('items').get();
     console.log('🔍 getCartItems - itemsSnap size:', itemsSnap.size);
@@ -342,10 +342,10 @@ export class FirestoreStorage {
     return items;
   }
 
-  async updateCartItemQuantity(id: string, quantity: number, sessionId: string) {
+  async updateCartItemQuantity(id: string, quantity: number, userId: string) {
     try {
       // Buscar el item en el carrito del usuario
-      const cartRef = db.collection('carts').doc(sessionId);
+      const cartRef = db.collection('carts').doc(userId);
       const itemRef = cartRef.collection('items').doc(id);
       
       // Verificar que el item existe
@@ -372,10 +372,10 @@ export class FirestoreStorage {
     }
   }
 
-  async removeFromCart(id: string, sessionId: string) {
+  async removeFromCart(id: string, userId: string) {
     try {
       // Buscar el item en el carrito del usuario
-      const cartRef = db.collection('carts').doc(sessionId);
+      const cartRef = db.collection('carts').doc(userId);
       const itemRef = cartRef.collection('items').doc(id);
       
       // Verificar que el item existe
@@ -394,8 +394,8 @@ export class FirestoreStorage {
     }
   }
 
-  async clearCart(sessionId: string) {
-    const cartRef = db.collection('carts').doc(sessionId);
+  async clearCart(userId: string) {
+    const cartRef = db.collection('carts').doc(userId);
     const itemsSnap = await cartRef.collection('items').get();
     const batch = db.batch();
     itemsSnap.forEach(doc => batch.delete(doc.ref));
