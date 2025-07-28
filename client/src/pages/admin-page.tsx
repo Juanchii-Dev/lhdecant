@@ -129,6 +129,9 @@ export default function AdminPage() {
   const [isCreateCollectionDialogOpen, setIsCreateCollectionDialogOpen] = useState(false);
   const [isEditCollectionDialogOpen, setIsEditCollectionDialogOpen] = useState(false);
   const [isImageUploadDialogOpen, setIsImageUploadDialogOpen] = useState(false);
+  const [selectedPerfumeId, setSelectedPerfumeId] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
   const [editingPerfume, setEditingPerfume] = useState<Perfume | null>(null);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
 
@@ -534,6 +537,62 @@ export default function AdminPage() {
       prices: prices ? prices.split(",").map((p: string) => p.trim()).filter((p: string) => p) : [],
       imageUrl: formData.get("imageUrl") as string
     });
+  };
+
+  // Funciones para manejo de imágenes
+  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreview(reader.result as string);
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedPerfumeId || (!imageUrl && !imagePreview)) {
+      toast({ title: "Selecciona un perfume y una imagen", variant: "destructive" });
+      return;
+    }
+
+    try {
+      // Subir imagen a Cloudinary
+      const response = await fetch('/api/admin/images/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ imageUrl: imageUrl || imagePreview }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al subir imagen');
+      }
+
+      const result = await response.json();
+      
+      // Actualizar el perfume con la nueva imagen
+      const perfume = perfumes?.find(p => p.id === selectedPerfumeId);
+      if (perfume) {
+        updatePerfumeMutation.mutate({
+          id: selectedPerfumeId,
+          imageUrl: result.imageUrl
+        });
+      }
+
+      // Limpiar el formulario
+      setSelectedPerfumeId("");
+      setImageUrl("");
+      setImagePreview("");
+      setIsImageUploadDialogOpen(false);
+      
+      toast({ title: "Imagen subida exitosamente", variant: "default" });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({ title: "Error al subir imagen", variant: "destructive" });
+    }
   };
 
   // Configuraciones
@@ -1578,8 +1637,8 @@ export default function AdminPage() {
                           <Input name="prices" className="bg-black/50 border-[#D4AF37]/30 text-white" placeholder="25, 45" />
                           </div>
                         </div>
-                                            <div>
-                      <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
+                        <div>
+                          <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
                       <Input 
                         name="imageUrl" 
                         type="url" 
@@ -1589,7 +1648,7 @@ export default function AdminPage() {
                       <p className="text-xs text-gray-400 mt-1">
                         Acepta URLs de imágenes (.jpg, .png, .gif, .webp, etc.)
                       </p>
-                    </div>
+                        </div>
                         <Button type="submit" disabled={createCollectionMutation.isPending} className="w-full luxury-button">
                           {createCollectionMutation.isPending ? (
                             <>
@@ -1661,14 +1720,14 @@ export default function AdminPage() {
                   <h2 className="text-2xl font-bold text-[#D4AF37]">Gestión de Imágenes</h2>
                   <p className="text-gray-400">Sube y gestiona imágenes para perfumes y colecciones</p>
                 </div>
-                <Button
+                            <Button
                   onClick={() => setIsImageUploadDialogOpen(true)}
                   className="luxury-button admin-smooth-transition"
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Subir Nueva Imagen
-                </Button>
-              </div>
+                            </Button>
+                          </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Subida de Imágenes */}
@@ -1688,7 +1747,7 @@ export default function AdminPage() {
                         <li>• Las imágenes se optimizan automáticamente</li>
                         <li>• Se almacenan en Cloudinary (gratuito)</li>
                       </ul>
-                    </div>
+                        </div>
                     
                     <div className="p-4 border border-green-500/20 rounded-lg bg-green-500/5">
                       <h3 className="text-green-400 font-medium mb-2">Ventajas de Cloudinary</h3>
@@ -1698,7 +1757,7 @@ export default function AdminPage() {
                         <li>• CDN global para entrega rápida</li>
                         <li>• Transformaciones en tiempo real</li>
                       </ul>
-                    </div>
+                      </div>
                   </CardContent>
                 </Card>
 
@@ -1717,13 +1776,13 @@ export default function AdminPage() {
                           {perfumes?.filter(p => p.imageUrl).length || 0}
                         </p>
                         <p className="text-gray-400 text-sm">Perfumes con imagen</p>
-                      </div>
+                  </div>
                       <div className="p-4 border border-[#D4AF37]/20 rounded-lg text-center">
                         <p className="text-2xl font-bold text-[#D4AF37]">
                           {collections?.filter(c => c.imageUrl).length || 0}
                         </p>
                         <p className="text-gray-400 text-sm">Colecciones con imagen</p>
-                      </div>
+                  </div>
                     </div>
                     
                     <div className="p-4 border border-blue-500/20 rounded-lg bg-blue-500/5">
@@ -1732,8 +1791,8 @@ export default function AdminPage() {
                         Plan gratuito: 25 GB almacenamiento + 25 GB/mes ancho de banda
                       </p>
                     </div>
-                  </CardContent>
-                </Card>
+              </CardContent>
+            </Card>
               </div>
             </div>
           </TabsContent>
@@ -1807,11 +1866,11 @@ export default function AdminPage() {
                         onCheckedChange={(checked) => {
                           updateSettingMutation.mutate({ 
                             key: 'email_notifications', 
-                            value: checked.toString() 
-                          });
-                        }}
-                      />
-                    </div>
+                        value: checked.toString() 
+                      });
+                    }}
+                  />
+                </div>
               </CardContent>
             </Card>
 
@@ -2013,8 +2072,8 @@ export default function AdminPage() {
                 </div>
               </div>
               
-                                  <div>
-                      <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
+              <div>
+                <Label htmlFor="imageUrl" className="text-[#D4AF37]">URL de Imagen</Label>
                       <Input 
                         name="imageUrl" 
                         type="url" 
@@ -2025,7 +2084,7 @@ export default function AdminPage() {
                       <p className="text-xs text-gray-400 mt-1">
                         Acepta URLs de imágenes (.jpg, .png, .gif, .webp, etc.)
                       </p>
-                    </div>
+              </div>
               <Button type="submit" disabled={updateCollectionMutation.isPending} className="w-full luxury-button">
                 {updateCollectionMutation.isPending ? (
                   <>
@@ -2045,13 +2104,30 @@ export default function AdminPage() {
       <Dialog open={isImageUploadDialogOpen} onOpenChange={setIsImageUploadDialogOpen}>
         <DialogContent className="bg-black border-[#D4AF37]/20 text-white max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[#D4AF37]">Subir Nueva Imagen</DialogTitle>
+            <DialogTitle className="text-[#D4AF37]">Subir Imagen para Perfume</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Sube una imagen desde tu computadora o ingresa una URL
+              Sube una imagen específica para un perfume desde tu computadora o URL
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6">
+            {/* Selección de Perfume */}
+            <div>
+              <Label htmlFor="perfumeSelect" className="text-[#D4AF37]">Seleccionar Perfume</Label>
+              <select 
+                id="perfumeSelect"
+                className="w-full mt-2 bg-black/50 border border-[#D4AF37]/30 text-white rounded-md p-2"
+                onChange={(e) => setSelectedPerfumeId(e.target.value)}
+              >
+                <option value="">Selecciona un perfume...</option>
+                {perfumes?.map((perfume) => (
+                  <option key={perfume.id} value={perfume.id}>
+                    {perfume.name} - {perfume.brand}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Subida desde archivo */}
             <div>
               <Label className="text-[#D4AF37] mb-2 block">Subir desde archivo</Label>
@@ -2063,13 +2139,7 @@ export default function AdminPage() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      // Aquí se procesaría la subida
-                      console.log('Archivo seleccionado:', file.name);
-                    }
-                  }}
+                  onChange={handleImageFileUpload}
                 />
               </div>
             </div>
@@ -2081,12 +2151,28 @@ export default function AdminPage() {
                 id="imageUrl"
                 type="url" 
                 placeholder="https://ejemplo.com/imagen.jpg"
-                className="bg-black/50 border-[#D4AF37]/30 text-white mt-2" 
+                className="bg-black/50 border-[#D4AF37]/30 text-white mt-2"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
               />
               <p className="text-xs text-gray-400 mt-1">
                 Ingresa una URL válida de imagen (.jpg, .png, .gif, .webp, etc.)
               </p>
             </div>
+
+            {/* Vista previa */}
+            {imagePreview && (
+              <div>
+                <Label className="text-[#D4AF37] mb-2 block">Vista previa</Label>
+                <div className="relative w-full h-48 bg-charcoal rounded-lg overflow-hidden border border-[#D4AF37]/20">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Información de Cloudinary */}
             <div className="p-4 border border-green-500/20 rounded-lg bg-green-500/5">
@@ -2102,12 +2188,21 @@ export default function AdminPage() {
             <div className="flex justify-end space-x-3">
               <Button
                 variant="outline"
-                onClick={() => setIsImageUploadDialogOpen(false)}
+                onClick={() => {
+                  setIsImageUploadDialogOpen(false);
+                  setSelectedPerfumeId("");
+                  setImageUrl("");
+                  setImagePreview("");
+                }}
                 className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black"
               >
                 Cancelar
               </Button>
-              <Button className="luxury-button">
+              <Button 
+                className="luxury-button"
+                onClick={handleImageUpload}
+                disabled={!selectedPerfumeId || (!imageUrl && !imagePreview)}
+              >
                 <Upload className="w-4 h-4 mr-2" />
                 Subir Imagen
               </Button>

@@ -763,9 +763,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/popular-perfumes', requireAdmin, async (req, res) => {
     try {
       const perfumes = await storage.getPerfumes();
-      // Por ahora retornamos los primeros 5, pero aquí se podría implementar
-      // lógica basada en ventas reales
-      const popularPerfumes = perfumes.slice(0, 5);
+      const orders = await storage.getOrders();
+      
+      // Calcular popularidad basada en ventas reales
+      const perfumeSales: { [key: string]: number } = {};
+      
+      orders.forEach(order => {
+        if (order.items) {
+          order.items.forEach((item: any) => {
+            if (item.perfumeId) {
+              perfumeSales[item.perfumeId] = (perfumeSales[item.perfumeId] || 0) + (item.quantity || 1);
+            }
+          });
+        }
+      });
+      
+      // Ordenar perfumes por ventas y tomar los top 5
+      const popularPerfumes = perfumes
+        .map(perfume => ({
+          ...perfume,
+          salesCount: perfumeSales[perfume.id] || 0
+        }))
+        .sort((a, b) => b.salesCount - a.salesCount)
+        .slice(0, 5)
+        .map(({ salesCount, ...perfume }) => perfume); // Remover salesCount del resultado
       
       res.json(popularPerfumes);
     } catch (error) {
