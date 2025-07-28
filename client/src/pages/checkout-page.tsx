@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
 import { useCart } from "../hooks/use-cart";
 import { useAuth } from "../hooks/use-auth";
 import { useToast } from "../hooks/use-toast";
@@ -74,7 +75,7 @@ export default function CheckoutPage() {
       const { sessionId } = await response.json();
       
       // Redirigir a Stripe Checkout
-      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+      const stripe = await loadStripe('pk_test_placeholder');
       if (stripe) {
         const { error } = await stripe.redirectToCheckout({ sessionId });
         if (error) {
@@ -93,16 +94,6 @@ export default function CheckoutPage() {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const loadStripe = async (publishableKey: string) => {
-    try {
-      const { loadStripe } = await import('@stripe/stripe-js');
-      return await loadStripe(publishableKey);
-    } catch (error) {
-      console.error('Error loading Stripe:', error);
-      return null;
     }
   };
 
