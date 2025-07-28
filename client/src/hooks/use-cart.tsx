@@ -31,11 +31,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     refetchOnReconnect: true,
     staleTime: 30000, // 30 segundos
     cacheTime: 60000, // 1 minuto
+    retry: 1,
+    onError: (error) => {
+      console.error('Error fetching cart:', error);
+      if (error.message.includes('401')) {
+        // Usuario no autenticado, no mostrar error
+        return;
+      }
+      toast({
+        title: "Error al cargar el carrito",
+        description: "No se pudieron cargar los productos del carrito",
+        variant: "destructive",
+      });
+    },
   });
 
   const addToCartMutation = useMutation({
     mutationFn: async (item: any) => {
       const res = await apiRequest("POST", "/api/cart", item);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error al agregar al carrito');
+      }
       return await res.json();
     },
     onSuccess: async (data) => {
@@ -49,9 +66,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error) => {
+      console.error('Error adding to cart:', error);
+      if (error.message.includes('401')) {
+        toast({
+          title: "Inicia sesión para continuar",
+          description: "Necesitas estar registrado para agregar productos al carrito",
+          variant: "destructive",
+        });
+        window.location.href = '/auth?message=login-required';
+        return;
+      }
       toast({
         title: "Error",
-        description: "No se pudo agregar el producto al carrito",
+        description: error.message || "No se pudo agregar el producto al carrito",
         variant: "destructive",
       });
     },

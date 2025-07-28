@@ -390,11 +390,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cart routes
-  app.post("/api/cart", async (req, res) => {
+  app.post("/api/cart", requireAuth, async (req, res) => {
     try {
-      const sessionId = req.sessionID;
-      console.log('Adding to cart with sessionId:', sessionId);
-      const cartItem = await storage.addToCart(sessionId, req.body);
+      const userId = req.user.id;
+      console.log('Adding to cart with userId:', userId);
+      const cartItem = await storage.addToCart(userId, req.body);
       res.status(201).json(cartItem);
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -402,11 +402,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/cart", async (req, res) => {
+  app.get("/api/cart", requireAuth, async (req, res) => {
     try {
-      const sessionId = req.sessionID;
-      console.log('Getting cart with sessionId:', sessionId);
-      const items = await storage.getCartItems(sessionId);
+      const userId = req.user.id;
+      console.log('Getting cart with userId:', userId);
+      const items = await storage.getCartItems(userId);
       console.log('Cart items found:', items.length);
       res.json(items);
     } catch (error) {
@@ -415,12 +415,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/cart/:id", async (req, res) => {
+  app.put("/api/cart/:id", requireAuth, async (req, res) => {
     try {
       const id = req.params.id;
       const { quantity } = req.body;
-      const sessionId = req.sessionID;
-      const updatedItem = await storage.updateCartItemQuantity(id, quantity, sessionId);
+      const userId = req.user.id;
+      const updatedItem = await storage.updateCartItemQuantity(id, quantity, userId);
       res.json(updatedItem);
     } catch (error) {
       console.error('Error updating cart item:', error);
@@ -428,11 +428,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/cart/:id", async (req, res) => {
+  app.delete("/api/cart/:id", requireAuth, async (req, res) => {
     try {
       const id = req.params.id;
-      const sessionId = req.sessionID;
-      await storage.removeFromCart(id, sessionId);
+      const userId = req.user.id;
+      await storage.removeFromCart(id, userId);
       res.sendStatus(204);
     } catch (error) {
       console.error('Error removing cart item:', error);
@@ -440,10 +440,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/cart", async (req, res) => {
+  app.delete("/api/cart", requireAuth, async (req, res) => {
     try {
-      const sessionId = req.sessionID;
-      await storage.clearCart(sessionId);
+      const userId = req.user.id;
+      await storage.clearCart(userId);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to clear cart" });
