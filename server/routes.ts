@@ -7,6 +7,7 @@ import nodemailer from 'nodemailer';
 import express from 'express';
 import crypto from 'crypto';
 import { admin } from "./storage";
+import { uploadFromUrl, deleteImage, isCloudinaryUrl } from "./cloudinary";
 
 const db = admin.firestore();
 
@@ -224,6 +225,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ message: "Failed to delete perfume" });
+    }
+  });
+
+  // Image upload endpoints
+  app.post("/api/images/upload", requireAdmin, async (req, res) => {
+    try {
+      const { imageUrl } = req.body;
+      
+      if (!imageUrl) {
+        return res.status(400).json({ message: "URL de imagen requerida" });
+      }
+
+      // Validar URL de imagen
+      if (!isValidImageUrl(imageUrl)) {
+        return res.status(400).json({ 
+          message: "URL de imagen inválida. Debe ser una URL válida con extensión de imagen (.jpg, .png, .gif, etc.)" 
+        });
+      }
+
+      // Subir imagen a Cloudinary
+      const cloudinaryUrl = await uploadFromUrl(imageUrl, 'perfumes');
+      
+      res.json({ 
+        success: true, 
+        imageUrl: cloudinaryUrl,
+        message: "Imagen subida exitosamente a Cloudinary" 
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      res.status(500).json({ 
+        message: "Error al subir imagen. Intenta con otra URL o más tarde." 
+      });
+    }
+  });
+
+  app.delete("/api/images/:publicId", requireAdmin, async (req, res) => {
+    try {
+      const { publicId } = req.params;
+      
+      if (!publicId) {
+        return res.status(400).json({ message: "ID de imagen requerido" });
+      }
+
+      // Eliminar imagen de Cloudinary
+      await deleteImage(publicId);
+      
+      res.json({ 
+        success: true, 
+        message: "Imagen eliminada exitosamente" 
+      });
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      res.status(500).json({ 
+        message: "Error al eliminar imagen" 
+      });
     }
   });
 

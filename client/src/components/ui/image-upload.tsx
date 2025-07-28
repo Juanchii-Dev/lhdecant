@@ -25,14 +25,37 @@ export default function ImageUpload({ onImageUpload, currentImage, className = "
       const previewUrl = URL.createObjectURL(file);
       setPreview(previewUrl);
 
-      // Simular carga a Cloudinary (aquí implementarías la carga real)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Convertir archivo a URL de datos para enviar al servidor
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const dataUrl = reader.result as string;
+          
+          // Enviar al servidor para subir a Cloudinary
+          const response = await fetch('/api/images/upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ imageUrl: dataUrl }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Error al subir imagen');
+          }
+
+          const result = await response.json();
+          onImageUpload(result.imageUrl);
+          setUploading(false);
+        } catch (error) {
+          console.error("Error uploading image:", error);
+          setUploading(false);
+          setPreview(null);
+        }
+      };
       
-      // URL simulada de Cloudinary (reemplazar con URL real)
-      const cloudinaryUrl = `https://res.cloudinary.com/lhdecant/image/upload/v1/perfumes/${file.name}`;
-      
-      onImageUpload(cloudinaryUrl);
-      setUploading(false);
+      reader.readAsDataURL(file);
     } catch (error) {
       console.error("Error uploading image:", error);
       setUploading(false);
