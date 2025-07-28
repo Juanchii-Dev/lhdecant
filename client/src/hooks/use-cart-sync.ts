@@ -66,8 +66,9 @@ export function useCartSync() {
     onSuccess: async (data) => {
       console.log('🛒 Add to cart success:', data);
       
-      // Actualizar store local inmediatamente
+      // Actualizar store local con el ID real del backend
       addItem({
+        id: data.id, // Usar el ID real del backend
         perfumeId: data.perfumeId,
         size: data.size,
         price: data.price,
@@ -78,6 +79,16 @@ export function useCartSync() {
       // Sincronizar con backend
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      
+      // Refetch adicional después de un delay
+      setTimeout(async () => {
+        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      }, 50);
+      
+      // Refetch final para asegurar
+      setTimeout(async () => {
+        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      }, 200);
       
       toast({
         title: "Agregado al carrito",

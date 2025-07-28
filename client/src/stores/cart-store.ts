@@ -22,7 +22,7 @@ interface CartStore {
   totalAmount: number;
   
   // Actions
-  addItem: (item: Omit<CartItem, 'id'>) => void;
+  addItem: (item: CartItem) => void;
   updateQuantity: (id: string, quantity: number) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
@@ -65,9 +65,8 @@ export const useCartStore = create<CartStore>()(
               totalAmount,
             };
           } else {
-            // Agregar nuevo item
-            const itemWithId = { ...newItem, id: `${newItem.perfumeId}-${newItem.size}-${Date.now()}` };
-            const updatedItems = [...state.items, itemWithId];
+            // Agregar nuevo item con el ID del backend
+            const updatedItems = [...state.items, newItem];
             
             const totalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
             const totalAmount = updatedItems.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
