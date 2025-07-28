@@ -29,11 +29,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
-    staleTime: 30000, // 30 segundos
-    cacheTime: 60000, // 1 minuto
+    staleTime: 0, // Siempre considerar los datos como stale para refetch inmediato
+    cacheTime: 0, // No cachear para obtener datos frescos siempre
     retry: 1,
     enabled: !!user, // Solo ejecutar si el usuario está autenticado
-    onSuccess: (data) => {
+    onSuccess: (data) => { // Added for debugging
       console.log('🛒 Cart query success:', data);
     },
     onError: (error) => {
@@ -62,14 +62,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     onSuccess: async (data) => {
       console.log('🛒 Add to cart success:', data);
       
-      // Invalidar y refetch inmediatamente
+      // Invalidar inmediatamente
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      
+      // Refetch múltiples veces para asegurar actualización
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
       
-      // Forzar una nueva consulta después de un pequeño delay
+      // Refetch adicional después de un delay
       setTimeout(async () => {
         await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
-      }, 100);
+      }, 50);
+      
+      // Refetch final para asegurar
+      setTimeout(async () => {
+        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      }, 200);
       
       toast({
         title: "Agregado al carrito",
@@ -107,6 +114,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      
+      // Refetch adicional para asegurar
+      setTimeout(async () => {
+        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      }, 100);
     },
     onError: (error) => {
       console.error('Error updating quantity:', error);
@@ -129,6 +141,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      
+      // Refetch adicional para asegurar
+      setTimeout(async () => {
+        await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      }, 100);
+      
       toast({
         title: "Producto eliminado",
         description: "El producto se ha eliminado del carrito",
