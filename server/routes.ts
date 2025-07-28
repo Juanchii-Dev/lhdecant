@@ -686,7 +686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orders = await storage.getOrders();
       // Filtrar órdenes del usuario actual
-      const userOrders = orders.filter(order => order.userId === req.user.id);
+      const userOrders = orders.filter(order => order.userId === req.user?.id);
       res.json(userOrders);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch orders" });
@@ -700,7 +700,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
       // Verificar que la orden pertenece al usuario
-      if (order.userId !== req.user.id) {
+      if (order.userId !== req.user?.id) {
         return res.status(403).json({ message: "Access denied" });
       }
       res.json(order);
@@ -1293,15 +1293,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint avanzado para crear sesión de pago con Stripe
-  app.post('/api/stripe/create-checkout-session', async (req, res) => {
+  app.post('/api/stripe/create-checkout-session', requireAuth, async (req, res) => {
     try {
-      const { sessionId, currency } = req.body;
-      if (!sessionId || !['eur', 'usd'].includes((currency || '').toLowerCase())) {
-        return res.status(400).json({ message: 'Datos de sesión o moneda inválidos' });
+      const { currency, customerEmail } = req.body;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuario no autenticado' });
+      }
+      
+      if (!['eur', 'usd'].includes((currency || '').toLowerCase())) {
+        return res.status(400).json({ message: 'Moneda inválida' });
       }
 
-      // Obtener carrito desde Firestore
-      const items = await storage.getCartItems(sessionId);
+      // Obtener carrito desde Firestore usando userId
+      const items = await storage.getCartItems(userId);
       if (!items.length) {
         return res.status(400).json({ message: 'El carrito está vacío' });
       }
@@ -1369,22 +1375,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         payment_method_types: ['card'],
         line_items: validatedItems,
         mode: 'payment',
-        success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/cart`,
+        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/cart`,
         metadata: { 
-          sessionId,
+          userId,
           totalItems: items.length,
           totalAmount: totalAmount.toFixed(2)
         },
         currency: currency.toLowerCase(),
-        customer_email: req.body.customerEmail, // Email del cliente si está disponible
+        customer_email: customerEmail, // Email del cliente si está disponible
         billing_address_collection: 'required',
         shipping_address_collection: {
           allowed_countries: ['ES', 'US', 'MX', 'AR', 'CL', 'CO', 'PE'],
         },
         payment_intent_data: {
           metadata: {
-            sessionId,
+            userId,
             items: JSON.stringify(items.map(item => ({
               perfumeId: item.perfumeId,
               size: item.size,
@@ -1394,37 +1400,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      res.json({ 
-        url: session.url,
-        sessionId: session.id,
-        totalAmount: totalAmount.toFixed(2),
-        currency: currency.toLowerCase()
-      });
-
+      res.json({ sessionId: session.id });
     } catch (error) {
       console.error('Error creando sesión de Stripe:', error);
       
       // Manejo específico de errores de Stripe
       if (error.type === 'StripeCardError') {
         return res.status(400).json({ 
-          message: 'Error con la tarjeta de crédito',
-          error: error.message 
+          message: 'Error con la tarjeta de crédito. Verifica los datos.' 
         });
       } else if (error.type === 'StripeInvalidRequestError') {
         return res.status(400).json({ 
-          message: 'Datos de pago inválidos',
-          error: error.message 
+          message: 'Datos de pago inválidos. Verifica la información.' 
         });
       } else if (error.type === 'StripeAPIError') {
         return res.status(500).json({ 
-          message: 'Error del servidor de pagos',
-          error: error.message 
+          message: 'Error del servidor de pagos. Intenta más tarde.' 
         });
       }
-
+      
       res.status(500).json({ 
-        message: 'Error creando sesión de pago',
-        error: error.message 
+        message: 'Error interno del servidor' 
       });
     }
   });

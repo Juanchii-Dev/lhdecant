@@ -8,12 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { motion } from "framer-motion";
 
 export default function CheckoutPage() {
-  const { items, totalAmount } = useCart();
-  const { user } = useAuth();
+  const { items, totalAmount, isLoading: cartLoading } = useCart();
+  const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    // Esperar a que se carguen los datos
+    if (authLoading || cartLoading) return;
+
     // Verificar si el usuario está logueado
     if (!user) {
       toast({
@@ -21,7 +24,6 @@ export default function CheckoutPage() {
         description: "Necesitas estar logueado para acceder al checkout",
         variant: "destructive",
       });
-      // Usar setTimeout para evitar múltiples redirecciones
       setTimeout(() => {
         window.location.href = '/auth?message=login-required';
       }, 1000);
@@ -29,25 +31,33 @@ export default function CheckoutPage() {
     }
 
     // Verificar si hay items en el carrito
-    if (items.length === 0) {
+    if ((items || []).length === 0) {
       toast({
         title: "Carrito vacío",
         description: "Agrega productos antes de proceder al pago",
         variant: "destructive",
       });
-      // Usar setTimeout para evitar múltiples redirecciones
       setTimeout(() => {
         window.location.href = '/';
       }, 1000);
       return;
     }
-  }, [user, items.length]); // Solo dependencias necesarias
+  }, [user, items, authLoading, cartLoading]);
 
   const handleCheckout = async () => {
     if (!user) {
       toast({
         title: "Error",
         description: "Necesitas estar logueado para realizar la compra",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if ((items || []).length === 0) {
+      toast({
+        title: "Carrito vacío",
+        description: "Agrega productos antes de proceder al pago",
         variant: "destructive",
       });
       return;
@@ -63,7 +73,7 @@ export default function CheckoutPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          sessionId: document.cookie.split(';').find(c => c.trim().startsWith('connect.sid='))?.split('=')[1] || '',
+          items: items,
           currency: 'usd',
           customerEmail: user.email,
         }),
@@ -89,6 +99,7 @@ export default function CheckoutPage() {
         }
       }
     } catch (error) {
+      console.error('Checkout error:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo procesar el pago",
@@ -110,7 +121,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (items.length === 0) {
+  if ((items || []).length === 0) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
