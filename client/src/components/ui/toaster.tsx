@@ -3,13 +3,17 @@ import { Toast, ToastAction, ToastClose, ToastDescription, ToastTitle, ToastView
 import * as ToastPrimitives from "@radix-ui/react-toast";
 
 export function Toaster() {
-  const { toasts } = useToast();
+  const { toasts, removeToast } = useToast();
 
   return (
     <ToastPrimitives.Provider>
       {toasts.map(function ({ id, title, description, action, ...props }: any) {
         return (
-          <Toast key={id} {...props}>
+          <Toast key={id} {...props} onOpenChange={(open) => {
+            if (!open) {
+              removeToast(id);
+            }
+          }}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (

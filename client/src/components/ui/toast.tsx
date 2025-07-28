@@ -16,7 +16,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<any[]>([]);
 
   const addToast = useCallback((toast: any) => {
-    setToasts((prev) => [...prev, { ...toast, open: true, id: genId() }]);
+    const id = genId();
+    const newToast = { ...toast, open: true, id };
+    
+    setToasts((prev) => [...prev, newToast]);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+      removeToast(id);
+    }, 5000);
   }, []);
 
   const removeToast = useCallback((id: string) => {
