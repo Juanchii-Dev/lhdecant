@@ -107,16 +107,73 @@ export class FirestoreStorage {
   }
 
   // Session store para Passport
+  // Sistema completo de sesiones con Firebase Firestore
   sessionStore = {
     get: async (sid: string) => {
-      // Implementación simple para desarrollo
-      return null;
+      try {
+        const sessionRef = db.collection('sessions').doc(sid);
+        const sessionSnap = await sessionRef.get();
+        
+        if (!sessionSnap.exists) {
+          return null;
+        }
+        
+        const sessionData = sessionSnap.data();
+        
+        // Verificar si la sesión ha expirado
+        if (sessionData?.expiresAt && new Date() > sessionData.expiresAt.toDate()) {
+          await sessionRef.delete();
+          return null;
+        }
+        
+        return sessionData;
+      } catch (error) {
+        console.error('Error getting session:', error);
+        return null;
+      }
     },
+    
     set: async (sid: string, session: any) => {
-      // Implementación simple para desarrollo
+      try {
+        const sessionRef = db.collection('sessions').doc(sid);
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // Sesión expira en 7 días
+        
+        await sessionRef.set({
+          ...session,
+          sid,
+          expiresAt,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      } catch (error) {
+        console.error('Error setting session:', error);
+      }
     },
+    
     destroy: async (sid: string) => {
-      // Implementación simple para desarrollo
+      try {
+        const sessionRef = db.collection('sessions').doc(sid);
+        await sessionRef.delete();
+      } catch (error) {
+        console.error('Error destroying session:', error);
+      }
+    },
+    
+    touch: async (sid: string, session: any) => {
+      try {
+        const sessionRef = db.collection('sessions').doc(sid);
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // Renovar por 7 días más
+        
+        await sessionRef.update({
+          ...session,
+          expiresAt,
+          updatedAt: new Date()
+        });
+      } catch (error) {
+        console.error('Error touching session:', error);
+      }
     }
   };
   async getPerfumes() {
@@ -1306,6 +1363,118 @@ export class FirestoreStorage {
     }
     
     return { id: perfumeSnap.id, ...perfumeSnap.data() };
+  }
+
+  // Funciones adicionales para gestión de sesiones
+  async getAllSessions(): Promise<any[]> {
+    try {
+      const sessionsSnap = await db.collection('sessions').get();
+      return sessionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error getting all sessions:', error);
+      return [];
+    }
+  }
+
+  async getActiveSessions(): Promise<any[]> {
+    try {
+      const now = new Date();
+      const sessionsSnap = await db.collection('sessions')
+        .where('expiresAt', '>', now)
+        .get();
+      
+      return sessionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error getting active sessions:', error);
+      return [];
+    }
+  }
+
+  async getSessionById(sid: string): Promise<any> {
+    try {
+      const sessionRef = db.collection('sessions').doc(sid);
+      const sessionSnap = await sessionRef.get();
+      
+      if (!sessionSnap.exists) {
+        return null;
+      }
+      
+      const sessionData = sessionSnap.data();
+      
+      // Verificar si la sesión ha expirado
+      if (sessionData?.expiresAt && new Date() > sessionData.expiresAt.toDate()) {
+        await sessionRef.delete();
+        return null;
+      }
+      
+      return { id: sessionSnap.id, ...sessionData };
+    } catch (error) {
+      console.error('Error getting session by ID:', error);
+      return null;
+    }
+  }
+
+  async updateSession(sid: string, updates: any): Promise<any> {
+    try {
+      const sessionRef = db.collection('sessions').doc(sid);
+      const sessionSnap = await sessionRef.get();
+      
+      if (!sessionSnap.exists) {
+        throw new Error('Session not found');
+      }
+      
+      await sessionRef.update({
+        ...updates,
+        updatedAt: new Date()
+      });
+      
+      const updatedSnap = await sessionRef.get();
+      return { id: updatedSnap.id, ...updatedSnap.data() };
+    } catch (error) {
+      console.error('Error updating session:', error);
+      throw error;
+    }
+  }
+
+  async deleteExpiredSessions(): Promise<number> {
+    try {
+      const now = new Date();
+      const expiredSessionsSnap = await db.collection('sessions')
+        .where('expiresAt', '<=', now)
+        .get();
+      
+      const deletePromises = expiredSessionsSnap.docs.map(doc => doc.ref.delete());
+      await Promise.all(deletePromises);
+      
+      return expiredSessionsSnap.size;
+    } catch (error) {
+      console.error('Error deleting expired sessions:', error);
+      return 0;
+    }
+  }
+
+  async getSessionStats(): Promise<any> {
+    try {
+      const now = new Date();
+      const allSessionsSnap = await db.collection('sessions').get();
+      const activeSessionsSnap = await db.collection('sessions')
+        .where('expiresAt', '>', now)
+        .get();
+      
+      const expiredSessionsSnap = await db.collection('sessions')
+        .where('expiresAt', '<=', now)
+        .get();
+      
+      return {
+        total: allSessionsSnap.size,
+        active: activeSessionsSnap.size,
+        expired: expiredSessionsSnap.size,
+        lastCleanup: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error getting session stats:', error);
+      return { total: 0, active: 0, expired: 0, lastCleanup: new Date().toISOString() };
+    }
   }
 }
 

@@ -285,6 +285,31 @@ export default function AdminPage() {
     enabled: shouldFetch
   });
 
+  // Session queries
+  const { data: sessions = [] } = useQuery<any[]>({
+    queryKey: ["sessions"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/sessions", {
+        credentials: "include"
+      });
+      if (!response.ok) throw new Error("Error fetching sessions");
+      return response.json();
+    },
+    enabled: shouldFetch
+  });
+
+  const { data: sessionStats } = useQuery<any>({
+    queryKey: ["session-stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/sessions-stats", {
+        credentials: "include"
+      });
+      if (!response.ok) throw new Error("Error fetching session stats");
+      return response.json();
+    },
+    enabled: shouldFetch
+  });
+
   // Mutations
   const createPerfumeMutation = useMutation({
     mutationFn: async (data: InsertPerfume) => {
@@ -444,6 +469,47 @@ export default function AdminPage() {
     },
     onError: () => {
       toast({ title: "Error al marcar mensaje como leído", variant: "destructive" });
+    }
+  });
+
+  // Session mutations
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (sid: string) => {
+      const response = await fetch(`/api/admin/sessions/${sid}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      if (!response.ok) throw new Error("Error deleting session");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["session-stats"] });
+      toast({ title: "Sesión eliminada exitosamente", variant: "default" });
+    },
+    onError: () => {
+      toast({ title: "Error al eliminar sesión", variant: "destructive" });
+    }
+  });
+
+  const cleanupSessionsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/admin/sessions/cleanup", {
+        method: "POST",
+        credentials: "include"
+      });
+      if (!response.ok) throw new Error("Error cleaning up sessions");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["session-stats"] });
+      toast({ 
+        title: `Limpieza completada: ${data.deletedCount} sesiones eliminadas`, 
+        variant: "default" 
+      });
+    },
+    onError: () => {
+      toast({ title: "Error al limpiar sesiones", variant: "destructive" });
     }
   });
 
@@ -630,6 +696,7 @@ export default function AdminPage() {
             <TabsTrigger value="content" className="admin-nav-item">Contenido</TabsTrigger>
             <TabsTrigger value="collections" className="admin-nav-item">Colecciones</TabsTrigger>
             <TabsTrigger value="images" className="admin-nav-item">Imágenes</TabsTrigger>
+            <TabsTrigger value="sessions" className="admin-nav-item">Sesiones</TabsTrigger>
             <TabsTrigger value="settings" className="admin-nav-item">Configuración</TabsTrigger>
           </TabsList>
           {/* Dashboard Avanzado */}
@@ -1794,6 +1861,191 @@ export default function AdminPage() {
               </CardContent>
             </Card>
               </div>
+            </div>
+          </TabsContent>
+
+          {/* Sección de Gestión de Sesiones */}
+          <TabsContent value="sessions">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#D4AF37]">Gestión de Sesiones</h2>
+                  <p className="text-gray-400">Administra sesiones activas y expiradas</p>
+                </div>
+                <Button
+                  onClick={() => cleanupSessionsMutation.mutate()}
+                  className="luxury-button admin-smooth-transition"
+                  disabled={cleanupSessionsMutation.isPending}
+                >
+                  {cleanupSessionsMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4 mr-2" />
+                  )}
+                  Limpiar Sesiones Expiradas
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Estadísticas de Sesiones */}
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Estadísticas</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Información sobre sesiones
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 border border-[#D4AF37]/20 rounded-lg text-center">
+                        <p className="text-2xl font-bold text-[#D4AF37]">
+                          {sessionStats?.total || 0}
+                        </p>
+                        <p className="text-gray-400 text-sm">Total Sesiones</p>
+                      </div>
+                      <div className="p-4 border border-green-500/20 rounded-lg text-center">
+                        <p className="text-2xl font-bold text-green-400">
+                          {sessionStats?.active || 0}
+                        </p>
+                        <p className="text-gray-400 text-sm">Sesiones Activas</p>
+                      </div>
+                    </div>
+                    <div className="p-4 border border-red-500/20 rounded-lg text-center">
+                      <p className="text-2xl font-bold text-red-400">
+                        {sessionStats?.expired || 0}
+                      </p>
+                      <p className="text-gray-400 text-sm">Sesiones Expiradas</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Información del Sistema */}
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Información del Sistema</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Configuración de sesiones
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 border border-[#D4AF37]/20 rounded-lg">
+                      <h3 className="text-[#D4AF37] font-medium mb-2">Configuración</h3>
+                      <ul className="text-gray-400 text-sm space-y-1">
+                        <li>• Duración: 7 días</li>
+                        <li>• Almacenamiento: Firebase Firestore</li>
+                        <li>• Limpieza automática: Manual</li>
+                        <li>• Seguridad: Cookies seguras</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="p-4 border border-blue-500/20 rounded-lg bg-blue-500/5">
+                      <h3 className="text-blue-400 font-medium mb-2">Última Limpieza</h3>
+                      <p className="text-gray-400 text-sm">
+                        {sessionStats?.lastCleanup ? 
+                          new Date(sessionStats.lastCleanup).toLocaleString() : 
+                          'No disponible'
+                        }
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Acciones Rápidas */}
+                <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle className="text-[#D4AF37]">Acciones Rápidas</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Gestiona sesiones rápidamente
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Button
+                      onClick={() => cleanupSessionsMutation.mutate()}
+                      className="w-full luxury-button admin-smooth-transition"
+                      disabled={cleanupSessionsMutation.isPending}
+                    >
+                      {cleanupSessionsMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 mr-2" />
+                      )}
+                      Limpiar Expiradas
+                    </Button>
+                    
+                    <div className="p-4 border border-yellow-500/20 rounded-lg bg-yellow-500/5">
+                      <h3 className="text-yellow-400 font-medium mb-2">Nota</h3>
+                      <p className="text-gray-400 text-sm">
+                        Las sesiones expiradas se eliminan automáticamente al acceder
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Lista de Sesiones */}
+              <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
+                <CardHeader>
+                  <CardTitle className="text-[#D4AF37]">Sesiones Activas</CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Lista de todas las sesiones activas en el sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-[#D4AF37]">ID de Sesión</TableHead>
+                          <TableHead className="text-[#D4AF37]">Usuario</TableHead>
+                          <TableHead className="text-[#D4AF37]">Tipo</TableHead>
+                          <TableHead className="text-[#D4AF37]">Creada</TableHead>
+                          <TableHead className="text-[#D4AF37]">Expira</TableHead>
+                          <TableHead className="text-[#D4AF37]">Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sessions.map((session) => (
+                          <TableRow key={session.id} className="hover:bg-gray-800/50">
+                            <TableCell className="font-mono text-sm">
+                              {session.id.slice(0, 8)}...
+                            </TableCell>
+                            <TableCell>
+                              {session.passport?.user?.email || session.user?.email || 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={session.isAdmin ? "default" : "secondary"}>
+                                {session.isAdmin ? 'Admin' : 'Usuario'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {session.createdAt ? 
+                                new Date(session.createdAt.toDate()).toLocaleString() : 
+                                'N/A'
+                              }
+                            </TableCell>
+                            <TableCell>
+                              {session.expiresAt ? 
+                                new Date(session.expiresAt.toDate()).toLocaleString() : 
+                                'N/A'
+                              }
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteSessionMutation.mutate(session.id)}
+                                disabled={deleteSessionMutation.isPending}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 

@@ -1153,6 +1153,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sistema de gestión de sesiones (admin)
+  app.get('/api/admin/sessions', requireAdmin, async (req, res) => {
+    try {
+      const { type = 'active' } = req.query;
+      
+      let sessions;
+      if (type === 'all') {
+        sessions = await storage.getAllSessions();
+      } else if (type === 'expired') {
+        const allSessions = await storage.getAllSessions();
+        const now = new Date();
+        sessions = allSessions.filter(s => s.expiresAt && new Date(s.expiresAt.toDate()) <= now);
+      } else {
+        sessions = await storage.getActiveSessions();
+      }
+      
+      res.json(sessions);
+    } catch (error) {
+      console.error('Error obteniendo sesiones:', error);
+      res.status(500).json({ message: 'Error obteniendo sesiones' });
+    }
+  });
+
+  app.get('/api/admin/sessions/:sid', requireAdmin, async (req, res) => {
+    try {
+      const { sid } = req.params;
+      const session = await storage.getSessionById(sid);
+      
+      if (!session) {
+        return res.status(404).json({ message: 'Sesión no encontrada' });
+      }
+      
+      res.json(session);
+    } catch (error) {
+      console.error('Error obteniendo sesión:', error);
+      res.status(500).json({ message: 'Error obteniendo sesión' });
+    }
+  });
+
+  app.delete('/api/admin/sessions/:sid', requireAdmin, async (req, res) => {
+    try {
+      const { sid } = req.params;
+      await storage.sessionStore.destroy(sid);
+      
+      res.json({ message: 'Sesión eliminada exitosamente' });
+    } catch (error) {
+      console.error('Error eliminando sesión:', error);
+      res.status(500).json({ message: 'Error eliminando sesión' });
+    }
+  });
+
+  app.post('/api/admin/sessions/cleanup', requireAdmin, async (req, res) => {
+    try {
+      const deletedCount = await storage.deleteExpiredSessions();
+      
+      res.json({ 
+        message: `${deletedCount} sesiones expiradas eliminadas`,
+        deletedCount 
+      });
+    } catch (error) {
+      console.error('Error limpiando sesiones:', error);
+      res.status(500).json({ message: 'Error limpiando sesiones' });
+    }
+  });
+
+  app.get('/api/admin/sessions-stats', requireAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getSessionStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error obteniendo estadísticas de sesiones:', error);
+      res.status(500).json({ message: 'Error obteniendo estadísticas de sesiones' });
+    }
+  });
+
   // Endpoint avanzado para crear sesión de pago con Stripe
   app.post('/api/stripe/create-checkout-session', async (req, res) => {
     try {
