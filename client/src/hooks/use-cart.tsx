@@ -117,20 +117,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
   const addToCart = (perfumeId: string, size: string, price: string) => {
-    // Verificar si el usuario está logueado
-    if (!user) {
-      toast({
-        title: "Inicia sesión para continuar",
-        description: "Necesitas estar registrado para agregar productos al carrito",
-        variant: "destructive",
-      });
-      
-      // Redirigir a la página de registro
-      window.location.href = '/auth?message=login-required';
-      return;
-    }
-
-    // Si está logueado, agregar al carrito
     addToCartMutation.mutate({
       perfumeId,
       size,

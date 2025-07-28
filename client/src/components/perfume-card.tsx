@@ -35,11 +35,7 @@ export default function PerfumeCard({
 
   const handleAddToCart = (perfume: Perfume, size: string) => {
     const price = getPrice(perfume, size);
-    addToCart(perfume.id, size, price);
-    toast({
-      title: "Agregado al carrito",
-      description: `${perfume.name} - ${size} agregado correctamente`,
-    });
+    addToCart(perfume.id.toString(), size, price);
   };
 
   const getPrice = (perfume: Perfume, size: string) => {
