@@ -10,7 +10,7 @@ type CartContextType = {
   isLoading: boolean;
   totalItems: number;
   totalAmount: number;
-  addToCart: (perfumeId: number, size: string, price: string) => void;
+  addToCart: (perfumeId: string, size: string, price: string) => void;
   updateQuantity: (id: number, quantity: number) => void;
   removeItem: (id: number) => void;
   clearCart: () => void;
@@ -107,7 +107,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
-  const addToCart = (perfumeId: number, size: string, price: string) => {
+  const addToCart = (perfumeId: string, size: string, price: string) => {
     addToCartMutation.mutate({
       perfumeId,
       size,

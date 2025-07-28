@@ -291,28 +291,38 @@ export class FirestoreStorage {
     return { id: newMessageRef.id, ...newMessageSnap.data() };
   }
   async addToCart(sessionId: string, item: any) {
+    console.log('🛒 addToCart - sessionId:', sessionId);
+    console.log('🛒 addToCart - item:', item);
     const cartRef = db.collection('carts').doc(sessionId);
+    console.log('🛒 addToCart - cartRef path:', cartRef.path);
     const itemsRef = cartRef.collection('items');
     // Buscar si ya existe el item (por perfumeId y size)
     const query = await itemsRef.where('perfumeId', '==', item.perfumeId).where('size', '==', item.size).limit(1).get();
+    console.log('🛒 addToCart - query size:', query.size);
     if (!query.empty) {
       // Si existe, actualizar cantidad
       const doc = query.docs[0];
       const newQuantity = (doc.data().quantity || 1) + (item.quantity || 1);
       await doc.ref.update({ quantity: newQuantity });
+      console.log('🛒 addToCart - updated existing item, new quantity:', newQuantity);
       return { id: doc.id, ...doc.data(), quantity: newQuantity };
     } else {
       // Si no existe, agregar nuevo
       const newDoc = await itemsRef.add({ ...item, quantity: item.quantity || 1, createdAt: new Date() });
       const newItem = await newDoc.get();
+      console.log('🛒 addToCart - created new item with id:', newDoc.id);
       return { id: newDoc.id, ...newItem.data() };
     }
   }
 
   async getCartItems(sessionId: string) {
+    console.log('🔍 getCartItems - sessionId:', sessionId);
     const cartRef = db.collection('carts').doc(sessionId);
+    console.log('🔍 getCartItems - cartRef path:', cartRef.path);
     const itemsSnap = await cartRef.collection('items').get();
+    console.log('🔍 getCartItems - itemsSnap size:', itemsSnap.size);
     const items = itemsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log('🔍 getCartItems - items found:', items.length);
     return items;
   }
 
