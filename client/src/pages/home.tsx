@@ -6,7 +6,6 @@ import PerfumeCatalog from "../components/perfume-catalog";
 import Collections from "../components/collections";
 import SocialMedia from "../components/social-media";
 import Footer from "../components/footer";
-import CartTest from "../components/cart-test";
 
 export default function Home() {
   return (
@@ -14,7 +13,6 @@ export default function Home() {
       <Navigation />
       <Hero />
       <Features />
-      <CartTest />
       <PerfumeCatalog />
       <Collections />
       <SocialMedia />

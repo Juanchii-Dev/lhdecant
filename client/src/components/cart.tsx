@@ -79,13 +79,13 @@ export function CartDrawer() {
                       className="flex items-center gap-4 p-4 bg-black/50 rounded-lg border border-[#D4AF37]/20"
                     >
                       <img
-                        src={item.perfume.imageUrl}
-                        alt={item.perfume.name}
+                        src={item.perfume?.imageUrl}
+                        alt={item.perfume?.name || 'Perfume'}
                         className="w-16 h-16 object-cover rounded-lg"
                       />
                       <div className="flex-1">
-                        <h4 className="font-semibold text-white">{item.perfume.name}</h4>
-                        <p className="text-sm text-gray-400">{item.perfume.brand}</p>
+                        <h4 className="font-semibold text-white">{item.perfume?.name || `Perfume ${item.perfumeId}`}</h4>
+                        <p className="text-sm text-gray-400">{item.size}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="outline" className="border-[#D4AF37]/30 text-[#D4AF37]">
                             {item.size}
