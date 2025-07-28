@@ -14,6 +14,7 @@ type CartContextType = {
   updateQuantity: (id: number, quantity: number) => void;
   removeItem: (id: number) => void;
   clearCart: () => void;
+  forceRefreshCart: () => Promise<void>;
 };
 
 export const CartContext = createContext<CartContextType | null>(null);
@@ -24,6 +25,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { data: items = [], isLoading } = useQuery<(any & { perfume: any })[]>({
     queryKey: ["/api/cart"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   console.log('🛒 CartProvider - items:', items);
@@ -35,9 +41,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/cart", item);
       return await res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('🛒 addToCartMutation - success:', data);
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      
+      // Forzar invalidación y refetch inmediato
+      await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      
       toast({
         title: "Agregado al carrito",
         description: "El producto se ha agregado correctamente",
@@ -114,12 +124,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
   const addToCart = (perfumeId: string, size: string, price: string) => {
+    console.log('🛒 addToCart - llamando con:', { perfumeId, size, price });
     addToCartMutation.mutate({
       perfumeId,
       size,
       price,
       quantity: 1,
     });
+  };
+
+  const forceRefreshCart = async () => {
+    console.log('🛒 forceRefreshCart - forzando refresh');
+    await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
   };
 
   const updateQuantity = (id: number, quantity: number) => {
@@ -149,6 +166,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         updateQuantity,
         removeItem,
         clearCart,
+        forceRefreshCart,
       }}
     >
       {children}

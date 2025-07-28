@@ -1,18 +1,17 @@
 import React from 'react';
 import { useCart } from '../hooks/use-cart';
-import { queryClient } from '../lib/queryClient';
 
 export default function CartTest() {
-  const { items, addToCart, totalItems, totalAmount } = useCart();
+  const { items, addToCart, totalItems, totalAmount, forceRefreshCart } = useCart();
 
   const handleAddTestItem = () => {
     console.log('🛒 CartTest - Agregando item de prueba');
     addToCart("0lHbtoskm6Y2fZ4bOHhh", "2ml", "15.99");
   };
 
-  const handleRefreshCart = () => {
+  const handleRefreshCart = async () => {
     console.log('🛒 CartTest - Refrescando carrito manualmente');
-    queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    await forceRefreshCart();
   };
 
   console.log('🛒 CartTest - Renderizando con items:', items);
