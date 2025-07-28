@@ -685,9 +685,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders", requireAuth, async (req, res) => {
     try {
       const orders = await storage.getOrders();
-      res.json(orders);
+      // Filtrar órdenes del usuario actual
+      const userOrders = orders.filter(order => order.userId === req.user.id);
+      res.json(userOrders);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.get("/api/orders/:id", requireAuth, async (req, res) => {
+    try {
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      // Verificar que la orden pertenece al usuario
+      if (order.userId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch order" });
     }
   });
 
