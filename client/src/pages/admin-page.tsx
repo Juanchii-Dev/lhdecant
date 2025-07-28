@@ -273,6 +273,18 @@ export default function AdminPage() {
     enabled: shouldFetch
   });
 
+  const { data: recentUsers = [] } = useQuery<any[]>({
+    queryKey: ["recent-users"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/recent-users", {
+        credentials: "include"
+      });
+      if (!response.ok) throw new Error("Error fetching recent users");
+      return response.json();
+    },
+    enabled: shouldFetch
+  });
+
   const { data: salesStats } = useQuery<SalesStats>({
     queryKey: ["sales-stats"],
     queryFn: async () => {
@@ -1395,23 +1407,47 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-black/30 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded flex items-center justify-center">
-                          <Users className="w-4 h-4 text-black" />
+                    {recentUsers?.length > 0 ? (
+                      recentUsers.map((user: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-black/30 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded flex items-center justify-center">
+                              <Users className="w-4 h-4 text-black" />
+                            </div>
+                            <div>
+                              <p className="text-white font-medium">Nuevo registro</p>
+                              <p className="text-gray-400 text-sm">{user.email || user.username}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[#D4AF37] text-sm">
+                              {user.createdAt ? 
+                                (user.createdAt._seconds ? 
+                                  new Date(user.createdAt._seconds * 1000).toLocaleDateString('es-ES', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  }) : 
+                                  new Date(user.createdAt).toLocaleDateString('es-ES', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })
+                                ) : 'Reciente'}
+                            </p>
+                            <Badge variant="outline" className="border-green-500/30 text-green-400">
+                              Activo
+                            </Badge>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-white font-medium">Nuevo registro</p>
-                          <p className="text-gray-400 text-sm">usuario@ejemplo.com</p>
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-gray-400">No hay actividad reciente</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[#D4AF37] text-sm">Hace 2 horas</p>
-                        <Badge variant="outline" className="border-green-500/30 text-green-400">
-                          Activo
-                        </Badge>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

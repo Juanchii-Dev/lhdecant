@@ -912,6 +912,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para obtener usuarios recientes
+  app.get('/api/admin/recent-users', requireAdmin, async (req, res) => {
+    try {
+      const usersRef = db.collection('users');
+      const usersSnapshot = await usersRef.orderBy('createdAt', 'desc').limit(5).get();
+      const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al obtener usuarios recientes' });
+    }
+  });
+
   // Endpoint para actualizar estado de usuario
   app.patch('/api/admin/users/:id/status', requireAdmin, async (req, res) => {
     try {
