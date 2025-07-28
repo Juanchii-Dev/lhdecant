@@ -11,8 +11,8 @@ type CartContextType = {
   totalItems: number;
   totalAmount: number;
   addToCart: (perfumeId: string, size: string, price: string) => void;
-  updateQuantity: (id: number, quantity: number) => void;
-  removeItem: (id: number) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  removeItem: (id: string) => void;
   clearCart: () => void;
   goToCheckout: () => void;
 };
@@ -96,37 +96,49 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
 
   const updateQuantityMutation = useMutation({
-    mutationFn: async ({ id, quantity }: { id: number; quantity: number }) => {
+    mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
       const res = await apiRequest("PUT", `/api/cart/${id}`, { quantity });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error al actualizar cantidad');
+      }
       return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error updating quantity:', error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar la cantidad",
+        description: error.message || "No se pudo actualizar la cantidad",
         variant: "destructive",
       });
     },
   });
 
   const removeItemMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/cart/${id}`);
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/cart/${id}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error al eliminar producto');
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Producto eliminado",
         description: "El producto se ha eliminado del carrito",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error removing item:', error);
       toast({
         title: "Error",
-        description: "No se pudo eliminar el producto",
+        description: error.message || "No se pudo eliminar el producto",
         variant: "destructive",
       });
     },
@@ -202,7 +214,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     window.location.href = '/checkout';
   };
 
-  const updateQuantity = (id: number, quantity: number) => {
+  const updateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
       removeItem(id);
       return;
@@ -210,7 +222,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     updateQuantityMutation.mutate({ id, quantity });
   };
 
-  const removeItem = (id: number) => {
+  const removeItem = (id: string) => {
     removeItemMutation.mutate(id);
   };
 

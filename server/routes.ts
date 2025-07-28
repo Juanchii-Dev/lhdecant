@@ -1363,9 +1363,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           validatedItems.push({
-            price_data: {
-              currency: currency.toLowerCase(),
-              product_data: {
+          price_data: {
+            currency: currency.toLowerCase(),
+            product_data: {
                 name: perfume.name,
                 description: `${perfume.brand} - ${item.size}`,
                 images: perfume.imageUrl ? [perfume.imageUrl] : [],
@@ -1457,8 +1457,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionId = session.metadata.sessionId;
       
       try {
-        // Obtener carrito y datos del cliente
-        const items = await storage.getCartItems(sessionId);
+      // Obtener carrito y datos del cliente
+      const items = await storage.getCartItems(sessionId);
         if (!items.length) {
           console.error('Carrito vacío en webhook para sesión:', sessionId);
           return res.status(400).json({ error: 'Carrito vacío' });
@@ -1482,12 +1482,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           validatedItems.push(item);
         }
 
-        const orderData = {
-          customer_email: session.customer_email,
-          amount_total: session.amount_total / 100,
-          currency: session.currency,
-          payment_intent: session.payment_intent,
-          stripe_session_id: session.id,
+      const orderData = {
+        customer_email: session.customer_email,
+        amount_total: session.amount_total / 100,
+        currency: session.currency,
+        payment_intent: session.payment_intent,
+        stripe_session_id: session.id,
           status: 'paid',
           shipping_address: session.shipping_address,
           billing_address: session.billing_address,
@@ -1517,9 +1517,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ).join('');
 
           // Email al cliente
-          await transporter.sendMail({
+        await transporter.sendMail({
             from: 'lhdecant@gmail.com',
-            to: session.customer_email,
+          to: session.customer_email,
             subject: '¡Gracias por tu compra en LhDecant!',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -1536,9 +1536,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           // Email al admin
-          await transporter.sendMail({
+        await transporter.sendMail({
             from: 'lhdecant@gmail.com',
-            to: process.env.ADMIN_EMAIL,
+          to: process.env.ADMIN_EMAIL,
             subject: 'Nueva venta realizada - LhDecant',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
