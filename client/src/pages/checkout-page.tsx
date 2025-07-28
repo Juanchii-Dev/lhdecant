@@ -86,8 +86,8 @@ export default function CheckoutPage() {
 
       const { sessionId } = await response.json();
       
-      // Redirigir a Stripe Checkout
-      const stripe = await loadStripe(process.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
+      // Redirigir a Stripe Checkout usando import.meta.env
+      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
       if (stripe) {
         const { error } = await stripe.redirectToCheckout({ sessionId });
         if (error) {
@@ -98,7 +98,7 @@ export default function CheckoutPage() {
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout error:', error);
       toast({
         title: "Error",
@@ -109,6 +109,17 @@ export default function CheckoutPage() {
       setIsLoading(false);
     }
   };
+
+  if (authLoading || cartLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <p>Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -136,99 +147,55 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white py-12">
-      <div className="container mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+      className="min-h-screen bg-black text-white py-12"
+    >
+      <div className="container mx-auto px-6 max-w-3xl">
+        <h1 className="text-4xl font-bold text-yellow-500 mb-8 text-center">
+          Finalizar Compra
+        </h1>
+
+        <Card className="bg-gray-900 border-gray-700 mb-6">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              Resumen del Pedido
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {items.map((item: any) => (
+                <div key={item.id} className="flex justify-between items-center border-b border-gray-800 pb-2 last:border-b-0">
+                  <div className="flex items-center gap-3">
+                    {item.perfume?.imageUrl && (
+                      <img src={item.perfume.imageUrl} alt={item.perfume.name} className="w-12 h-12 object-cover rounded-md" />
+                    )}
+                    <div>
+                      <p className="text-white font-medium">{item.perfume?.name || 'Producto desconocido'}</p>
+                      <p className="text-gray-400 text-sm">{item.size} - Cantidad: {item.quantity}</p>
+                    </div>
+                  </div>
+                  <span className="text-yellow-500 font-bold">${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between items-center pt-4 border-t border-gray-700">
+                <span className="text-lg font-semibold text-gray-300">Total:</span>
+                <span className="text-3xl font-bold text-yellow-500">${totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button
+          onClick={handleCheckout}
+          className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 rounded-lg text-lg transition-colors duration-300"
+          disabled={isLoading || authLoading || cartLoading || (items || []).length === 0}
         >
-          <h1 className="text-4xl font-bold text-center mb-8">
-            Finalizar Compra
-          </h1>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            {/* Resumen del carrito */}
-            <Card className="bg-gray-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white">Resumen del pedido</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {items.map((item, index) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center justify-between p-4 bg-gray-800 rounded-lg"
-                    >
-                      <div>
-                        <h3 className="text-white font-medium">
-                          {item.perfume?.name || `Perfume ${item.perfumeId}`}
-                        </h3>
-                        <p className="text-gray-400 text-sm">{item.size}</p>
-                        <p className="text-gray-400 text-sm">Cantidad: {item.quantity}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-yellow-500 font-bold">
-                          ${(parseFloat(item.price) * item.quantity).toFixed(2)}
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <div className="border-t border-gray-700 mt-6 pt-6">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xl font-bold text-white">Total:</span>
-                    <span className="text-2xl font-bold text-yellow-500">
-                      ${totalAmount.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Información de pago */}
-            <Card className="bg-gray-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white">Información de pago</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-gray-800 p-4 rounded-lg">
-                    <h3 className="text-white font-medium mb-2">Cliente</h3>
-                    <p className="text-gray-400">{user.email}</p>
-                  </div>
-
-                  <div className="bg-gray-800 p-4 rounded-lg">
-                    <h3 className="text-white font-medium mb-2">Método de pago</h3>
-                    <p className="text-gray-400">Tarjeta de crédito/débito</p>
-                    <p className="text-gray-400 text-sm">Procesado por Stripe</p>
-                  </div>
-
-                  <Button
-                    onClick={handleCheckout}
-                    disabled={isLoading}
-                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3"
-                  >
-                    {isLoading ? "Procesando..." : `Pagar $${totalAmount.toFixed(2)}`}
-                  </Button>
-
-                  <Button
-                    onClick={() => window.location.href = '/'}
-                    variant="outline"
-                    className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
-                  >
-                    Continuar comprando
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </motion.div>
+          {isLoading ? "Procesando..." : "Continuar con el Pago"}
+        </Button>
       </div>
-    </div>
+    </motion.div>
   );
 } 
