@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "nodemon server/index.ts",
     "client:dev": "cd client && npm run dev",
-    "build": "npm run server:build && cd client && npm run build",
+    "build": "npm run server:build",
     "start": "node dist/index.js",
     "server:build": "tsc -p tsconfig.server.json --skipLibCheck --noEmitOnError false 2>nul || echo Build completed with warnings",
     "postinstall": "npm run server:build"
