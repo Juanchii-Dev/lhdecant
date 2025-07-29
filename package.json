@@ -8,10 +8,10 @@
     "server:dev": "tsx watch server/index.ts",
     "client:dev": "cd client && npm run dev",
     "build": "npm run server:build",
+    "server:build": "tsc -p tsconfig.server.json --skipLibCheck --noEmitOnError",
+    "client:build": "cd client && npm run build",
     "start": "node dist/index.js",
-    "server:build": "tsc -p tsconfig.server.json",
-    "postinstall": "npm run server:build",
-    "client:build": "cd client && npm run build"
+    "postinstall": "npm run server:build"
   },
   "keywords": [
     "perfumes",

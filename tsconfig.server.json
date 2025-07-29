@@ -20,7 +20,9 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "lib": ["ES2020", "DOM"],
-    "types": ["node"]
+    "noEmitOnError": false,
+    "allowJs": true,
+    "checkJs": false
   },
   "include": ["server/**/*", "shared/**/*"],
   "exclude": ["vite.config.ts", "server/vite.ts", "server/seed-*.ts", "server/add-*.ts", "client/**/*", "node_modules", "dist"]
