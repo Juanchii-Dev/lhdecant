@@ -9,7 +9,7 @@
     "client:dev": "cd client && npm run dev",
     "build": "npm run server:build",
     "start": "node dist/index.js",
-    "server:build": "tsc -p tsconfig.server.json --skipLibCheck --noEmitOnError false --allowJs --checkJs false",
+    "server:build": "tsc server/index.ts server/routes.ts server/auth.ts server/storage.ts server/cloudinary.ts --outDir dist/server --target ES2020 --module commonjs --esModuleInterop --skipLibCheck --noEmitOnError false --allowJs --checkJs false --lib ES2020,DOM --types node",
     "postinstall": "npm run server:build"
   },
   "keywords": [
@@ -55,7 +55,6 @@
     "concurrently": "^8.2.2"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "node": "18.x"
   }
 }
