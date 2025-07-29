@@ -19,8 +19,7 @@
     "noImplicitThis": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "lib": ["ES2020"],
-    "types": ["node"]
+    "lib": ["ES2020"]
   },
   "include": ["server/**/*", "shared/**/*"],
   "exclude": ["vite.config.ts", "server/vite.ts", "server/seed-*.ts", "server/add-*.ts", "client/**/*", "node_modules", "dist"]
