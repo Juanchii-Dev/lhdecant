@@ -11,7 +11,7 @@ import { uploadFromUrl, deleteImage, isCloudinaryUrl } from "./cloudinary";
 
 const db = admin.firestore();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2022-11-15' });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-08-16' });
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -392,8 +392,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart routes
   app.post("/api/cart", requireAuth, async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
       console.log('Adding to cart with userId:', userId);
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
       const cartItem = await storage.addToCart(userId, req.body);
       res.status(201).json(cartItem);
     } catch (error) {
@@ -404,8 +407,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/cart", requireAuth, async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id;
       console.log('Getting cart with userId:', userId);
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
       const items = await storage.getCartItems(userId);
       console.log('Cart items found:', items.length);
       res.json(items);

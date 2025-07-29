@@ -2,7 +2,11 @@ import 'dotenv/config';
 
 import express, { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+// import { setupVite, serveStatic, log } from "./vite";
+
+function log(message: string) {
+  console.log(`[${new Date().toISOString()}] ${message}`);
+}
 
 const app = express();
 
@@ -64,13 +68,9 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+  // Servir archivos estáticos en producción
+  if (app.get("env") === "production") {
+    app.use(express.static('public'));
   }
 
   // ALWAYS serve the app on port 5000
