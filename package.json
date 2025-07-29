@@ -9,7 +9,7 @@
     "client:dev": "cd client && npm run dev",
     "build": "npm run server:build",
     "start": "node dist/index.js",
-    "server:build": "tsc -p tsconfig.server.json --skipLibCheck --noEmitOnError false",
+    "server:build": "tsc -p tsconfig.server.json --skipLibCheck --noEmitOnError false --allowJs --checkJs false",
     "postinstall": "npm run server:build"
   },
   "keywords": [
