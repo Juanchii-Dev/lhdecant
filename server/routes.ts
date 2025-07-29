@@ -721,7 +721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
       // Verificar que la orden pertenece al usuario
-      if (order.userId !== req.user?.id) {
+      if ((order as any).userId !== req.user?.id) {
         return res.status(403).json({ message: "Access denied" });
       }
       res.json(order);
@@ -761,13 +761,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      const ordersToday = orders.filter(order => {
+      const ordersToday = orders.filter((order: any) => {
         const orderDate = new Date(order.createdAt);
         orderDate.setHours(0, 0, 0, 0);
         return orderDate.getTime() === today.getTime();
       });
 
-      const perfumesOnOffer = perfumes.filter(p => p.isOnOffer);
+      const perfumesOnOffer = perfumes.filter((p: any) => p.isOnOffer);
       
       const stats = {
         totalPerfumes: perfumes.length,
@@ -775,7 +775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalCollections: collections.length,
         perfumesOnOffer: perfumesOnOffer.length,
         totalOrders: orders.length,
-        totalRevenue: orders.reduce((sum, order) => sum + (order.amount_total || 0), 0)
+        totalRevenue: orders.reduce((sum, order) => sum + ((order as any).amount_total || 0), 0)
       };
       
       res.json(stats);
@@ -789,7 +789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orders = await storage.getOrders();
       const recentOrders = orders
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .sort((a, b) => new Date((b as any).createdAt).getTime() - new Date((a as any).createdAt).getTime())
         .slice(0, 10);
       
       res.json(recentOrders);
@@ -807,7 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calcular popularidad basada en ventas reales
       const perfumeSales: { [key: string]: number } = {};
       
-      orders.forEach(order => {
+      orders.forEach((order: any) => {
         if (order.items) {
           order.items.forEach((item: any) => {
             if (item.perfumeId) {
@@ -820,7 +820,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Si no hay ventas, devolver perfumes destacados en lugar de "populares"
       if (orders.length === 0) {
         const featuredPerfumes = perfumes
-          .filter(perfume => perfume.showOnHomepage || perfume.isOnOffer)
+          .filter((perfume: any) => perfume.showOnHomepage || perfume.isOnOffer)
           .slice(0, 5);
         
         res.json(featuredPerfumes);
@@ -856,7 +856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       today.setHours(0, 0, 0, 0);
       
       const newUsersToday = users.filter(user => {
-        const userDate = new Date(user.createdAt);
+        const userDate = new Date((user as any).createdAt);
         userDate.setHours(0, 0, 0, 0);
         return userDate.getTime() === today.getTime();
       });
@@ -864,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stats = {
         totalUsers: users.length,
         newUsersToday: newUsersToday.length,
-        activeUsers: users.filter(u => u.lastLoginAt && 
+        activeUsers: users.filter((u: any) => u.lastLoginAt && 
           new Date(u.lastLoginAt).getTime() > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).getTime()
         ).length
       };
@@ -884,28 +884,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       
-      const ordersThisMonth = orders.filter(order => 
+      const ordersThisMonth = orders.filter((order: any) => 
         new Date(order.createdAt) >= thisMonth
       );
       
-      const ordersLastMonth = orders.filter(order => {
+      const ordersLastMonth = orders.filter((order: any) => {
         const orderDate = new Date(order.createdAt);
         return orderDate >= lastMonth && orderDate < thisMonth;
       });
       
       const totalRevenueThisMonth = ordersThisMonth.reduce((sum, order) => 
-        sum + (order.amount_total || 0), 0
+        sum + ((order as any).amount_total || 0), 0
       );
       
       const totalRevenueLastMonth = ordersLastMonth.reduce((sum, order) => 
-        sum + (order.amount_total || 0), 0
+        sum + ((order as any).amount_total || 0), 0
       );
       
       const avgOrderValue = orders.length > 0 ? 
-        orders.reduce((sum, order) => sum + (order.amount_total || 0), 0) / orders.length : 0;
+        orders.reduce((sum, order) => sum + ((order as any).amount_total || 0), 0) / orders.length : 0;
       
       const stats = {
-        totalRevenue: orders.reduce((sum, order) => sum + (order.amount_total || 0), 0),
+        totalRevenue: orders.reduce((sum, order) => sum + ((order as any).amount_total || 0), 0),
         totalOrders: orders.length,
         avgOrderValue: avgOrderValue,
         revenueThisMonth: totalRevenueThisMonth,
@@ -940,7 +940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await messageRef.update({ 
         isRead: true, 
         readAt: new Date(),
-        readBy: req.user.id 
+        readBy: req.user?.id 
       });
       
       res.json({ message: 'Mensaje marcado como leído' });
@@ -1080,7 +1080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Obtener todas las órdenes del cliente
-      const orders = await storage.getOrdersByEmail(email);
+      const orders = await storage.getOrdersByEmail(email as string);
       
       const trackingList = orders.map(order => ({
         orderId: order.id,
@@ -1384,10 +1384,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalAmount += finalPrice * item.quantity;
 
         } catch (error) {
-          console.error(`Error validando item ${item.name}:`, error);
-          return res.status(400).json({ 
-            message: `Error validando ${item.name}` 
-          });
+                      console.error(`Error validando item ${(item as any).name}:`, error);
+            return res.status(400).json({
+              message: `Error validando ${(item as any).name}`
+            });
         }
       }
 

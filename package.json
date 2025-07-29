@@ -5,12 +5,13 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
-    "server:dev": "nodemon server/index.ts",
+    "server:dev": "tsx watch server/index.ts",
     "client:dev": "cd client && npm run dev",
     "build": "npm run server:build",
     "start": "node dist/index.js",
-    "server:build": "tsc --skipLibCheck --noEmitOnError false --allowJs --checkJs false --lib ES2020,DOM --target ES2020 --module commonjs --esModuleInterop --outDir dist/server --noImplicitAny --noImplicitReturns --noImplicitThis --noUnusedLocals --noUnusedParameters --strict false server/index.ts server/routes.ts server/auth.ts server/storage.ts server/cloudinary.ts",
-    "postinstall": "npm run server:build"
+    "server:build": "tsc -p tsconfig.server.json",
+    "postinstall": "npm run server:build",
+    "client:build": "cd client && npm run build"
   },
   "keywords": [
     "perfumes",
@@ -24,34 +25,35 @@
   "license": "MIT",
   "dependencies": {
     "@stripe/stripe-js": "^2.4.0",
+    "axios": "^1.6.0",
+    "cloudinary": "^1.41.0",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-session": "^1.17.3",
     "firebase-admin": "^11.11.0",
+    "helmet": "^7.1.0",
+    "nanoid": "^5.0.0",
+    "nodemailer": "^6.9.7",
     "passport": "^0.6.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
-    "stripe": "^13.10.0",
-    "nodemailer": "^6.9.7",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express-session": "^1.17.3",
-    "helmet": "^7.1.0",
-    "compression": "^1.7.4",
-    "axios": "^1.6.0",
-    "cloudinary": "^1.41.0",
-    "nanoid": "^5.0.0"
+    "stripe": "^13.10.0"
   },
   "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/express-session": "^1.17.10",
+    "@types/node": "^24.1.0",
+    "@types/nodemailer": "^6.4.14",
     "@types/passport": "^1.0.16",
     "@types/passport-google-oauth20": "^2.0.14",
     "@types/passport-local": "^1.0.38",
-    "@types/cors": "^2.8.17",
-    "@types/express-session": "^1.17.10",
-    "@types/compression": "^1.7.5",
-    "@types/nodemailer": "^6.4.14",
-    "typescript": "^5.3.2",
+    "concurrently": "^8.2.2",
     "nodemon": "^3.0.2",
-    "concurrently": "^8.2.2"
+    "typescript": "^5.3.2"
   },
   "engines": {
     "node": "18.x"

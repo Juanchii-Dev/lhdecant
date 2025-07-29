@@ -398,7 +398,7 @@ export class FirestoreStorage {
     const cartRef = db.collection('carts').doc(userId);
     const itemsSnap = await cartRef.collection('items').get();
     const batch = db.batch();
-    itemsSnap.forEach(doc => batch.delete(doc.ref));
+    itemsSnap.forEach((doc: any) => batch.delete(doc.ref));
     await batch.commit();
     return true;
   }
@@ -425,7 +425,7 @@ export class FirestoreStorage {
       status: 'pagado',
     });
     // Agregar los items como subcolección
-    items.forEach(item => {
+    items.forEach((item: any) => {
       const itemRef = orderRef.collection('items').doc();
       batch.set(itemRef, item);
     });
@@ -489,7 +489,7 @@ export class FirestoreStorage {
   async getSettings() {
     const settingsSnap = await db.collection('settings').get();
     const settings: any = {};
-    settingsSnap.docs.forEach(doc => {
+    settingsSnap.docs.forEach((doc: any) => {
       settings[doc.id] = doc.data()?.value;
     });
     return settings;
@@ -671,7 +671,7 @@ export class FirestoreStorage {
       .get();
     
     const batch = db.batch();
-    addressesRef.docs.forEach(doc => {
+    addressesRef.docs.forEach((doc: any) => {
       batch.update(doc.ref, { isDefault: false });
     });
     
@@ -730,7 +730,7 @@ export class FirestoreStorage {
       .get();
     
     const batch = db.batch();
-    paymentMethodsRef.docs.forEach(doc => {
+    paymentMethodsRef.docs.forEach((doc: any) => {
       batch.update(doc.ref, { isDefault: false });
     });
     
@@ -861,11 +861,11 @@ export class FirestoreStorage {
     
     // Eliminar favoritos
     const favoritesSnapshot = await db.collection('favorites').where('userId', '==', userId).get();
-    favoritesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    favoritesSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
     
     // Eliminar direcciones
     const addressesSnapshot = await db.collection('addresses').where('userId', '==', userId).get();
-    addressesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    addressesSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
     
     // Eliminar métodos de pago
     const paymentMethodsSnapshot = await db.collection('paymentMethods').where('userId', '==', userId).get();
@@ -1173,7 +1173,7 @@ export class FirestoreStorage {
     // Filtrar por búsqueda
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase();
-      notifications = notifications.filter(notification => 
+      notifications = notifications.filter((notification: any) => 
         (notification.title || '').toLowerCase().includes(searchTerm) ||
         (notification.message || '').toLowerCase().includes(searchTerm)
       );
@@ -1233,7 +1233,7 @@ export class FirestoreStorage {
       .get();
 
     const batch = db.batch();
-    notificationsSnapshot.docs.forEach(doc => {
+    notificationsSnapshot.docs.forEach((doc: any) => {
       batch.update(doc.ref, {
         isRead: true,
         readAt: new Date()
