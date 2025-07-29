@@ -1,18 +1,11 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-// import { Perfume, Collection } from "../../../shared/schema"; // ELIMINADO
+import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Button } from "../components/ui/button";
-import { Badge } from "../components/ui/badge";
-import { Search, Filter, ArrowLeft } from "lucide-react";
-import { useCart } from "../hooks/use-cart";
 import { useToast } from "../hooks/use-toast";
-import { CartDrawer } from "../components/cart";
-import { Link } from "wouter";
-import { getQueryFn } from "../lib/queryClient";
+import { useAddToCart } from "../hooks/use-add-to-cart";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CatalogPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,22 +13,23 @@ export default function CatalogPage() {
   const [selectedBrand, setSelectedBrand] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [selectedSizes, setSelectedSizes] = useState<{ [key: number]: string }>({});
-  const { addToCart } = useCart();
+  
   const { toast } = useToast();
+  const { addToCart } = useAddToCart();
 
-  const { data: perfumes, isLoading } = useQuery<any[]>({
+  const { data: perfumes, isLoading } = useQuery({
     queryKey: ["/api/perfumes"],
     queryFn: async () => {
-      const response = await fetch('/api/perfumes', {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Error fetching perfumes');
+      const response = await fetch('/api/perfumes');
+      if (!response.ok) {
+        throw new Error('Failed to fetch perfumes');
+      }
       return response.json();
     },
   });
 
   // Filter and sort perfumes
-  const filteredPerfumes = perfumes?.filter((perfume) => {
+  const filteredPerfumes = perfumes?.filter((perfume: any) => {
     // Only show perfumes that are in stock (stock check)
     if (!perfume.inStock) {
       return false;
@@ -50,7 +44,7 @@ export default function CatalogPage() {
     return matchesSearch && matchesCategory && matchesBrand;
   }) || [];
 
-  const sortedPerfumes = [...filteredPerfumes].sort((a, b) => {
+  const sortedPerfumes = [...filteredPerfumes].sort((a: any, b: any) => {
     switch (sortBy) {
       case "name":
         return a.name.localeCompare(b.name);
@@ -60,13 +54,12 @@ export default function CatalogPage() {
         return parseFloat(a.prices[0]) - parseFloat(b.prices[0]);
       case "price-high":
         return parseFloat(b.prices[0]) - parseFloat(a.prices[0]);
-
       default:
         return 0;
     }
   });
 
-  const uniqueBrands = perfumes?.reduce((brands: string[], perfume) => {
+  const uniqueBrands = perfumes?.reduce((brands: string[], perfume: any) => {
     if (!brands.includes(perfume.brand)) {
       brands.push(perfume.brand);
     }
@@ -80,13 +73,9 @@ export default function CatalogPage() {
     }));
   };
 
-  const handleAddToCart = (perfume: any, size: string) => {
+  const handleAddToCart = async (perfume: any, size: string) => {
     const price = getPrice(perfume, size);
-    addToCart(perfume.id, size, price);
-    toast({
-      title: "Agregado al carrito",
-      description: `${perfume.name} - ${size} agregado correctamente`,
-    });
+    await addToCart(perfume.id.toString(), size, price);
   };
 
   const getPrice = (perfume: any, size: string) => {
@@ -107,149 +96,100 @@ export default function CatalogPage() {
     return sizeIndex !== -1 ? perfume.prices[sizeIndex] : perfume.prices[0];
   };
 
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case "masculine": return "Masculino";
-      case "feminine": return "Femenino";
-      case "unisex": return "Unisex";
-      case "niche": return "Nicho";
-      default: return category;
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37] mx-auto mb-4"></div>
-          <p className="text-gray-400">Cargando catálogo...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <p>Cargando catálogo...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-6 pt-8 pb-12">
-        {/* Header with navigation and cart */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex justify-between items-center mb-8"
-        >
-          <Link href="/">
-            <Button 
-              variant="outline" 
-              className="border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10 flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Volver al Inicio
-            </Button>
-          </Link>
-          
-          <div className="flex items-center gap-4">
-            <CartDrawer />
-          </div>
-        </motion.div>
-
+    <div className="min-h-screen bg-black text-white py-12">
+      <div className="container mx-auto px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="mb-8"
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
         >
-          <h1 className="text-4xl md:text-6xl font-montserrat font-bold mb-4 luxury-gold-text text-center">
-            Catálogo Completo
+          <h1 className="text-4xl font-bold text-yellow-500 mb-4">
+            Catálogo de Perfumes
           </h1>
-          <p className="text-gray-400 text-center max-w-2xl mx-auto">
-            Descubre nuestra colección completa de fragancias de lujo. Explora, filtra y encuentra tu perfume perfecto.
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Descubre nuestra colección exclusiva de perfumes de lujo. 
+            Cada fragancia cuenta una historia única.
           </p>
         </motion.div>
 
-        {/* Filters */}
-        <motion.div 
-          className="bg-gradient-to-r from-luxury-gold/15 to-luxury-gold/10 backdrop-blur-sm rounded-3xl p-8 mb-12 border-2 border-luxury-gold/40 shadow-2xl shadow-luxury-gold/10"
-          initial={{ opacity: 0, y: 30 }}
+        {/* Filtros y búsqueda */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
+          transition={{ delay: 0.2 }}
+          className="mb-8 space-y-4"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <Filter className="w-7 h-7 text-luxury-gold drop-shadow-lg" />
-            <h3 className="text-2xl font-montserrat font-bold text-luxury-gold drop-shadow-lg">Filtros de Búsqueda</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-luxury-gold w-5 h-5 drop-shadow-sm" />
-              <Input
-                placeholder="Buscar perfumes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 bg-black/70 border-2 border-luxury-gold/50 text-white placeholder-gray-300 text-lg font-medium focus:border-luxury-gold focus:ring-2 focus:ring-luxury-gold/20 rounded-xl shadow-lg"
-              />
-            </div>
-
-            {/* Category Filter */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Input
+              placeholder="Buscar perfumes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-gray-900 border-gray-700 text-white"
+            />
+            
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="h-12 bg-black/70 border-2 border-luxury-gold/50 text-white text-lg font-medium focus:border-luxury-gold focus:ring-2 focus:ring-luxury-gold/20 rounded-xl shadow-lg">
+              <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
                 <SelectValue placeholder="Categoría" />
               </SelectTrigger>
-              <SelectContent className="bg-black border-luxury-gold/50">
-                <SelectItem value="all" className="text-white hover:bg-luxury-gold/20">Todas las categorías</SelectItem>
-                <SelectItem value="masculine" className="text-white hover:bg-luxury-gold/20">Masculino</SelectItem>
-                <SelectItem value="feminine" className="text-white hover:bg-luxury-gold/20">Femenino</SelectItem>
-                <SelectItem value="unisex" className="text-white hover:bg-luxury-gold/20">Unisex</SelectItem>
-                <SelectItem value="niche" className="text-white hover:bg-luxury-gold/20">Nicho</SelectItem>
+              <SelectContent className="bg-gray-900 border-gray-700">
+                <SelectItem value="all">Todas las categorías</SelectItem>
+                <SelectItem value="masculino">Masculino</SelectItem>
+                <SelectItem value="femenino">Femenino</SelectItem>
+                <SelectItem value="unisex">Unisex</SelectItem>
               </SelectContent>
             </Select>
 
-            {/* Brand Filter */}
             <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-              <SelectTrigger className="h-12 bg-black/70 border-2 border-luxury-gold/50 text-white text-lg font-medium focus:border-luxury-gold focus:ring-2 focus:ring-luxury-gold/20 rounded-xl shadow-lg">
+              <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
                 <SelectValue placeholder="Marca" />
               </SelectTrigger>
-              <SelectContent className="bg-black border-luxury-gold/50">
-                <SelectItem value="all" className="text-white hover:bg-luxury-gold/20">Todas las marcas</SelectItem>
-                {uniqueBrands.map(brand => (
-                  <SelectItem key={brand} value={brand} className="text-white hover:bg-luxury-gold/20">{brand}</SelectItem>
+              <SelectContent className="bg-gray-900 border-gray-700">
+                <SelectItem value="all">Todas las marcas</SelectItem>
+                {uniqueBrands.map((brand) => (
+                  <SelectItem key={brand} value={brand}>
+                    {brand}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-12 bg-black/70 border-2 border-luxury-gold/50 text-white text-lg font-medium focus:border-luxury-gold focus:ring-2 focus:ring-luxury-gold/20 rounded-xl shadow-lg">
+              <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
-              <SelectContent className="bg-black border-luxury-gold/50">
-                <SelectItem value="name" className="text-white hover:bg-luxury-gold/20">Nombre A-Z</SelectItem>
-                <SelectItem value="brand" className="text-white hover:bg-luxury-gold/20">Marca A-Z</SelectItem>
-                <SelectItem value="price-low" className="text-white hover:bg-luxury-gold/20">Precio: Menor a Mayor</SelectItem>
-                <SelectItem value="price-high" className="text-white hover:bg-luxury-gold/20">Precio: Mayor a Menor</SelectItem>
+              <SelectContent className="bg-gray-900 border-gray-700">
+                <SelectItem value="name">Nombre</SelectItem>
+                <SelectItem value="brand">Marca</SelectItem>
+                <SelectItem value="price-low">Precio: Menor a Mayor</SelectItem>
+                <SelectItem value="price-high">Precio: Mayor a Menor</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          {/* Results count */}
-          <div className="text-center bg-black/30 rounded-xl p-4 border border-luxury-gold/30">
-            <span className="text-luxury-gold text-lg font-semibold drop-shadow-sm">
-              {sortedPerfumes.length} perfume{sortedPerfumes.length !== 1 ? 's' : ''} encontrado{sortedPerfumes.length !== 1 ? 's' : ''}
-            </span>
-          </div>
         </motion.div>
 
-        {/* Perfumes Grid */}
-        <motion.div 
-          className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto"
+        {/* Grid de perfumes */}
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ delay: 0.4 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
         >
           {sortedPerfumes.map((perfume, index) => {
-            const selectedSize = selectedSizes[perfume.id] || perfume.sizes[0];
-            
+            const selectedSize = selectedSizes[perfume.id];
+
             return (
               <motion.div
                 key={perfume.id}
@@ -269,6 +209,7 @@ export default function CatalogPage() {
                 className="group perspective-1000"
               >
                 <div className="glass-card luxury-hover-lift rounded-3xl overflow-hidden relative border border-luxury-gold/20 h-[600px] flex flex-col">
+                  {/* Image Section */}
                   <div className="relative overflow-hidden">
                     <motion.img
                       src={perfume.imageUrl || "https://i.imgur.com/Vgwv7Kh.png"}
@@ -277,54 +218,23 @@ export default function CatalogPage() {
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.4, ease: "easeOut" }}
                     />
+                    
+                    {/* Image Overlay */}
                     <motion.div 
                       className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
                       whileHover={{ background: "linear-gradient(to top, rgba(0,0,0,0.6), transparent, transparent)" }}
                       transition={{ duration: 0.3 }}
-                    ></motion.div>
-                    
-                    {/* Subtle glow effect */}
-                    <motion.div 
-                      className="absolute inset-0 bg-gradient-to-t from-luxury-gold/5 via-transparent to-transparent opacity-0"
-                      whileHover={{ opacity: 1 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
                     />
                     
-                    {/* Brand badge */}
+                    {/* Brand Badge */}
                     <motion.div 
-                      className="absolute top-4 left-4"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.3 + index * 0.1 }}
                     >
-                      <motion.div 
-                        className="bg-black/80 backdrop-blur-sm text-luxury-gold border border-luxury-gold/50 px-3 py-1 rounded-full text-xs font-montserrat font-bold"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                      >
-                        {perfume.brand}
-                      </motion.div>
+                      <span className="text-xs font-medium text-white">{perfume.brand}</span>
                     </motion.div>
-                    
-                    {/* Offer badge */}
-                    {perfume.isOnOffer && (
-                      <motion.div 
-                        className="absolute top-4 right-4"
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.4 + index * 0.1 }}
-                      >
-                        <motion.div 
-                          className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold"
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          -{perfume.discountPercentage}%
-                        </motion.div>
-                      </motion.div>
-                    )}
-                    
-
                   </div>
                   
                   <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
@@ -405,6 +315,16 @@ export default function CatalogPage() {
             );
           })}
         </motion.div>
+
+        {sortedPerfumes.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
+          >
+            <p className="text-gray-400 text-lg">No se encontraron perfumes con los filtros seleccionados.</p>
+          </motion.div>
+        )}
       </div>
     </div>
   );

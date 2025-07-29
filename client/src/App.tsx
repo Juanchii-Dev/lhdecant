@@ -1,11 +1,11 @@
+import React from "react";
 import { Route, Switch } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./hooks/use-auth";
 import { ToastProvider } from "./components/ui/toast";
 import { TooltipProvider } from "./components/ui/tooltip";
-import { AuthProvider } from "./hooks/use-auth";
-import { CartProvider } from "./hooks/use-cart";
-import { Toaster } from "./components/ui/toaster";
 import Navigation from "./components/navigation";
+import { Toaster } from "./components/ui/toaster";
 import Home from "./pages/home";
 import CatalogPage from "./pages/catalog-page";
 import AuthPage from "./pages/auth-page";
@@ -42,35 +42,33 @@ export default function App() {
       <ToastProvider>
         <TooltipProvider>
           <AuthProvider>
-            <CartProvider>
-              <Navigation />
-              <Switch>
-                <Route path="/" component={Home} />
-                <Route path="/catalogo" component={CatalogPage} />
-                <Route path="/auth" component={AuthPage} />
-                <Route path="/admin-auth" component={AdminAuthPage} />
-                <Route path="/admin" component={() => (
-                  <AdminGuard>
-                    <AdminPage />
-                  </AdminGuard>
-                )} />
-                <Route path="/profile" component={ProfilePage} />
-                <Route path="/favorites" component={FavoritesPage} />
-                <Route path="/orders" component={OrdersPage} />
-                <Route path="/tracking" component={TrackingPage} />
-                <Route path="/payment-methods" component={PaymentMethodsPage} />
-                <Route path="/addresses" component={AddressesPage} />
-                <Route path="/coupons" component={CouponsPage} />
-                <Route path="/reviews" component={ReviewsPage} />
-                <Route path="/notifications" component={NotificationsPage} />
-                <Route path="/settings" component={SettingsPage} />
-                <Route path="/colecciones" component={CollectionsPage} />
-                <Route path="/checkout" component={CheckoutPage} />
-                <Route path="/success" component={SuccessPage} />
-                <Route component={NotFound} />
-              </Switch>
-              <Toaster />
-            </CartProvider>
+            <Navigation />
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/catalogo" component={CatalogPage} />
+              <Route path="/auth" component={AuthPage} />
+              <Route path="/admin-auth" component={AdminAuthPage} />
+              <Route path="/admin" component={() => (
+                <AdminGuard>
+                  <AdminPage />
+                </AdminGuard>
+              )} />
+              <Route path="/profile" component={ProfilePage} />
+              <Route path="/favorites" component={FavoritesPage} />
+              <Route path="/orders" component={OrdersPage} />
+              <Route path="/tracking" component={TrackingPage} />
+              <Route path="/payment-methods" component={PaymentMethodsPage} />
+              <Route path="/addresses" component={AddressesPage} />
+              <Route path="/coupons" component={CouponsPage} />
+              <Route path="/reviews" component={ReviewsPage} />
+              <Route path="/notifications" component={NotificationsPage} />
+              <Route path="/settings" component={SettingsPage} />
+              <Route path="/colecciones" component={CollectionsPage} />
+              <Route path="/checkout" component={CheckoutPage} />
+              <Route path="/success" component={SuccessPage} />
+              <Route component={NotFound} />
+            </Switch>
+            <Toaster />
           </AuthProvider>
         </TooltipProvider>
       </ToastProvider>

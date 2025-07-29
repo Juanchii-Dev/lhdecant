@@ -1,13 +1,47 @@
 
-import { useState } from "react";
-import { useCartSync } from "../hooks/use-cart-sync";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "../hooks/use-auth";
+import { useToast } from "../hooks/use-toast";
+
+interface CartItem {
+  id: string;
+  perfumeId: string;
+  size: string;
+  price: string;
+  quantity: number;
+  perfume?: {
+    id: string;
+    name: string;
+    brand: string;
+    imageUrl?: string;
+  };
+}
 
 export function CartIcon() {
-  const { totalItems } = useCartSync();
+  const [totalItems, setTotalItems] = useState(0);
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const response = await fetch('/api/cart', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const items = await response.json();
+          const total = items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
+          setTotalItems(total);
+        }
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+      }
+    };
+
+    fetchCart();
+  }, []);
 
   return (
     <div className="relative">
@@ -26,12 +60,167 @@ export function CartIcon() {
 }
 
 export function CartDrawer() {
-  const { items, totalItems, totalAmount, updateQuantity, removeItem, clearCart, goToCheckout } = useCartSync();
   const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleQuantityChange = (itemId: string, newQuantity: number) => {
-    updateQuantity(itemId, newQuantity);
+  const fetchCart = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch('/api/cart', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const cartItems = await response.json();
+        setItems(cartItems);
+      }
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    if (open) {
+      fetchCart();
+    }
+  }, [open, user]);
+
+  const updateQuantity = async (id: string, quantity: number) => {
+    if (!user) return;
+
+    // Actualización optimista
+    const previousItems = [...items];
+    const updatedItems = items.map(item => 
+      item.id === id ? { ...item, quantity } : item
+    );
+    setItems(updatedItems);
+
+    try {
+      const response = await fetch(`/api/cart/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ quantity })
+      });
+
+      if (!response.ok) {
+        // Revertir si hay error
+        setItems(previousItems);
+        throw new Error('Error updating quantity');
+      }
+
+      toast({
+        title: "Cantidad actualizada",
+        description: "La cantidad se ha actualizado correctamente",
+      });
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la cantidad",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeItem = async (id: string) => {
+    if (!user) return;
+
+    // Actualización optimista
+    const previousItems = [...items];
+    const updatedItems = items.filter(item => item.id !== id);
+    setItems(updatedItems);
+
+    try {
+      const response = await fetch(`/api/cart/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        // Revertir si hay error
+        setItems(previousItems);
+        throw new Error('Error removing item');
+      }
+
+      toast({
+        title: "Producto eliminado",
+        description: "El producto se ha eliminado del carrito",
+      });
+    } catch (error) {
+      console.error('Error removing item:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el producto",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const clearCart = async () => {
+    if (!user) return;
+
+    // Actualización optimista
+    const previousItems = [...items];
+    setItems([]);
+
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        // Revertir si hay error
+        setItems(previousItems);
+        throw new Error('Error clearing cart');
+      }
+
+      toast({
+        title: "Carrito vacío",
+        description: "Todos los productos han sido eliminados",
+      });
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo vaciar el carrito",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const goToCheckout = () => {
+    if (!user) {
+      toast({
+        title: "Inicia sesión para continuar",
+        description: "Necesitas estar registrado para realizar la compra",
+        variant: "destructive",
+      });
+      window.location.href = '/auth?message=login-required';
+      return;
+    }
+
+    if (items.length === 0) {
+      toast({
+        title: "Carrito vacío",
+        description: "Agrega productos antes de proceder al pago",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    window.location.href = '/checkout';
+  };
+
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -53,7 +242,11 @@ export function CartDrawer() {
         </SheetHeader>
 
         <div className="mt-6 space-y-4">
-          {items.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-gray-400">Cargando carrito...</p>
+            </div>
+          ) : items.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-400 mb-4">Tu carrito está vacío</p>
               <Button onClick={() => setOpen(false)}>
@@ -100,7 +293,7 @@ export function CartDrawer() {
                       <div className="flex flex-col items-center gap-2">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
                             disabled={item.quantity <= 1}
                           >
@@ -108,7 +301,7 @@ export function CartDrawer() {
                           </button>
                           <span className="text-white w-8 text-center font-medium">{item.quantity}</span>
                           <button
-                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
                           >
                             <Plus className="w-4 h-4" />

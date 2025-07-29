@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { useToast } from "../hooks/use-toast";
-import { useCartSync } from "../hooks/use-cart-sync";
+import { useAddToCart } from "../hooks/use-add-to-cart";
 import type { Perfume } from "../../../shared/schema";
 
 interface PerfumeCardProps {
@@ -20,7 +20,7 @@ export default function PerfumeCard({
 }: PerfumeCardProps) {
   const [localSelectedSize, setLocalSelectedSize] = useState(perfume.sizes[0]);
   const { toast } = useToast();
-  const { addToCart } = useCartSync();
+  const { addToCart } = useAddToCart();
 
   // Use external size state if provided, otherwise use local state
   const selectedSize = selectedSizes[perfume.id] || localSelectedSize;
@@ -33,7 +33,7 @@ export default function PerfumeCard({
     }
   };
 
-  const handleAddToCart = (perfume: Perfume, size: string) => {
+  const handleAddToCart = async (perfume: Perfume, size: string) => {
     const price = getPrice(perfume, size);
     
     // Mostrar toast inmediato
@@ -42,7 +42,7 @@ export default function PerfumeCard({
       description: `${perfume.name} - ${size}`,
     });
     
-    addToCart(perfume.id.toString(), size, price);
+    await addToCart(perfume.id.toString(), size, price);
   };
 
   const getPrice = (perfume: Perfume, size: string) => {
@@ -98,46 +98,15 @@ export default function PerfumeCard({
             transition={{ duration: 0.3 }}
           />
           
-          {/* Subtle glow effect */}
-          <motion.div 
-            className="absolute inset-0 bg-gradient-to-t from-luxury-gold/5 via-transparent to-transparent opacity-0"
-            whileHover={{ opacity: 1 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          />
-          
           {/* Brand Badge */}
           <motion.div 
-            className="absolute top-4 left-4"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 + index * 0.1 }}
           >
-            <motion.div 
-              className="bg-black/80 backdrop-blur-sm text-luxury-gold border border-luxury-gold/50 px-3 py-1 rounded-full text-xs font-montserrat font-bold"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              {perfume.brand}
-            </motion.div>
+            <span className="text-xs font-medium text-white">{perfume.brand}</span>
           </motion.div>
-          
-          {/* Offer Badge */}
-          {perfume.isOnOffer && (
-            <motion.div 
-              className="absolute top-4 right-4"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 + index * 0.1 }}
-            >
-              <motion.div 
-                className="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold"
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.2 }}
-              >
-                -{perfume.discountPercentage}%
-              </motion.div>
-            </motion.div>
-          )}
         </div>
         
         {/* Content Section */}
