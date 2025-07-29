@@ -178,17 +178,17 @@ export class FirestoreStorage {
   };
   async getPerfumes() {
     const perfumesSnap = await db.collection('perfumes').get();
-    return perfumesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return perfumesSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
   }
 
   async getPerfumesByCategory(category: string) {
     const perfumesSnap = await db.collection('perfumes').where('category', '==', category).get();
-    return perfumesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return perfumesSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
   }
 
   async getHomepagePerfumes() {
-    const perfumesSnap = await db.collection('perfumes').where('showOnHomepage', '==', true).limit(6).get();
-    return perfumesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const perfumesSnap = await db.collection('perfumes').where('showOnHomepage', '==', true).get();
+    return perfumesSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
   }
 
   async getPerfume(id: string) {
@@ -244,7 +244,7 @@ export class FirestoreStorage {
 
   async getCollections() {
     const collectionsSnap = await db.collection('collections').get();
-    return collectionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return collectionsSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
   }
 
   async getCollection(id: string) {
@@ -337,7 +337,7 @@ export class FirestoreStorage {
     console.log('🔍 getCartItems - cartRef path:', cartRef.path);
     const itemsSnap = await cartRef.collection('items').get();
     console.log('🔍 getCartItems - itemsSnap size:', itemsSnap.size);
-    const items = itemsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const items = itemsSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     console.log('🔍 getCartItems - items found:', items.length);
     return items;
   }
@@ -610,7 +610,7 @@ export class FirestoreStorage {
       .orderBy('createdAt', 'desc')
       .get();
     
-    return addressesRef.docs.map(doc => ({
+    return addressesRef.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));
@@ -689,7 +689,7 @@ export class FirestoreStorage {
       .orderBy('createdAt', 'desc')
       .get();
     
-    return paymentMethodsRef.docs.map(doc => ({
+    return paymentMethodsRef.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));
@@ -842,87 +842,80 @@ export class FirestoreStorage {
   }
 
   async deleteUserAccount(userId: string, password: string): Promise<void> {
-    const userRef = db.collection('users').doc(userId);
-    const userDoc = await userRef.get();
-    
-    if (!userDoc.exists) {
-      throw new Error('User not found');
+    try {
+      const batch = db.batch();
+      
+      // Eliminar carrito
+      const cartRef = db.collection('carts').doc(userId);
+      const itemsSnap = await cartRef.collection('items').get();
+      itemsSnap.forEach((doc: any) => batch.delete(doc.ref));
+      batch.delete(cartRef);
+      
+      // Eliminar favoritos
+      const favoritesRef = db.collection('users').doc(userId).collection('favorites');
+      const favoritesSnap = await favoritesRef.get();
+      favoritesSnap.forEach((doc: any) => batch.delete(doc.ref));
+      
+      // Eliminar direcciones
+      const addressesRef = db.collection('users').doc(userId).collection('addresses');
+      const addressesSnap = await addressesRef.get();
+      addressesSnap.docs.forEach((doc: any) => batch.delete(doc.ref));
+      
+      // Eliminar métodos de pago
+      const paymentMethodsRef = db.collection('users').doc(userId).collection('paymentMethods');
+      const paymentMethodsSnapshot = await paymentMethodsRef.get();
+      paymentMethodsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
+      
+      // Eliminar órdenes
+      const ordersRef = db.collection('orders');
+      const ordersSnapshot = await ordersRef.where('userId', '==', userId).get();
+      ordersSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
+      
+      // Eliminar reviews
+      const reviewsRef = db.collection('reviews');
+      const reviewsSnapshot = await reviewsRef.where('userId', '==', userId).get();
+      reviewsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
+      
+      // Eliminar notificaciones
+      const notificationsRef = db.collection('users').doc(userId).collection('notifications');
+      const notificationsSnapshot = await notificationsRef.get();
+      notificationsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
+      
+      // Eliminar cupones de usuario
+      const userCouponsRef = db.collection('userCoupons');
+      const userCouponsSnapshot = await userCouponsRef.where('userId', '==', userId).get();
+      userCouponsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
+      
+      // Eliminar usuario
+      batch.delete(db.collection('users').doc(userId));
+      
+      await batch.commit();
+      console.log('✅ Usuario eliminado completamente');
+    } catch (error) {
+      console.error('❌ Error eliminando usuario:', error);
+      throw error;
     }
-
-    const userData = userDoc.data();
-    
-    // Verificar contraseña (asumiendo que está hasheada)
-    if (userData?.password !== password) {
-      throw new Error('Invalid password');
-    }
-
-    // Eliminar todos los datos del usuario
-    const batch = db.batch();
-    
-    // Eliminar favoritos
-    const favoritesSnapshot = await db.collection('favorites').where('userId', '==', userId).get();
-    favoritesSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
-    
-    // Eliminar direcciones
-    const addressesSnapshot = await db.collection('addresses').where('userId', '==', userId).get();
-    addressesSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
-    
-    // Eliminar métodos de pago
-    const paymentMethodsSnapshot = await db.collection('paymentMethods').where('userId', '==', userId).get();
-    paymentMethodsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-    
-    // Eliminar órdenes
-    const ordersSnapshot = await db.collection('orders').where('userId', '==', userId).get();
-    ordersSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-    
-    // Eliminar reseñas
-    const reviewsSnapshot = await db.collection('reviews').where('userId', '==', userId).get();
-    reviewsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-    
-    // Eliminar notificaciones
-    const notificationsSnapshot = await db.collection('notifications').where('userId', '==', userId).get();
-    notificationsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-    
-    // Eliminar cupones del usuario
-    const userCouponsSnapshot = await db.collection('userCoupons').where('userId', '==', userId).get();
-    userCouponsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-    
-    // Eliminar usuario
-    batch.delete(userRef);
-    
-    await batch.commit();
   }
 
   // Coupons methods
   async getAvailableCoupons(): Promise<any[]> {
-    const couponsSnapshot = await db.collection('coupons')
-      .where('isActive', '==', true)
-      .where('validUntil', '>', new Date())
-      .get();
-    
-    return couponsSnapshot.docs.map(doc => ({
+    const couponsSnapshot = await db.collection('coupons').where('isActive', '==', true).get();
+    return couponsSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));
   }
 
   async getUserCoupons(userId: string): Promise<any[]> {
-    const userCouponsSnapshot = await db.collection('userCoupons')
-      .where('userId', '==', userId)
-      .get();
-    
-    const userCoupons = userCouponsSnapshot.docs.map(doc => ({
+    const userCouponsSnapshot = await db.collection('userCoupons').where('userId', '==', userId).get();
+    const userCoupons = userCouponsSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     })) as UserCoupon[];
 
-    // Obtener detalles de los cupones
-    const couponIds = userCoupons.map(uc => uc.couponId);
-    const couponsSnapshot = await db.collection('coupons')
-      .where(admin.firestore.FieldPath.documentId(), 'in', couponIds)
-      .get();
-    
-    const coupons = couponsSnapshot.docs.map(doc => ({
+    // Obtener información completa de los cupones
+    const couponsSnapshot = await db.collection('coupons').get();
+    const coupons = couponsSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));
@@ -1019,7 +1012,7 @@ export class FirestoreStorage {
     }
 
     const reviewsSnapshot = await query.get();
-    let reviews = reviewsSnapshot.docs.map(doc => ({
+    let reviews = reviewsSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     })) as Review[];
@@ -1057,7 +1050,7 @@ export class FirestoreStorage {
       .where(admin.firestore.FieldPath.documentId(), 'in', userIds)
       .get();
     
-    const users = usersSnapshot.docs.map(doc => ({
+    const users = usersSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));
@@ -1074,7 +1067,7 @@ export class FirestoreStorage {
       .orderBy('createdAt', 'desc')
       .get();
     
-    return reviewsSnapshot.docs.map(doc => ({
+    return reviewsSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));
@@ -1143,7 +1136,7 @@ export class FirestoreStorage {
     await reviewRef.delete();
   }
 
-  async markReviewHelpful(reviewId: string, userId: string): Promise<any> {
+  async markReviewHelpful(reviewId: string, _userId: string): Promise<any> {
     const reviewRef = db.collection('reviews').doc(reviewId);
     await reviewRef.update({
       helpfulCount: admin.firestore.FieldValue.increment(1)
@@ -1165,7 +1158,7 @@ export class FirestoreStorage {
     }
 
     const notificationsSnapshot = await query.orderBy('createdAt', 'desc').get();
-    let notifications = notificationsSnapshot.docs.map(doc => ({
+    let notifications = notificationsSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));
@@ -1358,17 +1351,13 @@ export class FirestoreStorage {
   }
 
   async getOrdersByEmail(email: string): Promise<any[]> {
-    const ordersRef = db.collection('orders');
-    const query = await ordersRef.where('customer_email', '==', email).get();
-    
-    return query.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const query = await db.collection('orders').where('customer_email', '==', email).get();
+    return query.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
   }
 
   async getOrderTrackingHistory(orderId: string): Promise<any[]> {
-    const trackingRef = db.collection('orderTracking').doc(orderId).collection('history');
-    const historySnap = await trackingRef.orderBy('timestamp', 'desc').get();
-    
-    return historySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const historySnap = await db.collection('orders').doc(orderId).collection('tracking').get();
+    return historySnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
   }
 
   async addOrderTrackingEntry(orderId: string, entry: any): Promise<void> {
@@ -1395,7 +1384,7 @@ export class FirestoreStorage {
   async getAllSessions(): Promise<any[]> {
     try {
       const sessionsSnap = await db.collection('sessions').get();
-      return sessionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return sessionsSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
       console.error('Error getting all sessions:', error);
       return [];
@@ -1409,7 +1398,7 @@ export class FirestoreStorage {
         .where('expiresAt', '>', now)
         .get();
       
-      return sessionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return sessionsSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
       console.error('Error getting active sessions:', error);
       return [];
@@ -1469,7 +1458,7 @@ export class FirestoreStorage {
         .where('expiresAt', '<=', now)
         .get();
       
-      const deletePromises = expiredSessionsSnap.docs.map(doc => doc.ref.delete());
+      const deletePromises = expiredSessionsSnap.docs.map((doc: any) => doc.ref.delete());
       await Promise.all(deletePromises);
       
       return expiredSessionsSnap.size;
