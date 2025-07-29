@@ -1340,10 +1340,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const item of items) {
         try {
           // Obtener perfume actualizado desde Firebase
-          const perfume = await storage.getPerfumeById(item.perfumeId);
+          const perfume = await storage.getPerfumeById((item as any).perfumeId);
           if (!perfume) {
             return res.status(400).json({ 
-              message: `Perfume ${item.name} no encontrado` 
+              message: `Perfume ${(item as any).name} no encontrado` 
             });
           }
 
@@ -1355,14 +1355,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           // Validar cantidad
-          if (item.quantity <= 0) {
+          if ((item as any).quantity <= 0) {
             return res.status(400).json({ 
               message: `Cantidad inválida para ${perfume.name}` 
             });
           }
 
           // Calcular precio con descuento si aplica
-          let finalPrice = parseFloat(item.price);
+          let finalPrice = parseFloat((item as any).price);
           if (perfume.isOnOffer && perfume.discountPercentage) {
             const discount = parseFloat(perfume.discountPercentage) / 100;
             finalPrice = finalPrice * (1 - discount);
@@ -1373,15 +1373,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             currency: currency.toLowerCase(),
             product_data: {
                 name: perfume.name,
-                description: `${perfume.brand} - ${item.size}`,
+                description: `${perfume.brand} - ${(item as any).size}`,
                 images: perfume.imageUrl ? [perfume.imageUrl] : [],
               },
               unit_amount: Math.round(finalPrice * 100), // Stripe espera centavos
             },
-            quantity: item.quantity,
+            quantity: (item as any).quantity,
           });
 
-          totalAmount += finalPrice * item.quantity;
+          totalAmount += finalPrice * (item as any).quantity;
 
         } catch (error) {
                       console.error(`Error validando item ${(item as any).name}:`, error);
@@ -1413,9 +1413,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           metadata: {
             userId,
             items: JSON.stringify(items.map(item => ({
-              perfumeId: item.perfumeId,
-              size: item.size,
-              quantity: item.quantity
+              perfumeId: (item as any).perfumeId,
+              size: (item as any).size,
+              quantity: (item as any).quantity
             })))
           }
         }
@@ -1473,16 +1473,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Validar stock una vez más antes de procesar la orden
         const validatedItems = [];
         for (const item of items) {
-          const perfume = await storage.getPerfumeById(item.perfumeId);
+          const perfume = await storage.getPerfumeById((item as any).perfumeId);
           if (!perfume || !perfume.inStock) {
-            console.error(`Stock insuficiente para ${item.name} en sesión:`, sessionId);
+            console.error(`Stock insuficiente para ${(item as any).name} en sesión:`, sessionId);
             // Reembolsar automáticamente si no hay stock
             await stripe.refunds.create({
               payment_intent: session.payment_intent,
               reason: 'requested_by_customer'
             });
             return res.status(400).json({ 
-              error: `Stock insuficiente para ${item.name}` 
+              error: `Stock insuficiente para ${(item as any).name}` 
             });
           }
           validatedItems.push(item);
@@ -1507,9 +1507,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             // Aquí se actualizaría el stock del perfume
             // await storage.updatePerfumeStock(item.perfumeId, -item.quantity);
-            console.log(`Stock actualizado para ${item.name}: -${item.quantity}`);
+            console.log(`Stock actualizado para ${(item as any).name}: -${(item as any).quantity}`);
           } catch (error) {
-            console.error(`Error actualizando stock para ${item.name}:`, error);
+                          console.error(`Error actualizando stock para ${(item as any).name}:`, error);
           }
         }
 
@@ -1519,7 +1519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Enviar emails
         try {
           const resumen = validatedItems.map(i => 
-            `<li>${i.name} (${i.size}) x${i.quantity} - ${i.price} ${session.currency.toUpperCase()}</li>`
+            `<li>${(i as any).name} (${(i as any).size}) x${(i as any).quantity} - ${(i as any).price} ${session.currency.toUpperCase()}</li>`
           ).join('');
 
           // Email al cliente
