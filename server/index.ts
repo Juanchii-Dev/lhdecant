@@ -2,6 +2,8 @@ import 'dotenv/config';
 
 import express, { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import helmet from 'helmet';
+import compression from 'compression';
 // import { setupVite, serveStatic, log } from "./vite";
 
 function log(message: string) {
@@ -10,9 +12,36 @@ function log(message: string) {
 
 const app = express();
 
+// Middleware de seguridad para producción
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
+        connectSrc: ["'self'", "https://api.stripe.com", "https://lhdecant-backend.onrender.com"],
+      },
+    },
+  }));
+  app.use(compression());
+}
+
 // Configuración de CORS
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'https://lhdecant.netlify.app',
+    'https://www.lhdecant.netlify.app'
+  ];
+  
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -60,6 +89,15 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
   app.use((err: any, _req: any, res: any, _next: any) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -80,6 +118,7 @@ app.use((req, res, next) => {
     "0.0.0.0",
     () => {
       log(`serving on port ${port}`);
+      log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     }
   );
 })();

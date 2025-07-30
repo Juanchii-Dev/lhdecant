@@ -126,20 +126,20 @@ export default function CatalogPage() {
         </motion.div>
 
         {/* Filtros y búsqueda */}
-        <motion.div
+        <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="mb-8 space-y-4"
         >
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Input
-              placeholder="Buscar perfumes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              <Input
+                placeholder="Buscar perfumes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               className="bg-gray-900 border-gray-700 text-white"
-            />
-            
+              />
+
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
                 <SelectValue placeholder="Categoría" />
@@ -181,7 +181,7 @@ export default function CatalogPage() {
         </motion.div>
 
         {/* Grid de perfumes */}
-        <motion.div
+        <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
@@ -189,7 +189,7 @@ export default function CatalogPage() {
         >
           {sortedPerfumes.map((perfume, index) => {
             const selectedSize = selectedSizes[perfume.id];
-
+            
             return (
               <motion.div
                 key={perfume.id}

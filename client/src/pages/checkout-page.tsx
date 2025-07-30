@@ -166,26 +166,26 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Resumen del carrito */}
           <div className="bg-gray-900 p-6 rounded-lg">
             <h2 className="text-xl font-bold mb-4">Resumen del pedido</h2>
-            <div className="space-y-4">
+                <div className="space-y-4">
               {items.map((item) => (
                 <div key={item.id} className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg">
                   <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center">
-                    {item.perfume?.imageUrl ? (
-                      <img
-                        src={item.perfume.imageUrl}
-                        alt={item.perfume.name}
+                        {item.perfume?.imageUrl ? (
+                          <img 
+                            src={item.perfume.imageUrl} 
+                            alt={item.perfume.name} 
                         className="w-full h-full object-cover rounded-lg"
-                      />
-                    ) : (
+                          />
+                        ) : (
                       <div className="text-2xl">🧴</div>
-                    )}
-                  </div>
-                  <div className="flex-1">
+                        )}
+                      </div>
+                      <div className="flex-1">
                     <h3 className="font-medium">{item.perfume?.name || `Perfume ${item.perfumeId}`}</h3>
                     <p className="text-gray-400 text-sm">{item.size}</p>
                     <p className="text-yellow-500 font-bold">${item.price} x {item.quantity}</p>
@@ -193,17 +193,17 @@ export default function CheckoutPage() {
                   <div className="text-right">
                     <p className="font-bold">${(parseFloat(item.price) * item.quantity).toFixed(2)}</p>
                   </div>
-                </div>
-              ))}
-            </div>
-            
+                      </div>
+                    ))}
+                  </div>
+                  
             <div className="border-t border-gray-700 mt-6 pt-6">
               <div className="flex justify-between items-center text-xl font-bold">
                 <span>Total:</span>
                 <span className="text-yellow-500">${totalAmount.toFixed(2)}</span>
               </div>
-            </div>
-          </div>
+                    </div>
+                  </div>
 
           {/* Información de pago */}
           <div className="bg-gray-900 p-6 rounded-lg">
@@ -225,20 +225,20 @@ export default function CheckoutPage() {
               </div>
 
               {/* Botón de pago */}
-              <Button
-                onClick={handleCheckout}
+                  <Button
+                    onClick={handleCheckout}
                 disabled={processingPayment || items.length === 0}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 text-lg transition-colors duration-300"
-              >
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 text-lg transition-colors duration-300"
+                  >
                 {processingPayment ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
-                    Procesando...
-                  </div>
-                ) : (
-                  `Pagar $${totalAmount.toFixed(2)}`
-                )}
-              </Button>
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                        Procesando...
+                      </div>
+                    ) : (
+                      `Pagar $${totalAmount.toFixed(2)}`
+                    )}
+                  </Button>
 
               {/* Información de seguridad */}
               <div className="text-center space-y-2">
@@ -248,8 +248,8 @@ export default function CheckoutPage() {
                 <p className="text-gray-400 text-sm">
                   🚚 Envío incluido
                 </p>
-              </div>
-            </div>
+                  </div>
+                </div>
           </div>
         </div>
       </div>

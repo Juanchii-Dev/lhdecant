@@ -54,18 +54,18 @@ export default function Collections() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
+          <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
           <p>Cargando colecciones...</p>
+          </div>
         </div>
-      </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-black text-white py-12">
       <div className="container mx-auto px-6">
-        <motion.div
+        <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -82,7 +82,7 @@ export default function Collections() {
 
         <div className="space-y-16">
           {collections?.map((collection: any, collectionIndex: number) => (
-            <motion.div
+          <motion.div 
               key={collection.id}
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
@@ -97,9 +97,9 @@ export default function Collections() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {collection.perfumes?.map((perfume: any, index: number) => {
                   const selectedSize = selectedSizes[perfume.id];
-
-                  return (
-                    <motion.div
+              
+              return (
+                <motion.div
                       key={perfume.id}
                       initial={{ opacity: 0, y: 50 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -108,25 +108,25 @@ export default function Collections() {
                         duration: 0.8,
                         ease: [0.22, 1, 0.36, 1]
                       }}
-                      viewport={{ once: true }}
-                      whileHover={{ 
-                        scale: 1.02, 
-                        y: -8,
-                        transition: { duration: 0.3, ease: "easeOut" }
-                      }}
+                  viewport={{ once: true }}
+                  whileHover={{ 
+                    scale: 1.02, 
+                    y: -8,
+                    transition: { duration: 0.3, ease: "easeOut" }
+                  }}
                       className="group perspective-1000"
-                    >
+                >
                       <div className="glass-card luxury-hover-lift rounded-3xl overflow-hidden relative border border-luxury-gold/20 h-[600px] flex flex-col">
                         {/* Image Section */}
-                        <div className="relative overflow-hidden">
+                    <div className="relative overflow-hidden">
                           <motion.img
                             src={perfume.imageUrl || "https://i.imgur.com/Vgwv7Kh.png"}
                             alt={perfume.name}
-                            className="w-full h-auto object-contain"
+                        className="w-full h-auto object-contain"
                             whileHover={{ scale: 1.05 }}
                             transition={{ duration: 0.4, ease: "easeOut" }}
-                          />
-                          
+                      />
+                      
                           {/* Image Overlay */}
                           <motion.div 
                             className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
@@ -163,7 +163,7 @@ export default function Collections() {
                             transition={{ delay: 0.6 + index * 0.1 }}
                           >
                             <div className="text-sm text-gray-300 font-medium">Tamaño:</div>
-                            <div className="flex gap-2">
+                        <div className="flex gap-2">
                               {perfume.sizes.map((size: any, sizeIndex: any) => (
                                 <motion.button
                                   key={size}
@@ -216,14 +216,14 @@ export default function Collections() {
                             >
                               Agregar
                             </Button>
-                          </div>
-                        </div>
                       </div>
-                    </motion.div>
-                  );
-                })}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
               </div>
-            </motion.div>
+          </motion.div>
           ))}
         </div>
       </div>

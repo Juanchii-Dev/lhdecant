@@ -13,15 +13,18 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'esbuild', // Cambiar a esbuild en lugar de terser
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
+          stripe: ['@stripe/stripe-js'],
+          query: ['@tanstack/react-query'],
         },
       },
     },
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     port: 5173,

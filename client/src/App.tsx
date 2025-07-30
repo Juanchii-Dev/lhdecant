@@ -42,33 +42,33 @@ export default function App() {
       <ToastProvider>
         <TooltipProvider>
           <AuthProvider>
-            <Navigation />
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route path="/catalogo" component={CatalogPage} />
-              <Route path="/auth" component={AuthPage} />
-              <Route path="/admin-auth" component={AdminAuthPage} />
-              <Route path="/admin" component={() => (
-                <AdminGuard>
-                  <AdminPage />
-                </AdminGuard>
-              )} />
-              <Route path="/profile" component={ProfilePage} />
-              <Route path="/favorites" component={FavoritesPage} />
-              <Route path="/orders" component={OrdersPage} />
-              <Route path="/tracking" component={TrackingPage} />
-              <Route path="/payment-methods" component={PaymentMethodsPage} />
-              <Route path="/addresses" component={AddressesPage} />
-              <Route path="/coupons" component={CouponsPage} />
-              <Route path="/reviews" component={ReviewsPage} />
-              <Route path="/notifications" component={NotificationsPage} />
-              <Route path="/settings" component={SettingsPage} />
-              <Route path="/colecciones" component={CollectionsPage} />
-              <Route path="/checkout" component={CheckoutPage} />
-              <Route path="/success" component={SuccessPage} />
-              <Route component={NotFound} />
-            </Switch>
-            <Toaster />
+              <Navigation />
+              <Switch>
+                <Route path="/" component={Home} />
+                <Route path="/catalogo" component={CatalogPage} />
+                <Route path="/auth" component={AuthPage} />
+                <Route path="/admin-auth" component={AdminAuthPage} />
+                <Route path="/admin" component={() => (
+                  <AdminGuard>
+                    <AdminPage />
+                  </AdminGuard>
+                )} />
+                <Route path="/profile" component={ProfilePage} />
+                <Route path="/favorites" component={FavoritesPage} />
+                <Route path="/orders" component={OrdersPage} />
+                <Route path="/tracking" component={TrackingPage} />
+                <Route path="/payment-methods" component={PaymentMethodsPage} />
+                <Route path="/addresses" component={AddressesPage} />
+                <Route path="/coupons" component={CouponsPage} />
+                <Route path="/reviews" component={ReviewsPage} />
+                <Route path="/notifications" component={NotificationsPage} />
+                <Route path="/settings" component={SettingsPage} />
+                <Route path="/colecciones" component={CollectionsPage} />
+                <Route path="/checkout" component={CheckoutPage} />
+                <Route path="/success" component={SuccessPage} />
+                <Route component={NotFound} />
+              </Switch>
+              <Toaster />
           </AuthProvider>
         </TooltipProvider>
       </ToastProvider>

@@ -7,11 +7,14 @@
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "tsx watch server/index.ts",
     "client:dev": "cd client && npm run dev",
-    "build": "npm run server:build",
+    "build": "npm run server:build && npm run client:build",
     "server:build": "tsc -p tsconfig.server.json --skipLibCheck --noEmitOnError --noImplicitAny --noImplicitReturns --noImplicitThis --noUnusedLocals --noUnusedParameters",
     "client:build": "cd client && npm run build",
     "start": "node dist/index.js",
-    "postinstall": "npm run server:build"
+    "postinstall": "npm run server:build",
+    "build:prod": "npm run build",
+    "start:prod": "NODE_ENV=production npm start",
+    "check:prod": "node scripts/check-production.js"
   },
   "keywords": [
     "perfumes",

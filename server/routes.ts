@@ -1385,9 +1385,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         } catch (error) {
                       console.error(`Error validando item ${(item as any).name}:`, error);
-            return res.status(400).json({
+          return res.status(400).json({ 
               message: `Error validando ${(item as any).name}`
-            });
+          });
         }
       }
 

@@ -843,53 +843,53 @@ export class FirestoreStorage {
 
   async deleteUserAccount(userId: string, password: string): Promise<void> {
     try {
-      const batch = db.batch();
+    const batch = db.batch();
       
       // Eliminar carrito
       const cartRef = db.collection('carts').doc(userId);
       const itemsSnap = await cartRef.collection('items').get();
       itemsSnap.forEach((doc: any) => batch.delete(doc.ref));
       batch.delete(cartRef);
-      
-      // Eliminar favoritos
+    
+    // Eliminar favoritos
       const favoritesRef = db.collection('users').doc(userId).collection('favorites');
       const favoritesSnap = await favoritesRef.get();
       favoritesSnap.forEach((doc: any) => batch.delete(doc.ref));
-      
-      // Eliminar direcciones
+    
+    // Eliminar direcciones
       const addressesRef = db.collection('users').doc(userId).collection('addresses');
       const addressesSnap = await addressesRef.get();
       addressesSnap.docs.forEach((doc: any) => batch.delete(doc.ref));
-      
-      // Eliminar métodos de pago
+    
+    // Eliminar métodos de pago
       const paymentMethodsRef = db.collection('users').doc(userId).collection('paymentMethods');
       const paymentMethodsSnapshot = await paymentMethodsRef.get();
       paymentMethodsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
-      
-      // Eliminar órdenes
+    
+    // Eliminar órdenes
       const ordersRef = db.collection('orders');
       const ordersSnapshot = await ordersRef.where('userId', '==', userId).get();
       ordersSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
-      
+    
       // Eliminar reviews
       const reviewsRef = db.collection('reviews');
       const reviewsSnapshot = await reviewsRef.where('userId', '==', userId).get();
       reviewsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
-      
-      // Eliminar notificaciones
+    
+    // Eliminar notificaciones
       const notificationsRef = db.collection('users').doc(userId).collection('notifications');
       const notificationsSnapshot = await notificationsRef.get();
       notificationsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
-      
+    
       // Eliminar cupones de usuario
       const userCouponsRef = db.collection('userCoupons');
       const userCouponsSnapshot = await userCouponsRef.where('userId', '==', userId).get();
       userCouponsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
-      
-      // Eliminar usuario
+    
+    // Eliminar usuario
       batch.delete(db.collection('users').doc(userId));
-      
-      await batch.commit();
+    
+    await batch.commit();
       console.log('✅ Usuario eliminado completamente');
     } catch (error) {
       console.error('❌ Error eliminando usuario:', error);
