@@ -841,7 +841,7 @@ export class FirestoreStorage {
     return exportData;
   }
 
-  async deleteUserAccount(userId: string, password: string): Promise<void> {
+  async deleteUserAccount(userId: string, _password: string): Promise<void> {
     try {
     const batch = db.batch();
       

@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import { registerRoutes } from "./routes";
 import helmet from 'helmet';
 import compression from 'compression';
@@ -90,7 +90,7 @@ app.use((req, res, next) => {
   const server = await registerRoutes(app);
 
   // Health check endpoint
-  app.get('/api/health', (req, res) => {
+  app.get('/api/health', (_req, res) => {
     res.json({ 
       status: 'ok', 
       timestamp: new Date().toISOString(),
@@ -103,7 +103,7 @@ app.use((req, res, next) => {
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    throw err;
+    console.error('Error:', err);
   });
 
   // Servir archivos estáticos en producción

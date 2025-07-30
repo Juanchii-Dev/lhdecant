@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User, GoogleProfile, UserUpdates } from "./types";
+// // // import { User, GoogleProfile, UserUpdates } from "./types";
 import axios from "axios";
 
 declare global {
@@ -99,7 +99,7 @@ export function setupAuth(app: Express) {
     console.log('🔗 Redirect URI:', googleRedirectUri);
     
     // Endpoint de verificación para Google OAuth configurado
-    app.get("/api/auth/google/status", (req, res) => {
+    app.get("/api/auth/google/status", (_req, res) => {
       res.json({
         configured: true,
         message: "Google OAuth configurado correctamente",
@@ -115,7 +115,7 @@ export function setupAuth(app: Express) {
     });
     
     // Ruta para iniciar el flujo OAuth
-    app.get("/api/auth/google", (req, res) => {
+    app.get("/api/auth/google", (_req, res) => {
       console.log('🚀 Iniciando flujo Google OAuth 2.0...');
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -299,7 +299,7 @@ export function setupAuth(app: Express) {
     console.log('7. Copia el Client ID y Client Secret a tu archivo .env');
     
     // Endpoint de diagnóstico
-    app.get("/api/auth/google/debug", (req, res) => {
+    app.get("/api/auth/google/debug", (_req, res) => {
       res.json({
         configured: false,
         message: "Google OAuth no configurado",
@@ -319,7 +319,7 @@ export function setupAuth(app: Express) {
     });
 
     // Registrar rutas de placeholder para evitar 404
-    app.get("/api/auth/google", (req, res) => {
+    app.get("/api/auth/google", (_req, res) => {
       res.status(400).json({ 
         error: "Google OAuth no configurado", 
         message: "Configura las credenciales de Google OAuth en tu archivo .env",
@@ -334,7 +334,7 @@ export function setupAuth(app: Express) {
       });
     });
 
-    app.get("/api/auth/google/callback", (req, res) => {
+    app.get("/api/auth/google/callback", (_req, res) => {
       res.status(400).json({ 
         error: "Google OAuth no configurado", 
         message: "Configura las credenciales de Google OAuth"
@@ -385,7 +385,10 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.isAuthenticated()) {
+      res.sendStatus(401);
+      return;
+    }
     res.json(req.user);
   });
 }

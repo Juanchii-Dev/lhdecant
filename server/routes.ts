@@ -7,7 +7,7 @@ import nodemailer from 'nodemailer';
 import express from 'express';
 import crypto from 'crypto';
 import { admin } from "./storage";
-import { uploadFromUrl, deleteImage, isCloudinaryUrl } from "./cloudinary";
+import { uploadFromUrl, deleteImage } from "./cloudinary";
 
 const db = admin.firestore();
 
@@ -98,21 +98,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   // Get all perfumes
-  app.get("/api/perfumes", async (req, res) => {
+  app.get("/api/perfumes", async (_req, res) => {
     try {
       const perfumes = await storage.getPerfumes();
       res.json(perfumes);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch perfumes" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
-  app.get("/api/perfumes/homepage", async (req, res) => {
+  app.get("/api/perfumes/homepage", async (_req, res) => {
     try {
       const perfumes = await storage.getHomepagePerfumes();
       res.json(perfumes);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch homepage perfumes" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -123,7 +125,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const perfumes = await storage.getPerfumesByCategory(category);
       res.json(perfumes);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch perfumes by category" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -137,7 +140,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(perfume);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch perfume" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -183,7 +187,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const perfume = await storage.createPerfume(req.body);
       res.status(201).json(perfume);
     } catch (error) {
-      res.status(500).json({ message: "Failed to create perfume" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -202,7 +207,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const perfume = await storage.updatePerfume(id, req.body);
       res.json(perfume);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update perfume" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -213,7 +219,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const perfume = await storage.updatePerfume(id, req.body);
       res.json(perfume);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update perfume" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -224,7 +231,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deletePerfume(id);
       res.sendStatus(204);
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete perfume" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -291,7 +299,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const perfume = await storage.toggleHomepageDisplay(id, showOnHomepage);
       res.json(perfume);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update homepage display" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -303,12 +312,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const perfume = await storage.updateOfferStatus(id, isOnOffer, discountPercentage, offerDescription);
       res.json(perfume);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update offer status" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
   // Get all collections
-  app.get("/api/collections", async (req, res) => {
+  app.get("/api/collections", async (_req, res) => {
     try {
       // Check if collections are enabled
       const collectionsEnabledSetting = await storage.getSetting('collections_enabled');
@@ -322,7 +332,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const collections = await storage.getCollections();
       res.json(collections);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch collections" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -339,7 +350,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const collection = await storage.createCollection(req.body);
       res.status(201).json(collection);
     } catch (error) {
-      res.status(500).json({ message: "Failed to create collection" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -353,7 +365,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(collection);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch collection" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -364,7 +377,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const collection = await storage.updateCollection(id, req.body);
       res.json(collection);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update collection" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -375,7 +389,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteCollection(id);
       res.sendStatus(204);
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete collection" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -385,7 +400,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await storage.createContactMessage(req.body);
       res.status(201).json({ message: "Message sent successfully", data: message });
     } catch (error) {
-      res.status(500).json({ message: "Failed to send message" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -467,7 +483,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.clearCart(userId);
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to clear cart" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -480,7 +497,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const favorites = await storage.getUserFavorites(req.user.id);
       res.json(favorites);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch favorites" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -492,7 +510,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const favorite = await storage.addToFavorites(req.user.id, req.body.perfumeId);
       res.status(201).json(favorite);
     } catch (error) {
-      res.status(500).json({ message: "Failed to add favorite" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -504,7 +523,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.removeFromFavorites(req.params.id, req.user.id);
       res.sendStatus(204);
     } catch (error) {
-      res.status(500).json({ message: "Failed to remove favorite" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -517,7 +537,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profile = await storage.getUserProfile(req.user.id);
       res.json(profile);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch profile" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -529,7 +550,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profile = await storage.updateUserProfile(req.user.id, req.body);
       res.json(profile);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update profile" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -541,7 +563,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.changeUserPassword(req.user.id, req.body.currentPassword, req.body.newPassword);
       res.json({ message: "Password updated successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to change password" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -554,7 +577,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const addresses = await storage.getUserAddresses(req.user.id);
       res.json(addresses);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch addresses" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -566,7 +590,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const address = await storage.addUserAddress(req.user.id, req.body);
       res.status(201).json(address);
     } catch (error) {
-      res.status(500).json({ message: "Failed to add address" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -578,7 +603,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const address = await storage.updateUserAddress(req.params.id, req.user.id, req.body);
       res.json(address);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update address" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -590,7 +616,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteUserAddress(req.params.id, req.user.id);
       res.sendStatus(204);
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete address" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -602,7 +629,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.setDefaultAddress(req.params.id, req.user.id);
       res.json({ message: "Default address updated" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to set default address" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -615,7 +643,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const paymentMethods = await storage.getUserPaymentMethods(req.user.id);
       res.json(paymentMethods);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch payment methods" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -627,7 +656,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const paymentMethod = await storage.addUserPaymentMethod(req.user.id, req.body);
       res.status(201).json(paymentMethod);
     } catch (error) {
-      res.status(500).json({ message: "Failed to add payment method" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -639,7 +669,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteUserPaymentMethod(req.params.id, req.user.id);
       res.sendStatus(204);
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete payment method" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -651,17 +682,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.setDefaultPaymentMethod(req.params.id, req.user.id);
       res.json({ message: "Default payment method updated" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to set default payment method" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
   // Settings endpoints
-  app.get("/api/settings", async (req, res) => {
+  app.get("/api/settings", async (_req, res) => {
     try {
       const settings = await storage.getSettings();
       res.json(settings);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch settings" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -673,7 +706,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(setting);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch setting" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -683,7 +717,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const setting = await storage.setSetting(key, value);
       res.json(setting);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update setting" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -699,7 +734,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json(order);
     } catch (error) {
-      res.status(500).json({ message: "Failed to create order" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -710,7 +746,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userOrders = orders.filter(order => order.userId === req.user?.id);
       res.json(userOrders);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch orders" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
@@ -726,12 +763,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(order);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch order" });
+      res.status(500).json({ message: "Error occurred" });
+      return;
     }
   });
 
   // Endpoints para dashboard admin
-  app.get('/api/admin/orders', requireAdmin, async (req, res) => {
+  app.get('/api/admin/orders', requireAdmin, async (_req, res) => {
     try {
       const orders = await storage.getOrders();
       res.json(orders);
@@ -751,7 +789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoints para estadísticas del dashboard
-  app.get('/api/admin/dashboard-stats', requireAdmin, async (req, res) => {
+  app.get('/api/admin/dashboard-stats', requireAdmin, async (_req, res) => {
     try {
       const perfumes = await storage.getPerfumes();
       const orders = await storage.getOrders();
@@ -785,7 +823,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para obtener pedidos recientes
-  app.get('/api/admin/recent-orders', requireAdmin, async (req, res) => {
+  app.get('/api/admin/recent-orders', requireAdmin, async (_req, res) => {
     try {
       const orders = await storage.getOrders();
       const recentOrders = orders
@@ -799,7 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para obtener perfumes populares
-  app.get('/api/admin/popular-perfumes', requireAdmin, async (req, res) => {
+  app.get('/api/admin/popular-perfumes', requireAdmin, async (_req, res) => {
     try {
       const perfumes = await storage.getPerfumes();
       const orders = await storage.getOrders();
@@ -845,7 +883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para estadísticas de usuarios
-  app.get('/api/admin/user-stats', requireAdmin, async (req, res) => {
+  app.get('/api/admin/user-stats', requireAdmin, async (_req, res) => {
     try {
       // Obtener todos los usuarios
       const usersRef = db.collection('users');
@@ -876,7 +914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para estadísticas de ventas
-  app.get('/api/admin/sales-stats', requireAdmin, async (req, res) => {
+  app.get('/api/admin/sales-stats', requireAdmin, async (_req, res) => {
     try {
       const orders = await storage.getOrders();
       
@@ -921,7 +959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para obtener mensajes de contacto
-  app.get('/api/admin/contact-messages', requireAdmin, async (req, res) => {
+  app.get('/api/admin/contact-messages', requireAdmin, async (_req, res) => {
     try {
       const messagesRef = db.collection('contactMessages');
       const messagesSnapshot = await messagesRef.orderBy('createdAt', 'desc').get();
@@ -950,7 +988,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para obtener todos los usuarios
-  app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  app.get('/api/admin/users', requireAdmin, async (_req, res) => {
     try {
       const usersRef = db.collection('users');
       const usersSnapshot = await usersRef.orderBy('createdAt', 'desc').get();
@@ -963,7 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para obtener usuarios recientes
-  app.get('/api/admin/recent-users', requireAdmin, async (req, res) => {
+  app.get('/api/admin/recent-users', requireAdmin, async (_req, res) => {
     try {
       const usersRef = db.collection('users');
       const usersSnapshot = await usersRef.orderBy('createdAt', 'desc').limit(5).get();
@@ -1190,7 +1228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para obtener estadísticas de tracking (admin)
-  app.get('/api/admin/tracking-stats', requireAdmin, async (req, res) => {
+  app.get('/api/admin/tracking-stats', requireAdmin, async (_req, res) => {
     try {
       const orders = await storage.getOrders();
       
@@ -1267,7 +1305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/sessions/cleanup', requireAdmin, async (req, res) => {
+  app.post('/api/admin/sessions/cleanup', requireAdmin, async (_req, res) => {
     try {
       const deletedCount = await storage.deleteExpiredSessions();
       
@@ -1281,7 +1319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/sessions-stats', requireAdmin, async (req, res) => {
+  app.get('/api/admin/sessions-stats', requireAdmin, async (_req, res) => {
     try {
       const stats = await storage.getSessionStats();
       res.json(stats);
@@ -1292,7 +1330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para configuraciones de colecciones
-  app.get('/api/admin/settings/collections', requireAdmin, async (req, res) => {
+  app.get('/api/admin/settings/collections', requireAdmin, async (_req, res) => {
     try {
       const setting = await storage.getSetting('collections_enabled');
       res.json({ enabled: setting === 'true' || setting === null });
@@ -1753,7 +1791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Coupons endpoints
-  app.get('/api/coupons/available', async (req, res) => {
+  app.get('/api/coupons/available', async (_req, res) => {
     try {
       const coupons = await storage.getAvailableCoupons();
       res.json(coupons);
