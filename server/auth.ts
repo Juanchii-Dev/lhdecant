@@ -91,7 +91,7 @@ export function setupAuth(app: Express) {
   // Google OAuth 2.0 Implementation - Manual flow
   const googleClientId = process.env.GOOGLE_CLIENT_ID;
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/api/auth/google/callback';
+  const googleRedirectUri = process.env.GOOGLE_CALLBACK_URL || 'https://lhdecant-backend.onrender.com/api/auth/google/callback';
 
   if (googleClientId && googleClientSecret) {
     console.log('✅ Configurando Google OAuth 2.0 con credenciales...');
@@ -140,12 +140,12 @@ export function setupAuth(app: Express) {
         
         if (error) {
           console.error('❌ Error de Google OAuth:', error);
-          return res.redirect(`http://localhost:5173/auth?error=google&message=${encodeURIComponent(error as string)}`);
+          return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=${encodeURIComponent(error as string)}`);
         }
         
         if (!code) {
           console.error('❌ No se recibió código de autorización');
-          return res.redirect('http://localhost:5173/auth?error=google&message=No se recibió código de autorización');
+          return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=No se recibió código de autorización`);
         }
         
         console.log('🔑 Intercambiando código por access token...');
@@ -294,8 +294,8 @@ export function setupAuth(app: Express) {
     console.log('2. Crea un proyecto o selecciona uno existente');
     console.log('3. Habilita Google+ API');
     console.log('4. Crea credenciales OAuth 2.0');
-    console.log('5. Configura las URIs de redirección: http://localhost:5000/api/auth/google/callback');
-    console.log('6. Agrega orígenes autorizados: http://localhost:5173');
+    console.log('5. Configura las URIs de redirección: https://lhdecant-backend.onrender.com/api/auth/google/callback');
+    console.log('6. Agrega orígenes autorizados: https://lhdecant.com');
     console.log('7. Copia el Client ID y Client Secret a tu archivo .env');
     
     // Endpoint de diagnóstico
@@ -306,13 +306,13 @@ export function setupAuth(app: Express) {
         required_vars: {
           GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "✅ Configurado" : "❌ Faltante",
           GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? "✅ Configurado" : "❌ Faltante",
-          GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI || "http://localhost:5000/api/auth/google/callback"
+          GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || "https://lhdecant-backend.onrender.com/api/auth/google/callback"
         },
         instructions: [
           "1. Ve a https://console.cloud.google.com",
           "2. Crea credenciales OAuth 2.0",
-          "3. Configura URIs de redirección: http://localhost:5000/api/auth/google/callback",
-          "4. Agrega orígenes autorizados: http://localhost:5173",
+          "3. Configura URIs de redirección: https://lhdecant-backend.onrender.com/api/auth/google/callback",
+          "4. Agrega orígenes autorizados: https://lhdecant.com",
           "5. Copia Client ID y Client Secret a tu .env"
         ]
       });
@@ -327,8 +327,8 @@ export function setupAuth(app: Express) {
         instructions: [
           "1. Ve a https://console.cloud.google.com",
           "2. Crea credenciales OAuth 2.0",
-          "3. Configura URIs de redirección: http://localhost:5000/api/auth/google/callback",
-          "4. Agrega orígenes autorizados: http://localhost:5173",
+          "3. Configura URIs de redirección: https://lhdecant-backend.onrender.com/api/auth/google/callback",
+          "4. Agrega orígenes autorizados: https://lhdecant.com",
           "5. Copia Client ID y Client Secret a tu .env"
         ]
       });
