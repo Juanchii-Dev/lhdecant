@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "tsx watch server/index.ts",
     "client:dev": "cd client && npm run dev",
-    "build": "npm run server:build && cd client && npm install --force && npm run build",
+    "build": "npm run server:build && cd client && npm install && npm run build",
     "server:build": "tsc -p tsconfig.server.json --skipLibCheck",
     "client:build": "cd client && npm run build",
     "start": "node dist/index.js",
