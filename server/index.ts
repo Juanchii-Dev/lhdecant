@@ -38,8 +38,20 @@ app.use((req, res, next) => {
     console.log('🌐 CORS Request from origin:', origin);
   }
   
-  // PERMITIR TODOS LOS ORÍGENES SIN EXCEPCIÓN
-  res.header('Access-Control-Allow-Origin', origin || '*');
+  // PERMITIR TODOS LOS ORÍGENES SIN EXCEPCIÓN - FORZADO
+  const allowedOrigins = [
+    'https://lhdecant.com',
+    'https://www.lhdecant.com',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-API-Key, Cache-Control');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -48,6 +60,7 @@ app.use((req, res, next) => {
   // Solo loggear si hay un origen definido
   if (origin) {
     console.log('✅ CORS headers set for origin:', origin);
+    console.log('🔧 Access-Control-Allow-Origin:', res.getHeader('Access-Control-Allow-Origin'));
   }
   
   if (req.method === 'OPTIONS') {
