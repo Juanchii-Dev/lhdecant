@@ -24,7 +24,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+
+    /* Module resolution */
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "include": ["src", "src/**/*"],
   "exclude": ["node_modules"],
