@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "tsx watch server/index.ts",
     "client:dev": "cd client && npm run dev",
-    "build": "npm run server:build && chmod +x scripts/build-client.sh && ./scripts/build-client.sh",
+    "build": "chmod +x scripts/build-server.sh && ./scripts/build-server.sh && chmod +x scripts/build-client.sh && ./scripts/build-client.sh",
     "server:build": "tsc -p tsconfig.server.json --skipLibCheck --outDir dist --noEmitOnError false",
     "client:build": "cd client && npm run build",
     "start": "node dist/index.js",
