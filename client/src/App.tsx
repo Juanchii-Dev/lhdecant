@@ -26,6 +26,32 @@ import NotificationsPage from "./pages/notifications-page";
 import CollectionsPage from "./pages/collections-page";
 import CheckoutPage from "./pages/checkout-page";
 import SuccessPage from "./pages/success-page";
+import { useAuth } from "./hooks/use-auth";
+
+// Componente para verificación global de autenticación
+function GlobalAuthCheck() {
+  const { user, refetchUser } = useAuth();
+  
+  React.useEffect(() => {
+    // Verificar autenticación al cargar la app
+    console.log('🌐 GlobalAuthCheck - Verificando autenticación inicial...');
+    refetchUser();
+    
+    // Verificar cada 30 segundos para detectar cambios de sesión
+    const interval = setInterval(() => {
+      console.log('🔄 GlobalAuthCheck - Verificación periódica...');
+      refetchUser();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [refetchUser]);
+  
+  React.useEffect(() => {
+    console.log('👤 GlobalAuthCheck - Estado de usuario:', user ? 'Autenticado' : 'No autenticado');
+  }, [user]);
+  
+  return null; // No renderiza nada
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +68,7 @@ export default function App() {
       <ToastProvider>
         <TooltipProvider>
           <AuthProvider>
+              <GlobalAuthCheck />
               <Navigation />
               <Switch>
                 <Route path="/" component={Home} />

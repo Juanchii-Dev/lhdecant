@@ -118,9 +118,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Función para verificar autenticación después de OAuth
   const checkAuthAfterOAuth = () => {
     console.log('🔄 Verificando autenticación después de OAuth...');
+    
+    // Limpiar cache primero
+    queryClient.removeQueries({ queryKey: ["/api/user"] });
+    
+    // Verificar múltiples veces para asegurar que se detecte
     setTimeout(() => {
+      console.log('🔄 Primera verificación...');
       refetchUser();
-    }, 1000); // Esperar 1 segundo para que la sesión se establezca
+    }, 500);
+    
+    setTimeout(() => {
+      console.log('🔄 Segunda verificación...');
+      refetchUser();
+    }, 1500);
+    
+    setTimeout(() => {
+      console.log('🔄 Tercera verificación...');
+      refetchUser();
+    }, 3000);
   };
 
   return (

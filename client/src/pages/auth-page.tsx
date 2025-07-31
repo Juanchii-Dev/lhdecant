@@ -20,8 +20,10 @@ export default function AuthPage() {
   const [success, setSuccess] = useState(false);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
 
-  // Manejar errores de Google OAuth
+  // Manejar errores de Google OAuth y verificar autenticación
   React.useEffect(() => {
+    console.log('🔍 Auth page effect - error:', error, 'message:', message, 'token:', token, 'emailParam:', emailParam);
+    
     if (error === "google" && message) {
       toast({
         title: "Error de Google OAuth",
@@ -30,14 +32,24 @@ export default function AuthPage() {
       });
     }
     
-    // Si no hay error y venimos de Google OAuth, verificar autenticación
-    if (!error && !token && !emailParam) {
-      // Verificar si venimos de Google OAuth (URL limpia)
-      const referrer = document.referrer;
-      if (referrer.includes('accounts.google.com') || referrer.includes('lhdecant.com')) {
-        console.log('🔄 Detectado retorno de Google OAuth, verificando autenticación...');
-        checkAuthAfterOAuth();
-      }
+    // Verificar autenticación en múltiples escenarios
+    const shouldCheckAuth = !error && !token && !emailParam;
+    const referrer = document.referrer;
+    const isFromGoogle = referrer.includes('accounts.google.com');
+    const isFromLhDecant = referrer.includes('lhdecant.com');
+    const isDirectAccess = !referrer || referrer === '';
+    
+    console.log('🔍 Auth check conditions:', {
+      shouldCheckAuth,
+      isFromGoogle,
+      isFromLhDecant,
+      isDirectAccess,
+      referrer
+    });
+    
+    if (shouldCheckAuth && (isFromGoogle || isFromLhDecant || isDirectAccess)) {
+      console.log('🔄 Detectado posible retorno de Google OAuth, verificando autenticación...');
+      checkAuthAfterOAuth();
     }
   }, [error, message, token, emailParam, toast, checkAuthAfterOAuth]);
 
