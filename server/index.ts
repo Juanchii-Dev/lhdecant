@@ -38,18 +38,16 @@ app.use((req, res, next) => {
     console.log('🌐 CORS Request from origin:', origin);
   }
   
-  // PERMITIR TODOS LOS ORÍGENES SIN EXCEPCIÓN - FORZADO
-  const allowedOrigins = [
-    'https://lhdecant.com',
-    'https://www.lhdecant.com',
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ];
-  
-  if (origin && allowedOrigins.includes(origin)) {
+  // SOLUCIÓN AGRESIVA - FORZAR CORS CORRECTO
+  if (origin === 'https://lhdecant.com' || origin === 'https://www.lhdecant.com') {
     res.header('Access-Control-Allow-Origin', origin);
+    console.log('🎯 CORS SET for lhdecant.com:', origin);
+  } else if (origin === 'http://localhost:5173' || origin === 'http://localhost:3000') {
+    res.header('Access-Control-Allow-Origin', origin);
+    console.log('🎯 CORS SET for localhost:', origin);
   } else {
     res.header('Access-Control-Allow-Origin', '*');
+    console.log('🎯 CORS SET for wildcard:', origin);
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
