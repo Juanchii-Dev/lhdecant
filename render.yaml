@@ -3,13 +3,15 @@ services:
     name: lhdecant-backend
     env: node
     plan: free
-    buildCommand: npm run build
+    buildCommand: chmod +x scripts/build.sh && ./scripts/build.sh
     startCommand: npm start
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: npm_config_package_manager
+        value: npm
       - key: PORT
         value: 10000
       - key: FIREBASE_PROJECT_ID

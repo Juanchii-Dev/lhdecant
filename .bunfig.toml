@@ -1,0 +1,8 @@
+# Deshabilitar Bun y forzar npm
+[install]
+# No usar Bun para instalación
+use_npm = true
+
+[run]
+# No usar Bun para ejecutar scripts
+use_npm = true 
