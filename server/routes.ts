@@ -260,44 +260,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json((req.session as any).user);
   });
 
-  // Health check endpoint
-  app.get('/api/health', (_req, res) => {
-    res.json({ 
-      status: 'ok', 
-        timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
-      cors: 'ultra-permissive',
-      version: '2.0.0'
-    });
-  });
 
-  // Debug endpoint para verificar CORS
-  app.get('/api/debug/cors', (req, res) => {
-    const origin = req.headers.origin;
-      
-      res.json({ 
-      origin: origin,
-      corsHeaders: {
-        'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
-        'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
-        'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
-        'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
-      },
-      environment: process.env.NODE_ENV || 'development',
-      timestamp: new Date().toISOString()
-    });
-  });
 
-  // Debug endpoint para verificar variables de entorno
-  app.get('/api/debug/env', (req, res) => {
-      res.json({
-      NODE_ENV: process.env.NODE_ENV,
-      GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
-      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? '***SET***' : 'NOT_SET',
-      FRONTEND_URL: process.env.FRONTEND_URL,
-      timestamp: new Date().toISOString()
-    });
-  });
+
 
   const httpServer = createServer(app);
   return httpServer;
