@@ -4,6 +4,7 @@ import express from "express";
 import { registerRoutes } from "./routes";
 import helmet from 'helmet';
 import compression from 'compression';
+import cookieParser from "cookie-parser";
 
 function log(message: string) {
   console.log(`[${new Date().toISOString()}] ${message}`);
@@ -70,6 +71,7 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(cookieParser()); // CRÍTICO: Para leer cookies
 
 app.use((req, res, next) => {
   const start = Date.now();

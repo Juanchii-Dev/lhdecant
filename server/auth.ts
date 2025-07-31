@@ -52,11 +52,11 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     // store: storage.sessionStore, // Comentado temporalmente para evitar errores de tipos
     cookie: {
-      secure: false, // Cambiado a false para evitar problemas con HTTPS
+      secure: process.env.NODE_ENV === 'production', // true en producción
       httpOnly: true,
-      sameSite: 'lax' as const,
+      sameSite: 'none' as const, // CRÍTICO para cross-origin
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      // domain: process.env.NODE_ENV === 'production' ? '.lhdecant.com' : undefined // Comentado temporalmente
+      domain: process.env.NODE_ENV === 'production' ? '.lhdecant.com' : undefined
     }
   };
 
@@ -263,6 +263,14 @@ export function setupAuth(app: Express) {
           }
           
           console.log('✅ Sesión guardada exitosamente para:', user.email);
+          console.log('🍪 Cookie de sesión configurada:', {
+            sessionId: req.sessionID,
+            cookie: req.session.cookie,
+            secure: req.session.cookie.secure,
+            sameSite: req.session.cookie.sameSite,
+            domain: req.session.cookie.domain,
+            httpOnly: req.session.cookie.httpOnly
+          });
           console.log('🎯 Redirigiendo a la aplicación...');
           
           // Redirigir al frontend

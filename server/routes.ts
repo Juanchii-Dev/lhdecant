@@ -31,16 +31,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Middleware to check if user is authenticated for admin routes
   const requireAuth = (req: any, res: any, next: any) => {
+    console.log('🔍 requireAuth - Headers:', req.headers);
+    console.log('🍪 requireAuth - Cookies:', req.cookies);
+    console.log('🔐 requireAuth - Session:', req.session);
+    console.log('👤 requireAuth - req.user:', req.user);
+    console.log('✅ requireAuth - req.isAuthenticated():', req.isAuthenticated());
+    
     // Verificar sesión manual (Google OAuth)
     if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
+      console.log('✅ requireAuth - Usuario autenticado via sesión manual');
       return next();
     }
     
     // Verificar autenticación de Passport (login normal)
     if (req.isAuthenticated()) {
+      console.log('✅ requireAuth - Usuario autenticado via Passport');
       return next();
     }
     
+    console.log('❌ requireAuth - Usuario NO autenticado');
     return res.status(401).json({ message: "Authentication required" });
   };
 
@@ -295,16 +304,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User routes
   app.get('/api/user', (req, res) => {
+    console.log('🔍 /api/user - Headers recibidos:', req.headers);
+    console.log('🍪 /api/user - Cookies recibidas:', req.cookies);
+    console.log('🔐 /api/user - Session:', req.session);
+    console.log('👤 /api/user - req.user:', req.user);
+    console.log('✅ /api/user - req.isAuthenticated():', req.isAuthenticated());
+    
     // Verificar sesión manual (Google OAuth)
     if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
+      console.log('✅ /api/user - Usuario autenticado via sesión manual');
       return res.json((req.session as any).user);
     }
     
     // Verificar autenticación de Passport (login normal)
     if (req.isAuthenticated() && req.user) {
+      console.log('✅ /api/user - Usuario autenticado via Passport');
       return res.json(req.user);
     }
     
+    console.log('❌ /api/user - Usuario NO autenticado');
     return res.status(401).json({ message: 'Authentication required' });
   });
 
