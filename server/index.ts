@@ -33,14 +33,15 @@ if (process.env.NODE_ENV === 'production') {
 const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
     const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://lhdecant.netlify.app',
-      'https://www.lhdecant.netlify.app',
-      'https://lhdecant.com',
-      'https://www.lhdecant.com',
-      'https://lhdecant-frontend.netlify.app'
-    ];
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://lhdecant.netlify.app',
+  'https://www.lhdecant.netlify.app',
+  'https://lhdecant.com',
+  'https://www.lhdecant.com',
+  'https://lhdecant-frontend.netlify.app',
+  'https://lhdecant-backend.onrender.com'
+];
     
     console.log('🌐 CORS Request from origin:', origin);
     
@@ -151,14 +152,15 @@ app.use((req, res, next) => {
   app.get('/api/debug/cors', (req, res) => {
     const origin = req.headers.origin;
     const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://lhdecant.netlify.app',
-      'https://www.lhdecant.netlify.app',
-      'https://lhdecant.com',
-      'https://www.lhdecant.com',
-      'https://lhdecant-frontend.netlify.app'
-    ];
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://lhdecant.netlify.app',
+  'https://www.lhdecant.netlify.app',
+  'https://lhdecant.com',
+  'https://www.lhdecant.com',
+  'https://lhdecant-frontend.netlify.app',
+  'https://lhdecant-backend.onrender.com'
+];
     
     res.json({
       origin: origin,
