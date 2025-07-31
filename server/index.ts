@@ -34,7 +34,9 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     'http://localhost:5173',
     'https://lhdecant.netlify.app',
-    'https://www.lhdecant.netlify.app'
+    'https://www.lhdecant.netlify.app',
+    'https://lhdecant.com',
+    'https://www.lhdecant.com'
   ];
   
   const origin = req.headers.origin;
