@@ -6,7 +6,7 @@ set -e
 echo "🔧 Compilando servidor TypeScript..."
 
 # Compilar servidor con flags forzados usando TypeScript local
-./node_modules/.bin/tsc server/index.ts --outDir dist --target ES2020 --module commonjs --esModuleInterop --skipLibCheck --noEmitOnError false
+./node_modules/.bin/tsc server/index.ts server/auth.ts server/routes.ts server/storage.ts server/cloudinary.ts --outDir dist --target ES2020 --module commonjs --esModuleInterop --skipLibCheck --noEmitOnError false
 
 # Copiar archivos adicionales del servidor
 echo "📁 Copiando archivos del servidor..."
