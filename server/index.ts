@@ -29,71 +29,19 @@ if (process.env.NODE_ENV === 'production') {
   app.use(compression());
 }
 
-// CONFIGURACIÓN CORS DEFINITIVA
-const corsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'https://lhdecant.netlify.app',
-  'https://www.lhdecant.netlify.app',
-  'https://lhdecant.com',
-  'https://www.lhdecant.com',
-  'https://lhdecant-frontend.netlify.app',
-  'https://lhdecant-backend.onrender.com'
-];
-    
-    console.log('🌐 CORS Request from origin:', origin);
-    
-    // Permitir requests sin origin (como mobile apps o Postman)
-    if (!origin) {
-      console.log('✅ CORS allowed: No origin (mobile app, Postman, etc.)');
-      return callback(null, true);
-    }
-    
-    if (allowedOrigins.includes(origin)) {
-      console.log('✅ CORS allowed for origin:', origin);
-      return callback(null, true);
-    } else {
-      console.log('❌ CORS blocked for origin:', origin);
-      // EN PRODUCCIÓN, PERMITIR TODOS LOS ORÍGENES COMO SOLUCIÓN TEMPORAL
-      if (process.env.NODE_ENV === 'production') {
-        console.log('🔄 Production mode: Allowing all origins temporarily');
-        return callback(null, true);
-      }
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Origin',
-    'X-Requested-With',
-    'Content-Type',
-    'Accept',
-    'Authorization',
-    'X-API-Key',
-    'Cache-Control'
-  ],
-  exposedHeaders: ['Content-Length', 'X-Requested-With'],
-  maxAge: 86400 // 24 horas
-};
-
-app.use(cors(corsOptions));
-
-// Middleware adicional para CORS como respaldo
+// CORS ULTRA PERMISIVO - SOLUCIÓN DEFINITIVA
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  console.log('🔍 Additional CORS check for origin:', origin);
+  console.log('🌐 CORS Request from origin:', origin);
   
-  // Si el middleware de CORS no se aplicó, aplicar headers manualmente
-  if (!res.getHeader('Access-Control-Allow-Origin')) {
-    res.header('Access-Control-Allow-Origin', origin || '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-API-Key, Cache-Control');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Max-Age', '86400');
-  }
+  // PERMITIR TODOS LOS ORÍGENES SIN EXCEPCIÓN
+  res.header('Access-Control-Allow-Origin', origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-API-Key, Cache-Control');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400');
+  
+  console.log('✅ CORS headers set for origin:', origin);
   
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -101,6 +49,22 @@ app.use((req, res, next) => {
     next();
   }
 });
+
+// Middleware adicional de CORS como respaldo
+app.use(cors({
+  origin: true, // Permitir todos los orígenes
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With', 
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'X-API-Key',
+    'Cache-Control'
+  ]
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -144,29 +108,16 @@ app.use((req, res, next) => {
       status: 'ok', 
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
-      cors: 'enabled'
+      cors: 'ultra-permissive'
     });
   });
 
   // Debug endpoint para verificar CORS
   app.get('/api/debug/cors', (req, res) => {
     const origin = req.headers.origin;
-    const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'https://lhdecant.netlify.app',
-  'https://www.lhdecant.netlify.app',
-  'https://lhdecant.com',
-  'https://www.lhdecant.com',
-  'https://lhdecant-frontend.netlify.app',
-  'https://lhdecant-backend.onrender.com'
-];
     
     res.json({
       origin: origin,
-      allowedOrigins: allowedOrigins,
-      isAllowed: origin ? allowedOrigins.includes(origin) : true,
-      headers: req.headers,
       corsHeaders: {
         'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
         'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
@@ -210,7 +161,7 @@ app.use((req, res, next) => {
     () => {
       log(`serving on port ${port}`);
       log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      log('🔧 CORS configuration loaded');
+      log('🔧 CORS ultra-permisivo configurado');
     }
   );
 })();
