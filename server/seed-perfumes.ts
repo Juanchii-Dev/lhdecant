@@ -128,7 +128,7 @@ async function seedPerfumes() {
 }
 
 // Ejecutar si se llama directamente
-if (process.argv[1] === __filename) {
+if (require.main === module) {
   seedPerfumes().then(() => {
     console.log("Script completado");
     process.exit(0);

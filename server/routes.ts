@@ -743,7 +743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orders = await storage.getOrders();
       // Filtrar órdenes del usuario actual
-      const userOrders = orders.filter(order => order.userId === req.user?.id);
+      const userOrders = orders.filter(order => (order as any).userId === req.user?.id);
       res.json(userOrders);
     } catch (error) {
       res.status(500).json({ message: "Error occurred" });
@@ -1021,7 +1021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await userRef.update({ 
         status, 
         updatedAt: new Date(),
-        updatedBy: req.user.id 
+        updatedBy: req.user?.id 
       });
       
       res.json({ message: 'Estado de usuario actualizado' });
@@ -1206,7 +1206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #D4AF37;">Actualización de tu pedido</h2>
               <p><strong>Número de orden:</strong> ${order.id}</p>
-              <p><strong>Estado actual:</strong> ${statusMessages[status] || status}</p>
+              <p><strong>Estado actual:</strong> ${(statusMessages as any)[status] || status}</p>
               ${trackingInfo}
               ${carrierInfo}
               ${deliveryInfo}
@@ -1235,13 +1235,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stats = {
         total: orders.length,
         byStatus: {
-          pending: orders.filter(o => o.status === 'pending').length,
-          paid: orders.filter(o => o.status === 'paid').length,
-          processing: orders.filter(o => o.status === 'processing').length,
-          shipped: orders.filter(o => o.status === 'shipped').length,
-          delivered: orders.filter(o => o.status === 'delivered').length,
-          cancelled: orders.filter(o => o.status === 'cancelled').length,
-          refunded: orders.filter(o => o.status === 'refunded').length
+          pending: orders.filter(o => (o as any).status === 'pending').length,
+          paid: orders.filter(o => (o as any).status === 'paid').length,
+          processing: orders.filter(o => (o as any).status === 'processing').length,
+          shipped: orders.filter(o => (o as any).status === 'shipped').length,
+          delivered: orders.filter(o => (o as any).status === 'delivered').length,
+          cancelled: orders.filter(o => (o as any).status === 'cancelled').length,
+          refunded: orders.filter(o => (o as any).status === 'refunded').length
         },
         averageProcessingTime: 0, // Se calcularía basado en timestamps
         recentUpdates: [] // Últimas actualizaciones de tracking
