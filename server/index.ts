@@ -29,7 +29,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(compression());
 }
 
-// CORS ULTRA PERMISIVO - SOLUCIÓN DEFINITIVA
+// CORS ULTRA AGRESIVO - SOLUCIÓN DEFINITIVA
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
@@ -38,16 +38,17 @@ app.use((req, res, next) => {
     console.log('🌐 CORS Request from origin:', origin);
   }
   
-  // SOLUCIÓN AGRESIVA - FORZAR CORS CORRECTO
-  if (origin === 'https://lhdecant.com' || origin === 'https://www.lhdecant.com') {
+  // SOLUCIÓN ULTRA AGRESIVA - FORZAR CORS CORRECTO SIEMPRE
+  if (origin && (origin.includes('lhdecant.com') || origin.includes('netlify.app'))) {
     res.header('Access-Control-Allow-Origin', origin);
-    console.log('🎯 CORS SET for lhdecant.com:', origin);
-  } else if (origin === 'http://localhost:5173' || origin === 'http://localhost:3000') {
+    console.log('🎯 CORS SET for production:', origin);
+  } else if (origin && origin.includes('localhost')) {
     res.header('Access-Control-Allow-Origin', origin);
     console.log('🎯 CORS SET for localhost:', origin);
   } else {
-    res.header('Access-Control-Allow-Origin', '*');
-    console.log('🎯 CORS SET for wildcard:', origin);
+    // Para cualquier otro origen, usar el dominio de producción
+    res.header('Access-Control-Allow-Origin', 'https://lhdecant.com');
+    console.log('🎯 CORS SET for fallback to lhdecant.com');
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');

@@ -182,7 +182,7 @@ export function setupAuth(app: Express) {
         
         if (!access_token) {
           console.error('❌ No se recibió access token');
-          return res.redirect('http://localhost:5173/auth?error=google&message=No se recibió access token');
+          return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=No se recibió access token`);
         }
         
         console.log('👤 Obteniendo información del usuario...');
@@ -206,7 +206,7 @@ export function setupAuth(app: Express) {
         const email = userInfo.email;
         if (!email) {
           console.error('❌ No se recibió email del usuario');
-          return res.redirect('http://localhost:5173/auth?error=google&message=No se recibió email del usuario');
+          return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=No se recibió email del usuario`);
         }
         
         let user = await storage.getUserByUsername(email);
@@ -241,14 +241,14 @@ export function setupAuth(app: Express) {
         req.login(user, (err) => {
           if (err) {
             console.error('❌ Error al crear sesión:', err);
-            return res.redirect('http://localhost:5173/auth?error=google&message=Error al crear sesión');
+            return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=Error al crear sesión`);
           }
           
           console.log('✅ Sesión creada exitosamente para:', user.email);
           console.log('🎯 Redirigiendo a la aplicación...');
           
           // Redirigir al frontend
-          res.redirect('http://localhost:5173/');
+          res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/`);
         });
         
       } catch (error: any) {
@@ -281,7 +281,7 @@ export function setupAuth(app: Express) {
         console.error('💬 Mensaje de error:', errorMessage);
         
         // Redirigir con información más específica
-        const redirectUrl = `http://localhost:5173/auth?error=google&message=${encodeURIComponent(errorMessage)}`;
+        const redirectUrl = `${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=${encodeURIComponent(errorMessage)}`;
         console.log('🔄 Redirigiendo a:', redirectUrl);
         res.redirect(redirectUrl);
       }
