@@ -1,4 +1,5 @@
 import { useAuth } from './use-auth';
+import { buildApiUrl } from "../config/api";
 import { useToast } from './use-toast';
 
 export function useAddToCart() {
@@ -23,7 +24,7 @@ export function useAddToCart() {
     });
 
     try {
-      const response = await fetch('/api/cart', {
+      const response = await fetch(buildApiUrl('/api/cart'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

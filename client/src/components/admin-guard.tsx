@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { buildApiUrl } from "../config/api";
 import { useLocation } from "wouter";
 // Removido useAuth para evitar conflictos con autenticación de admin
 import { Loader2, Shield, AlertTriangle } from "lucide-react";
@@ -16,7 +17,7 @@ export default function AdminGuard({ children }: AdminGuardProps) {
     const checkAdminAccess = async () => {
       try {
         // Verificar estado de admin en el servidor
-        const response = await fetch("/api/admin/status", {
+        const response = await fetch(buildApiUrl('/api/admin/status'), {
           credentials: "include"
         });
         const data = await response.json();

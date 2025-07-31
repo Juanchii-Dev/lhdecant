@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { buildApiUrl } from "../config/api";
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, Calendar, Edit, Save, X, Camera, Crown, Heart, ShoppingBag, Star } from 'lucide-react';
@@ -40,7 +41,7 @@ export default function ProfilePage() {
   const { data: userStats, isLoading: statsLoading } = useQuery<UserStats>({
     queryKey: ['user-stats', user?.id],
     queryFn: async () => {
-      const response = await fetch('/api/user-stats', {
+      const response = await fetch(buildApiUrl('/api/user-stats'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching user stats');
@@ -53,7 +54,7 @@ export default function ProfilePage() {
   const { data: recentActivity = [], isLoading: activityLoading } = useQuery<RecentActivity[]>({
     queryKey: ['user-activity', user?.id],
     queryFn: async () => {
-      const response = await fetch('/api/user-activity', {
+      const response = await fetch(buildApiUrl('/api/user-activity'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching user activity');
@@ -83,7 +84,7 @@ export default function ProfilePage() {
   // Mutación para actualizar perfil
   const updateProfileMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch('/api/profile', {
+      const response = await fetch(buildApiUrl('/api/profile'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -112,7 +113,7 @@ export default function ProfilePage() {
   // Mutación para cambiar contraseña
   const changePasswordMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
-      const response = await fetch('/api/profile/password', {
+      const response = await fetch(buildApiUrl('/api/profile/password'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

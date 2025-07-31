@@ -141,7 +141,7 @@ export default function AdminPage() {
     const checkAdminAuth = async () => {
       try {
         // Verificar estado de admin en el servidor
-        const response = await fetch("/api/admin/status", {
+        const response = await fetch(buildApiUrl('/api/admin/status'), {
           credentials: "include"
         });
         const data = await response.json();
@@ -265,7 +265,7 @@ export default function AdminPage() {
   const { data: userStats } = useQuery<UserStats>({
     queryKey: ["user-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/user-stats", {
+      const response = await fetch(buildApiUrl('/api/admin/user-stats'), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching user stats");
@@ -277,7 +277,7 @@ export default function AdminPage() {
   const { data: recentUsers = [] } = useQuery<any[]>({
     queryKey: ["recent-users"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/recent-users", {
+      const response = await fetch(buildApiUrl('/api/admin/recent-users'), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching recent users");
@@ -289,7 +289,7 @@ export default function AdminPage() {
   const { data: salesStats } = useQuery<SalesStats>({
     queryKey: ["sales-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/sales-stats", {
+      const response = await fetch(buildApiUrl('/api/admin/sales-stats'), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching sales stats");
@@ -302,7 +302,7 @@ export default function AdminPage() {
   const { data: sessions = [] } = useQuery<any[]>({
     queryKey: ["sessions"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/sessions", {
+      const response = await fetch(buildApiUrl('/api/admin/sessions'), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching sessions");
@@ -314,7 +314,7 @@ export default function AdminPage() {
   const { data: sessionStats } = useQuery<any>({
     queryKey: ["session-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/sessions-stats", {
+      const response = await fetch(buildApiUrl('/api/admin/sessions-stats'), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching session stats");
@@ -386,7 +386,7 @@ export default function AdminPage() {
 
   const createCollectionMutation = useMutation({
     mutationFn: async (data: InsertCollection) => {
-      const response = await fetch("/api/collections", {
+      const response = await fetch(buildApiUrl('/api/collections'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -407,7 +407,7 @@ export default function AdminPage() {
 
   const updateCollectionMutation = useMutation({
     mutationFn: async (data: { id: string } & Partial<InsertCollection>) => {
-      const response = await fetch(`/api/collections/${data.id}`, {
+      const response = await fetch(buildApiUrl('/api/collections/${data.id}'), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -429,7 +429,7 @@ export default function AdminPage() {
 
   const updateSettingMutation = useMutation({
     mutationFn: async (data: { key: string; value: string }) => {
-      const response = await fetch("/api/settings", {
+      const response = await fetch(buildApiUrl('/api/settings'), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -449,7 +449,7 @@ export default function AdminPage() {
 
   const updateOrderStatusMutation = useMutation({
     mutationFn: async (data: { id: string; status: string }) => {
-      const response = await fetch(`/api/admin/orders/${data.id}`, {
+      const response = await fetch(buildApiUrl('/api/admin/orders/${data.id}'), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -469,7 +469,7 @@ export default function AdminPage() {
 
   const markMessageAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/admin/contact-messages/${id}/read`, {
+      const response = await fetch(buildApiUrl('/api/admin/contact-messages/${id}/read'), {
         method: "PATCH",
         credentials: "include"
       });
@@ -488,7 +488,7 @@ export default function AdminPage() {
   // Session mutations
   const deleteSessionMutation = useMutation({
     mutationFn: async (sid: string) => {
-      const response = await fetch(`/api/admin/sessions/${sid}`, {
+      const response = await fetch(buildApiUrl('/api/admin/sessions/${sid}'), {
         method: "DELETE",
         credentials: "include"
       });
@@ -506,7 +506,7 @@ export default function AdminPage() {
 
   const cleanupSessionsMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/admin/sessions/cleanup", {
+      const response = await fetch(buildApiUrl('/api/admin/sessions/cleanup'), {
         method: "POST",
         credentials: "include"
       });
@@ -639,7 +639,7 @@ export default function AdminPage() {
 
     try {
       // Subir imagen a Cloudinary
-      const response = await fetch('/api/admin/images/upload', {
+      const response = await fetch(buildApiUrl('/api/admin/images/upload'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -679,7 +679,7 @@ export default function AdminPage() {
   const { data: collectionsSettings } = useQuery({
     queryKey: ["collections-settings"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/settings/collections", {
+      const response = await fetch(buildApiUrl('/api/admin/settings/collections'), {
         credentials: "include"
       });
       if (!response.ok) return { enabled: true };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { buildApiUrl } from "../config/api";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { MapPin, Plus, Trash2, Edit, Home, Building } from 'lucide-react';
@@ -57,7 +58,7 @@ export default function AddressesPage() {
   const { data: addresses = [], isLoading } = useQuery({
     queryKey: ['addresses', user?.id],
     queryFn: async () => {
-      const response = await fetch('/api/addresses', {
+      const response = await fetch(buildApiUrl('/api/addresses'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching addresses');
@@ -69,7 +70,7 @@ export default function AddressesPage() {
   // Mutación para agregar dirección
   const addAddressMutation = useMutation({
     mutationFn: async (data: AddressForm) => {
-      const response = await fetch('/api/addresses', {
+      const response = await fetch(buildApiUrl('/api/addresses'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -109,7 +110,7 @@ export default function AddressesPage() {
   // Mutación para eliminar dirección
   const deleteAddressMutation = useMutation({
     mutationFn: async (addressId: string) => {
-      const response = await fetch(`/api/addresses/${addressId}`, {
+      const response = await fetch(buildApiUrl('/api/addresses/${addressId}'), {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -135,7 +136,7 @@ export default function AddressesPage() {
   // Mutación para establecer como predeterminada
   const setDefaultMutation = useMutation({
     mutationFn: async (addressId: string) => {
-      const response = await fetch(`/api/addresses/${addressId}/default`, {
+      const response = await fetch(buildApiUrl('/api/addresses/${addressId}/default'), {
         method: 'PATCH',
         credentials: 'include',
       });

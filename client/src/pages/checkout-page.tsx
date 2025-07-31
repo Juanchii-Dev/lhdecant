@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { buildApiUrl } from "../config/api";
 import { useAuth } from "../hooks/use-auth";
 import { useToast } from "../hooks/use-toast";
 import { Button } from "../components/ui/button";
@@ -30,7 +31,7 @@ export default function CheckoutPage() {
       if (!user) return;
       
       try {
-        const response = await fetch('/api/cart', {
+        const response = await fetch(buildApiUrl('/api/cart'), {
           credentials: 'include'
         });
         if (response.ok) {
@@ -84,7 +85,7 @@ export default function CheckoutPage() {
         quantity: item.quantity,
       }));
 
-      const response = await fetch('/api/stripe/create-checkout-session', {
+      const response = await fetch(buildApiUrl('/api/stripe/create-checkout-session'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

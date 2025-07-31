@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { buildApiUrl } from "../config/api";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { 
@@ -29,7 +30,7 @@ export default function AdminAuthPage() {
     setSuccess("");
 
     try {
-      const response = await fetch("/api/admin/login", {
+      const response = await fetch(buildApiUrl('/api/admin/login'), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

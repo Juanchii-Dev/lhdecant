@@ -1,4 +1,5 @@
 import React from "react";
+import { buildApiUrl } from "../config/api";
 import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { useAuth } from "../hooks/use-auth";
@@ -47,7 +48,7 @@ export default function AuthPage() {
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const res = await fetch("/api/forgot-password", {
+    const res = await fetch(buildApiUrl('/api/forgot-password'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -65,7 +66,7 @@ export default function AuthPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const res = await fetch("/api/reset-password", {
+    const res = await fetch(buildApiUrl('/api/reset-password'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: emailParam, token, password }),

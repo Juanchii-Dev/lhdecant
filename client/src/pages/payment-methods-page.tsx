@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { buildApiUrl } from "../config/api";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { CreditCard, Plus, Trash2, Edit, Shield, Lock } from 'lucide-react';
@@ -45,7 +46,7 @@ export default function PaymentMethodsPage() {
   const { data: paymentMethods = [], isLoading } = useQuery({
     queryKey: ['payment-methods', user?.id],
     queryFn: async () => {
-      const response = await fetch('/api/payment-methods', {
+      const response = await fetch(buildApiUrl('/api/payment-methods'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching payment methods');
@@ -57,7 +58,7 @@ export default function PaymentMethodsPage() {
   // Mutación para agregar método de pago
   const addPaymentMethodMutation = useMutation({
     mutationFn: async (data: PaymentMethodForm) => {
-      const response = await fetch('/api/payment-methods', {
+      const response = await fetch(buildApiUrl('/api/payment-methods'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -87,7 +88,7 @@ export default function PaymentMethodsPage() {
   // Mutación para eliminar método de pago
   const deletePaymentMethodMutation = useMutation({
     mutationFn: async (methodId: string) => {
-      const response = await fetch(`/api/payment-methods/${methodId}`, {
+      const response = await fetch(buildApiUrl('/api/payment-methods/${methodId}'), {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -113,7 +114,7 @@ export default function PaymentMethodsPage() {
   // Mutación para establecer como predeterminado
   const setDefaultMutation = useMutation({
     mutationFn: async (methodId: string) => {
-      const response = await fetch(`/api/payment-methods/${methodId}/default`, {
+      const response = await fetch(buildApiUrl('/api/payment-methods/${methodId}/default'), {
         method: 'PATCH',
         credentials: 'include',
       });

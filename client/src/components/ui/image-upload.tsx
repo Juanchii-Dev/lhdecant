@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { buildApiUrl } from "../config/api";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
@@ -32,7 +33,7 @@ export default function ImageUpload({ onImageUpload, currentImage, className = "
           const dataUrl = reader.result as string;
           
           // Enviar al servidor para subir a Cloudinary (solo admin)
-          const response = await fetch('/api/admin/images/upload', {
+          const response = await fetch(buildApiUrl('/api/admin/images/upload'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

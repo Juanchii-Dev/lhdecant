@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
+import { buildApiUrl } from "../config/api";;
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
@@ -27,7 +28,7 @@ export function CartIcon() {
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const response = await fetch('/api/cart', {
+        const response = await fetch(buildApiUrl('/api/cart'), {
           credentials: 'include'
         });
         if (response.ok) {
@@ -71,7 +72,7 @@ export function CartDrawer() {
     
     setLoading(true);
     try {
-      const response = await fetch('/api/cart', {
+      const response = await fetch(buildApiUrl('/api/cart'), {
         credentials: 'include'
       });
       if (response.ok) {
@@ -102,7 +103,7 @@ export function CartDrawer() {
     setItems(updatedItems);
 
     try {
-      const response = await fetch(`/api/cart/${id}`, {
+      const response = await fetch(buildApiUrl('/api/cart/${id}'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -138,7 +139,7 @@ export function CartDrawer() {
     setItems(updatedItems);
 
     try {
-      const response = await fetch(`/api/cart/${id}`, {
+      const response = await fetch(buildApiUrl('/api/cart/${id}'), {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -171,7 +172,7 @@ export function CartDrawer() {
     setItems([]);
 
     try {
-      const response = await fetch('/api/cart', {
+      const response = await fetch(buildApiUrl('/api/cart'), {
         method: 'DELETE',
         credentials: 'include'
       });

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { buildApiUrl } from "../config/api";
 import { useAuth } from '../hooks/use-auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getQueryFn } from '../lib/queryClient';
@@ -57,7 +58,7 @@ export default function CouponsPage() {
   const { data: availableCoupons = [], isLoading: couponsLoading } = useQuery<Coupon[]>({
     queryKey: ['coupons', 'available'],
     queryFn: async () => {
-      const response = await fetch('/api/coupons', {
+      const response = await fetch(buildApiUrl('/api/coupons'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching available coupons');
@@ -69,7 +70,7 @@ export default function CouponsPage() {
   const { data: userCoupons = [], isLoading: userCouponsLoading } = useQuery<UserCoupon[]>({
     queryKey: ['user-coupons', user?.id],
     queryFn: async () => {
-      const response = await fetch('/api/coupons/user', {
+      const response = await fetch(buildApiUrl('/api/coupons/user'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching user coupons');
@@ -81,7 +82,7 @@ export default function CouponsPage() {
   // Mutación para aplicar cupón
   const applyCouponMutation = useMutation({
     mutationFn: async (code: string) => {
-      const response = await fetch('/api/coupons/apply', {
+      const response = await fetch(buildApiUrl('/api/coupons/apply'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

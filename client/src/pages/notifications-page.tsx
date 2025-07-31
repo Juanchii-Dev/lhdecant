@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { buildApiUrl } from "../config/api";
 import { useAuth } from '../hooks/use-auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getQueryFn } from '../lib/queryClient';
@@ -64,7 +65,7 @@ export default function NotificationsPage() {
       if (!showRead) params.append('showRead', 'false');
       if (searchTerm) params.append('search', searchTerm);
       
-      const response = await fetch(`/api/notifications?${params.toString()}`, {
+      const response = await fetch(buildApiUrl('/api/notifications?${params.toString()}'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching notifications');
@@ -77,7 +78,7 @@ export default function NotificationsPage() {
   const { data: settings } = useQuery<NotificationSettings>({
     queryKey: ['notification-settings', user?.id],
     queryFn: async () => {
-      const response = await fetch('/api/notification-settings', {
+      const response = await fetch(buildApiUrl('/api/notification-settings'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching notification settings');
@@ -89,7 +90,7 @@ export default function NotificationsPage() {
   // Mutación para marcar como leída
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/notifications/${id}/read`, {
+      const response = await fetch(buildApiUrl('/api/notifications/${id}/read'), {
         method: 'PUT',
         credentials: 'include',
       });
@@ -104,7 +105,7 @@ export default function NotificationsPage() {
   // Mutación para marcar todas como leídas
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/notifications/read-all', {
+      const response = await fetch(buildApiUrl('/api/notifications/read-all'), {
         method: 'PUT',
         credentials: 'include',
       });
@@ -123,7 +124,7 @@ export default function NotificationsPage() {
   // Mutación para eliminar notificación
   const deleteNotificationMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/notifications/${id}`, {
+      const response = await fetch(buildApiUrl('/api/notifications/${id}'), {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -141,7 +142,7 @@ export default function NotificationsPage() {
   // Mutación para actualizar configuración
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: Partial<NotificationSettings>) => {
-      const response = await fetch('/api/notifications/settings', {
+      const response = await fetch(buildApiUrl('/api/notifications/settings'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

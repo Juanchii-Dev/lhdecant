@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { buildApiUrl } from "../config/api";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Heart, Trash2, ShoppingCart, Star } from 'lucide-react';
@@ -33,7 +34,7 @@ export default function FavoritesPage() {
   const { data: favorites = [], isLoading } = useQuery({
     queryKey: ['favorites', user?.id],
     queryFn: async () => {
-      const response = await fetch('/api/favorites', {
+      const response = await fetch(buildApiUrl('/api/favorites'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching favorites');
@@ -45,7 +46,7 @@ export default function FavoritesPage() {
   // Mutación para eliminar favoritos
   const removeFavoriteMutation = useMutation({
     mutationFn: async (favoriteId: string) => {
-      const response = await fetch(`/api/favorites/${favoriteId}`, {
+      const response = await fetch(buildApiUrl('/api/favorites/${favoriteId}'), {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -71,7 +72,7 @@ export default function FavoritesPage() {
   // Mutación para agregar al carrito
   const addToCartMutation = useMutation({
     mutationFn: async (perfumeId: string) => {
-      const response = await fetch('/api/cart', {
+      const response = await fetch(buildApiUrl('/api/cart'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

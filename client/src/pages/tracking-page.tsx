@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { buildApiUrl } from "../config/api";
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Package, Truck, CheckCircle, Clock, MapPin, Search } from 'lucide-react';
@@ -44,7 +45,7 @@ export default function TrackingPage() {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/tracking?email=${user?.email}`, {
+      const response = await fetch(buildApiUrl('/api/tracking?email=${user?.email}'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching orders');
@@ -57,7 +58,7 @@ export default function TrackingPage() {
   const { data: trackingData, isLoading: trackingLoading } = useQuery({
     queryKey: ['tracking', trackingNumber],
     queryFn: async () => {
-      const response = await fetch(`/api/tracking/${trackingNumber}?email=${user?.email}`, {
+      const response = await fetch(buildApiUrl('/api/tracking/${trackingNumber}?email=${user?.email}'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching tracking data');

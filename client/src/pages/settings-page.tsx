@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { buildApiUrl } from "../config/api";
 import { useAuth } from '../hooks/use-auth';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getQueryFn } from '../lib/queryClient';
@@ -128,7 +129,7 @@ export default function SettingsPage() {
   const { data: settings = defaultSettings, isLoading } = useQuery({
     queryKey: ['user-settings'],
     queryFn: async () => {
-      const response = await fetch('/api/user-settings', {
+      const response = await fetch(buildApiUrl('/api/user-settings'), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching user settings');
@@ -140,7 +141,7 @@ export default function SettingsPage() {
   // Mutación para actualizar configuraciones
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: Partial<Settings>) => {
-      const response = await fetch('/api/user/settings', {
+      const response = await fetch(buildApiUrl('/api/user/settings'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSettings),
@@ -170,7 +171,7 @@ export default function SettingsPage() {
       if (newPassword !== confirmPassword) {
         throw new Error('Las contraseñas no coinciden');
       }
-      const response = await fetch('/api/user/change-password', {
+      const response = await fetch(buildApiUrl('/api/user/change-password'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -202,7 +203,7 @@ export default function SettingsPage() {
   // Mutación para exportar datos
   const exportDataMutation = useMutation({
     mutationFn: async (format: string) => {
-      const response = await fetch(`/api/user/export-data?format=${format}`, {
+      const response = await fetch(buildApiUrl('/api/user/export-data?format=${format}'), {
         method: 'GET',
       });
       if (!response.ok) throw new Error('Error al exportar datos');
@@ -236,7 +237,7 @@ export default function SettingsPage() {
   // Mutación para eliminar cuenta
   const deleteAccountMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/user/delete-account', {
+      const response = await fetch(buildApiUrl('/api/user/delete-account'), {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: currentPassword }),

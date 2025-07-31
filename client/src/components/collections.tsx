@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { buildApiUrl } from "../config/api";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { useToast } from "../hooks/use-toast";
@@ -13,7 +14,7 @@ export default function Collections() {
   const { data: collections, isLoading } = useQuery({
     queryKey: ["/api/collections"],
     queryFn: async () => {
-      const response = await fetch('/api/collections');
+      const response = await fetch(buildApiUrl('/api/collections'));
       if (!response.ok) {
         throw new Error('Failed to fetch collections');
       }
