@@ -1,8 +1,5 @@
-# Forzar redirección del subdominio de Netlify al dominio personalizado
-https://imaginative-peony-206bd8.netlify.app/* https://lhdecant.com/:splat 301!
-
-# Redirecciones de API al backend
+# Redirecciones de API al backend - DEBE IR PRIMERO
 /api/* https://lhdecant-backend.onrender.com/api/:splat 200!
 
-# Redirección general para SPA
+# Redirección general para SPA - DEBE IR DESPUÉS
 /* /index.html 200 
