@@ -18,14 +18,19 @@ export default function CatalogPage() {
   const { toast } = useToast();
   const { addToCart } = useAddToCart();
 
-  const { data: perfumes, isLoading } = useQuery({
+  const { data: perfumes, isLoading, error } = useQuery({
     queryKey: ["/api/perfumes"],
     queryFn: async () => {
+      console.log('🔄 Fetching perfumes...'); // Debug log
       const response = await fetch(buildApiUrl('/api/perfumes'));
+      console.log('📡 Response status:', response.status); // Debug log
       if (!response.ok) {
+        console.error('❌ Failed to fetch perfumes:', response.status, response.statusText); // Debug log
         throw new Error('Failed to fetch perfumes');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('✅ Perfumes loaded:', data.length, 'items'); // Debug log
+      return data;
     },
   });
 
@@ -103,6 +108,21 @@ export default function CatalogPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
           <p>Cargando catálogo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-2xl mb-4">❌ Error al cargar perfumes</div>
+          <div className="text-red-400 mb-4">{error.message}</div>
+          <div className="text-gray-400 text-sm">
+            <div>API URL: {buildApiUrl('/api/perfumes')}</div>
+            <div>Backend Status: Verificando...</div>
+          </div>
         </div>
       </div>
     );

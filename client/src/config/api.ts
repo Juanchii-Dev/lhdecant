@@ -1,7 +1,7 @@
 // Configuración de API para el frontend
 export const API_CONFIG = {
-  // URL base de la API
-  BASE_URL: import.meta.env.VITE_API_URL || 'https://lhdecant-backend.onrender.com',
+  // URL base de la API - FORZADA para producción
+  BASE_URL: 'https://lhdecant-backend.onrender.com',
   
   // Endpoints específicos
   ENDPOINTS: {
@@ -27,7 +27,9 @@ export const API_CONFIG = {
 
 // Función helper para construir URLs completas
 export const buildApiUrl = (endpoint: string): string => {
-  return `${API_CONFIG.BASE_URL}${endpoint}`;
+  const url = `${API_CONFIG.BASE_URL}${endpoint}`;
+  console.log('🔗 API URL:', url); // Debug log
+  return url;
 };
 
 // Función helper para hacer requests a la API
