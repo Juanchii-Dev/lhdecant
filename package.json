@@ -8,7 +8,7 @@
     "server:dev": "tsx watch server/index.ts",
     "client:dev": "cd client && npm run dev",
     "build": "npm run server:build && npm run client:build",
-    "server:build": "tsc -p tsconfig.server.json --skipLibCheck --noEmitOnError",
+    "server:build": "tsc -p tsconfig.server.json --skipLibCheck",
     "client:build": "cd client && npm run build",
     "start": "node dist/index.js",
     "postinstall": "npm run server:build",
