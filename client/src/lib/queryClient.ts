@@ -30,8 +30,6 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    console.log('🔍 Fetching:', queryKey[0]);
-    
     const res = await fetch(buildApiUrl(queryKey[0] as string), {
       credentials: "include",
       headers: {
@@ -39,9 +37,6 @@ export const getQueryFn: <T>(options: {
         'Content-Type': 'application/json',
       },
     });
-
-    console.log('📡 Response status:', res.status, 'for', queryKey[0]);
-    console.log('🍪 Cookies enviadas:', document.cookie ? 'Sí' : 'No');
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       console.log('❌ 401 Unauthorized, returning null for', queryKey[0]);

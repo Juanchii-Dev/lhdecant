@@ -44,7 +44,7 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
     },
   };
   
-  console.log('🍪 API Request - Cookies disponibles:', document.cookie ? 'Sí' : 'No');
+  
   
   try {
     const response = await fetch(url, config);

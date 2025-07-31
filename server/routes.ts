@@ -306,6 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user', (req, res) => {
     console.log('🔍 /api/user - Headers recibidos:', req.headers);
     console.log('🍪 /api/user - Cookies recibidas:', req.cookies);
+    console.log('🔐 /api/user - Session ID:', req.sessionID);
     console.log('🔐 /api/user - Session:', req.session);
     console.log('👤 /api/user - req.user:', req.user);
     console.log('✅ /api/user - req.isAuthenticated():', req.isAuthenticated());
@@ -324,6 +325,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     console.log('❌ /api/user - Usuario NO autenticado');
     return res.status(401).json({ message: 'Authentication required' });
+  });
+
+  // Endpoint de prueba para crear sesión manual
+  app.get('/api/test-session', (req, res) => {
+    console.log('🧪 Creando sesión de prueba...');
+    
+    // Crear sesión de prueba
+    (req.session as any).user = {
+      id: 'test-user-123',
+      username: 'test@example.com',
+      email: 'test@example.com',
+      name: 'Usuario de Prueba',
+      avatar: null
+    };
+    (req.session as any).isAuthenticated = true;
+    
+    req.session.save((err) => {
+      if (err) {
+        console.error('❌ Error al guardar sesión de prueba:', err);
+        return res.status(500).json({ error: 'Error al guardar sesión' });
+      }
+      
+      console.log('✅ Sesión de prueba creada:', req.sessionID);
+      res.json({ 
+        message: 'Sesión de prueba creada',
+        sessionId: req.sessionID,
+        user: (req.session as any).user
+      });
+    });
   });
 
 

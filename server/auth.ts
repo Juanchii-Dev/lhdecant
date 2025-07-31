@@ -52,11 +52,11 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     // store: storage.sessionStore, // Comentado temporalmente para evitar errores de tipos
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // true en producción
+      secure: false, // Cambiado a false para evitar problemas con HTTPS
       httpOnly: true,
-      sameSite: 'none' as const, // CRÍTICO para cross-origin
+      sameSite: 'lax' as const, // Cambiado a lax para mejor compatibilidad
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      domain: process.env.NODE_ENV === 'production' ? '.lhdecant.com' : undefined
+      // domain comentado temporalmente
     }
   };
 
@@ -255,6 +255,15 @@ export function setupAuth(app: Express) {
         // Marcar como autenticado
         (req.session as any).isAuthenticated = true;
         
+        console.log('🍪 Configuración de cookie:', {
+          sessionId: req.sessionID,
+          secure: req.session.cookie.secure,
+          sameSite: req.session.cookie.sameSite,
+          domain: req.session.cookie.domain,
+          httpOnly: req.session.cookie.httpOnly,
+          maxAge: req.session.cookie.maxAge
+        });
+        
         // Guardar la sesión
         req.session.save((err) => {
           if (err) {
@@ -263,14 +272,6 @@ export function setupAuth(app: Express) {
           }
           
           console.log('✅ Sesión guardada exitosamente para:', user.email);
-          console.log('🍪 Cookie de sesión configurada:', {
-            sessionId: req.sessionID,
-            cookie: req.session.cookie,
-            secure: req.session.cookie.secure,
-            sameSite: req.session.cookie.sameSite,
-            domain: req.session.cookie.domain,
-            httpOnly: req.session.cookie.httpOnly
-          });
           console.log('🎯 Redirigiendo a la aplicación...');
           
           // Redirigir al frontend

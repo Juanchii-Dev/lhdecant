@@ -33,7 +33,10 @@ function GlobalAuthCheck() {
   const { user } = useAuthRefresh();
   
   React.useEffect(() => {
-    console.log('👤 GlobalAuthCheck - Estado de usuario:', user ? 'Autenticado' : 'No autenticado');
+    // Solo loggear si hay cambios importantes
+    if (user) {
+      console.log('✅ Usuario autenticado:', user.email);
+    }
   }, [user]);
   
   return null; // No renderiza nada

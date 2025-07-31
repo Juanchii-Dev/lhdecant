@@ -8,14 +8,12 @@ export function useAuthRefresh() {
 
   useEffect(() => {
     // Verificar autenticación inmediatamente al montar
-    console.log('🔄 useAuthRefresh - Verificación inicial');
     refetchUser();
     lastCheckRef.current = Date.now();
 
     // Verificar cuando la ventana vuelve a estar activa
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('🔄 useAuthRefresh - Ventana activa, verificando autenticación');
         refetchUser();
         lastCheckRef.current = Date.now();
       }
@@ -23,7 +21,6 @@ export function useAuthRefresh() {
 
     // Verificar cuando la página vuelve a estar enfocada
     const handleFocus = () => {
-      console.log('🔄 useAuthRefresh - Página enfocada, verificando autenticación');
       refetchUser();
       lastCheckRef.current = Date.now();
     };
@@ -42,7 +39,6 @@ export function useAuthRefresh() {
 
   // Función para forzar verificación inmediata
   const forceRefresh = () => {
-    console.log('🔄 useAuthRefresh - Forzando verificación inmediata');
     refetchUser();
     lastCheckRef.current = Date.now();
   };
