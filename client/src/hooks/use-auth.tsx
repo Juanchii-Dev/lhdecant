@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetchOnMount: true,
     refetchOnReconnect: true,
     staleTime: 0, // Cambiado a 0 para siempre verificar
-    cacheTime: 600000, // 10 minutos
+    gcTime: 600000, // 10 minutos (cacheTime fue renombrado a gcTime en React Query v5)
     enabled: true,
   });
 
@@ -122,21 +122,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Limpiar cache primero
     queryClient.removeQueries({ queryKey: ["/api/user"] });
     
-    // Verificar múltiples veces para asegurar que se detecte
+    // Verificar inmediatamente y luego múltiples veces
+    refetchUser();
+    
     setTimeout(() => {
       console.log('🔄 Primera verificación...');
       refetchUser();
-    }, 500);
+    }, 1000);
     
     setTimeout(() => {
       console.log('🔄 Segunda verificación...');
       refetchUser();
-    }, 1500);
+    }, 3000);
     
     setTimeout(() => {
       console.log('🔄 Tercera verificación...');
       refetchUser();
-    }, 3000);
+    }, 5000);
+    
+    // Verificación adicional después de 10 segundos
+    setTimeout(() => {
+      console.log('🔄 Verificación final...');
+      refetchUser();
+    }, 10000);
   };
 
   return (

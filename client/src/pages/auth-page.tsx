@@ -38,16 +38,24 @@ export default function AuthPage() {
     const isFromGoogle = referrer.includes('accounts.google.com');
     const isFromLhDecant = referrer.includes('lhdecant.com');
     const isDirectAccess = !referrer || referrer === '';
+    const currentUrl = window.location.href;
+    const isCleanUrl = currentUrl === 'https://lhdecant.com/' || currentUrl === 'https://lhdecant.com/auth';
     
     console.log('🔍 Auth check conditions:', {
       shouldCheckAuth,
       isFromGoogle,
       isFromLhDecant,
       isDirectAccess,
-      referrer
+      isCleanUrl,
+      referrer,
+      currentUrl
     });
     
-    if (shouldCheckAuth && (isFromGoogle || isFromLhDecant || isDirectAccess)) {
+    // Verificar autenticación si:
+    // 1. No hay errores y es una URL limpia
+    // 2. Viene de Google OAuth
+    // 3. Es acceso directo después de login
+    if ((shouldCheckAuth && isCleanUrl) || isFromGoogle || (isDirectAccess && isCleanUrl)) {
       console.log('🔄 Detectado posible retorno de Google OAuth, verificando autenticación...');
       checkAuthAfterOAuth();
     }

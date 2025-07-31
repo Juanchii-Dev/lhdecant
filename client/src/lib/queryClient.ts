@@ -37,10 +37,13 @@ export const getQueryFn: <T>(options: {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
       },
     });
 
     console.log('📡 Response status:', res.status, 'for', queryKey[0]);
+    console.log('🍪 Cookies enviadas:', document.cookie ? 'Sí' : 'No');
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       console.log('❌ 401 Unauthorized, returning null for', queryKey[0]);

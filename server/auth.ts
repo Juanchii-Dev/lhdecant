@@ -49,12 +49,14 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'lhdecants-secret-key-2024',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Cambiado a false para evitar crear sesiones innecesarias
     // store: storage.sessionStore, // Comentado temporalmente para evitar errores de tipos
     cookie: {
-      secure: false,
+      secure: process.env.NODE_ENV === 'production', // true en producción
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      sameSite: 'lax' as const, // Mejor compatibilidad con CORS
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      domain: process.env.NODE_ENV === 'production' ? '.lhdecant.com' : undefined
     }
   };
 

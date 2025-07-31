@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import { useState, useEffect } from "react";
 import { buildApiUrl } from "../config/api";
 import { useAuth } from "../hooks/use-auth";

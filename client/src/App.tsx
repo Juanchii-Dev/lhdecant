@@ -26,25 +26,22 @@ import NotificationsPage from "./pages/notifications-page";
 import CollectionsPage from "./pages/collections-page";
 import CheckoutPage from "./pages/checkout-page";
 import SuccessPage from "./pages/success-page";
-import { useAuth } from "./hooks/use-auth";
+import { useAuthRefresh } from "./hooks/use-auth-refresh";
 
 // Componente para verificación global de autenticación
 function GlobalAuthCheck() {
-  const { user, refetchUser } = useAuth();
+  const { user, forceRefresh } = useAuthRefresh();
   
+  // Verificar cuando cambia la URL (después de login)
   React.useEffect(() => {
-    // Verificar autenticación al cargar la app
-    console.log('🌐 GlobalAuthCheck - Verificando autenticación inicial...');
-    refetchUser();
+    const handleUrlChange = () => {
+      console.log('🌐 GlobalAuthCheck - URL cambió, verificando autenticación...');
+      forceRefresh();
+    };
     
-    // Verificar cada 30 segundos para detectar cambios de sesión
-    const interval = setInterval(() => {
-      console.log('🔄 GlobalAuthCheck - Verificación periódica...');
-      refetchUser();
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [refetchUser]);
+    window.addEventListener('popstate', handleUrlChange);
+    return () => window.removeEventListener('popstate', handleUrlChange);
+  }, [forceRefresh]);
   
   React.useEffect(() => {
     console.log('👤 GlobalAuthCheck - Estado de usuario:', user ? 'Autenticado' : 'No autenticado');

@@ -38,7 +38,15 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
   const config = {
     ...API_CONFIG.REQUEST_CONFIG,
     ...options,
+    headers: {
+      ...API_CONFIG.REQUEST_CONFIG.headers,
+      ...options.headers,
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+    },
   };
+  
+  console.log('🍪 API Request - Cookies disponibles:', document.cookie ? 'Sí' : 'No');
   
   try {
     const response = await fetch(url, config);
