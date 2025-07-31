@@ -14,8 +14,7 @@
     "resolveJsonModule": true,
     "noEmitOnError": false,
     "allowJs": true,
-    "checkJs": false,
-    "types": ["node"]
+    "checkJs": false
   },
   "include": ["server/**/*"],
   "exclude": ["node_modules", "dist", "server/seed-*.ts", "server/add-*.ts"]
