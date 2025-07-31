@@ -1,7 +1,7 @@
 // Configuración de API para el frontend
 export const API_CONFIG = {
   // URL base de la API
-  BASE_URL: import.meta.env.VITE_API_URL || 'https://lhdecant.com',
+  BASE_URL: import.meta.env.VITE_API_URL || 'https://lhdecant-backend.onrender.com',
   
   // Endpoints específicos
   ENDPOINTS: {
