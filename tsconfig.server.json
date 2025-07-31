@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "lib": ["ES2020", "DOM"],
+    "lib": ["ES2020"],
     "outDir": "./dist",
     "rootDir": "./",
     "strict": false,
@@ -14,7 +14,8 @@
     "resolveJsonModule": true,
     "noEmitOnError": false,
     "allowJs": true,
-    "checkJs": false
+    "checkJs": false,
+    "types": ["node"]
   },
   "include": ["server/**/*"],
   "exclude": ["node_modules", "dist", "server/seed-*.ts", "server/add-*.ts"]
