@@ -237,14 +237,30 @@ export function setupAuth(app: Express) {
           }
         }
         
-        // Paso 4: Crear sesión
-        req.login(user, (err) => {
+        // Paso 4: Crear sesión MANUALMENTE
+        console.log('🔐 Configurando sesión para usuario:', user.email);
+        
+        // Guardar usuario en la sesión
+        (req.session as any).user = {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          name: user.name,
+          googleId: user.googleId,
+          avatar: user.avatar
+        };
+        
+        // Marcar como autenticado
+        (req.session as any).isAuthenticated = true;
+        
+        // Guardar la sesión
+        req.session.save((err) => {
           if (err) {
-            console.error('❌ Error al crear sesión:', err);
-            return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=Error al crear sesión`);
+            console.error('❌ Error al guardar sesión:', err);
+            return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=Error al guardar sesión`);
           }
           
-          console.log('✅ Sesión creada exitosamente para:', user.email);
+          console.log('✅ Sesión guardada exitosamente para:', user.email);
           console.log('🎯 Redirigiendo a la aplicación...');
           
           // Redirigir al frontend

@@ -31,10 +31,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Middleware to check if user is authenticated for admin routes
   const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Authentication required" });
+    // Verificar sesión manual (Google OAuth)
+    if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
+      return next();
     }
-    next();
+    
+    // Verificar autenticación de Passport (login normal)
+    if (req.isAuthenticated()) {
+      return next();
+    }
+    
+    return res.status(401).json({ message: "Authentication required" });
   };
 
   // Admin authentication endpoint
@@ -254,10 +261,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User routes
   app.get('/api/user', (req, res) => {
-    if (!req.session || !(req.session as any).user) {
-      return res.status(401).json({ message: 'Authentication required' });
+    // Verificar sesión manual (Google OAuth)
+    if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
+      return res.json((req.session as any).user);
     }
-    res.json((req.session as any).user);
+    
+    // Verificar autenticación de Passport (login normal)
+    if (req.isAuthenticated() && req.user) {
+      return res.json(req.user);
+    }
+    
+    return res.status(401).json({ message: 'Authentication required' });
   });
 
 
