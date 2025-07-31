@@ -179,7 +179,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart routes
   app.post("/api/cart", requireAuth, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      // Obtener userId de sesión manual (Google OAuth) o Passport
+      let userId;
+      if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
+        userId = (req.session as any).user.id;
+      } else if (req.user) {
+        userId = req.user.id;
+      }
+      
       console.log('Adding to cart with userId:', userId);
       if (!userId) {
         return res.status(401).json({ message: "Usuario no autenticado" });
@@ -194,7 +201,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/cart", requireAuth, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      // Obtener userId de sesión manual (Google OAuth) o Passport
+      let userId;
+      if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
+        userId = (req.session as any).user.id;
+      } else if (req.user) {
+        userId = req.user.id;
+      }
+      
       console.log('Getting cart with userId:', userId);
       if (!userId) {
         return res.status(401).json({ message: "Usuario no autenticado" });
@@ -212,7 +226,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = req.params.id;
       const { quantity } = req.body;
-      const userId = req.user?.id;
+      
+      // Obtener userId de sesión manual (Google OAuth) o Passport
+      let userId;
+      if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
+        userId = (req.session as any).user.id;
+      } else if (req.user) {
+        userId = req.user.id;
+      }
       
       if (!userId) {
         return res.status(401).json({ message: "Usuario no autenticado" });
@@ -229,7 +250,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/cart/:id", requireAuth, async (req, res) => {
     try {
       const id = req.params.id;
-      const userId = req.user?.id;
+      
+      // Obtener userId de sesión manual (Google OAuth) o Passport
+      let userId;
+      if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
+        userId = (req.session as any).user.id;
+      } else if (req.user) {
+        userId = req.user.id;
+      }
       
       if (!userId) {
         return res.status(401).json({ message: "Usuario no autenticado" });
@@ -245,7 +273,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart", requireAuth, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      // Obtener userId de sesión manual (Google OAuth) o Passport
+      let userId;
+      if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
+        userId = (req.session as any).user.id;
+      } else if (req.user) {
+        userId = req.user.id;
+      }
       
       if (!userId) {
         return res.status(401).json({ message: "Usuario no autenticado" });
