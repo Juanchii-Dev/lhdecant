@@ -40,8 +40,13 @@ app.use((req, res, next) => {
   ];
   
   const origin = req.headers.origin;
+  console.log('🌐 CORS Request from origin:', origin); // Debug log
+  
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
+    console.log('✅ CORS allowed for origin:', origin); // Debug log
+  } else {
+    console.log('❌ CORS blocked for origin:', origin); // Debug log
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -97,6 +102,26 @@ app.use((req, res, next) => {
       status: 'ok', 
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  // Debug endpoint para verificar CORS
+  app.get('/api/debug/cors', (req, res) => {
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'https://lhdecant.netlify.app',
+      'https://www.lhdecant.netlify.app',
+      'https://lhdecant.com',
+      'https://www.lhdecant.com'
+    ];
+    
+    res.json({
+      origin: origin,
+      allowedOrigins: allowedOrigins,
+      isAllowed: origin ? allowedOrigins.includes(origin) : false,
+      headers: req.headers,
+      timestamp: new Date().toISOString()
     });
   });
 
