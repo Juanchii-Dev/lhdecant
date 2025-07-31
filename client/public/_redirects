@@ -1,0 +1,5 @@
+# Redirecciones de API al backend
+/api/* https://lhdecant-backend.onrender.com/api/:splat 200!
+
+# Redirección general para SPA
+/* /index.html 200 
