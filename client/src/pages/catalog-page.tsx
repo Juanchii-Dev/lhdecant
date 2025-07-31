@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useToast } from "../hooks/use-toast";
 import { useAddToCart } from "../hooks/use-add-to-cart";
 import { useQuery } from "@tanstack/react-query";
+import { buildApiUrl } from "../config/api";
 
 export default function CatalogPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,7 +21,7 @@ export default function CatalogPage() {
   const { data: perfumes, isLoading } = useQuery({
     queryKey: ["/api/perfumes"],
     queryFn: async () => {
-      const response = await fetch('/api/perfumes');
+      const response = await fetch(buildApiUrl('/api/perfumes'));
       if (!response.ok) {
         throw new Error('Failed to fetch perfumes');
       }

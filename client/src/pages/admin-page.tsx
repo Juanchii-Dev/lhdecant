@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 // Removido useAuth para evitar conflictos con autenticación de admin
 import { useToast } from "../hooks/use-toast";
+import { buildApiUrl } from "../config/api";
 import { Button } from "../components/ui/button";
 import { Upload } from "lucide-react";
 import { Input } from "../components/ui/input";
@@ -192,7 +193,7 @@ export default function AdminPage() {
   const { data: perfumes = [] } = useQuery<Perfume[]>({
     queryKey: ["perfumes"],
     queryFn: async () => {
-      const response = await fetch("/api/perfumes", {
+      const response = await fetch(buildApiUrl("/api/perfumes"), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching perfumes");
@@ -204,7 +205,7 @@ export default function AdminPage() {
   const { data: collections = [] } = useQuery<Collection[]>({
     queryKey: ["collections"],
     queryFn: async () => {
-      const response = await fetch("/api/collections", {
+      const response = await fetch(buildApiUrl("/api/collections"), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching collections");
@@ -216,7 +217,7 @@ export default function AdminPage() {
   const { data: dashboardStats } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/dashboard-stats", {
+      const response = await fetch(buildApiUrl("/api/admin/dashboard-stats"), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching dashboard stats");
@@ -228,7 +229,7 @@ export default function AdminPage() {
   const { data: recentOrders } = useQuery<Order[]>({
     queryKey: ["recent-orders"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/recent-orders", {
+      const response = await fetch(buildApiUrl("/api/admin/recent-orders"), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching recent orders");
@@ -240,7 +241,7 @@ export default function AdminPage() {
   const { data: popularPerfumes } = useQuery<Perfume[]>({
     queryKey: ["popular-perfumes"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/popular-perfumes", {
+      const response = await fetch(buildApiUrl("/api/admin/popular-perfumes"), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching popular perfumes");
@@ -252,7 +253,7 @@ export default function AdminPage() {
   const { data: contactMessages } = useQuery<ContactMessage[]>({
     queryKey: ["contact-messages"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/contact-messages", {
+      const response = await fetch(buildApiUrl("/api/admin/contact-messages"), {
         credentials: "include"
       });
       if (!response.ok) throw new Error("Error fetching contact messages");
@@ -325,7 +326,7 @@ export default function AdminPage() {
   // Mutations
   const createPerfumeMutation = useMutation({
     mutationFn: async (data: InsertPerfume) => {
-      const response = await fetch("/api/perfumes", {
+      const response = await fetch(buildApiUrl("/api/perfumes"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -346,7 +347,7 @@ export default function AdminPage() {
 
   const updatePerfumeMutation = useMutation({
     mutationFn: async (data: { id: string } & Partial<InsertPerfume>) => {
-      const response = await fetch(`/api/perfumes/${data.id}`, {
+      const response = await fetch(buildApiUrl(`/api/perfumes/${data.id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -368,7 +369,7 @@ export default function AdminPage() {
 
   const deletePerfumeMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/perfumes/${id}`, {
+      const response = await fetch(buildApiUrl(`/api/perfumes/${id}`), {
         method: "DELETE",
         credentials: "include"
       });

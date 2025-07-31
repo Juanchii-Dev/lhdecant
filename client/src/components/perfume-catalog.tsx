@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
-import { getQueryFn } from "../lib/queryClient";
+import { buildApiUrl } from "../config/api";
 import PerfumeCard from "./perfume-card";
 
 export default function PerfumeCatalog() {
@@ -12,7 +12,13 @@ export default function PerfumeCatalog() {
 
   const { data: perfumes = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/perfumes/homepage"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch(buildApiUrl('/api/perfumes/homepage'));
+      if (!response.ok) {
+        throw new Error('Failed to fetch perfumes');
+      }
+      return response.json();
+    },
   });
 
   const filteredPerfumes = perfumes;
