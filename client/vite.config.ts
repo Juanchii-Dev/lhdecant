@@ -24,7 +24,12 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000,
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096,
+  },
+  css: {
+    devSourcemap: false,
   },
   server: {
     port: 5173,
@@ -35,5 +40,8 @@ export default defineConfig({
         secure: false,
       },
     },
+  },
+  define: {
+    __DEV__: false,
   },
 }) 

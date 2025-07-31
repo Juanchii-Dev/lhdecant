@@ -32,7 +32,11 @@ if (process.env.NODE_ENV === 'production') {
 // CORS ULTRA PERMISIVO - SOLUCIÓN DEFINITIVA
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  console.log('🌐 CORS Request from origin:', origin);
+  
+  // Solo loggear si hay un origen definido para evitar spam
+  if (origin) {
+    console.log('🌐 CORS Request from origin:', origin);
+  }
   
   // PERMITIR TODOS LOS ORÍGENES SIN EXCEPCIÓN
   res.header('Access-Control-Allow-Origin', origin || '*');
@@ -41,7 +45,10 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Max-Age', '86400');
   
-  console.log('✅ CORS headers set for origin:', origin);
+  // Solo loggear si hay un origen definido
+  if (origin) {
+    console.log('✅ CORS headers set for origin:', origin);
+  }
   
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);

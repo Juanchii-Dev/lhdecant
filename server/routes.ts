@@ -260,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Error occurred" });
-      return;
+        return;
     }
   });
 
@@ -276,7 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/health', (_req, res) => {
     res.json({ 
       status: 'ok', 
-      timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
       cors: 'ultra-permissive',
       version: '2.0.0'
@@ -286,8 +286,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Debug endpoint para verificar CORS
   app.get('/api/debug/cors', (req, res) => {
     const origin = req.headers.origin;
-    
-    res.json({
+      
+      res.json({ 
       origin: origin,
       corsHeaders: {
         'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
@@ -302,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Debug endpoint para verificar variables de entorno
   app.get('/api/debug/env', (req, res) => {
-    res.json({
+      res.json({
       NODE_ENV: process.env.NODE_ENV,
       GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
       GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? '***SET***' : 'NOT_SET',
