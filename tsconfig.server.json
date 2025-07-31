@@ -1,11 +1,15 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "lib": ["ES2020"],
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
     "outDir": "./dist",
-    "rootDir": "./",
-    "strict": false,
+    "rootDir": "./server",
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -17,6 +21,18 @@
     "allowJs": true,
     "checkJs": false
   },
-  "include": ["server/**/*"],
-  "exclude": ["node_modules", "dist", "server/seed-*.ts", "server/add-*.ts"]
-} 
+  "include": [
+    "server/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "client",
+    "dist",
+    "**/*.js",
+    "add-*.js",
+    "check-*.js",
+    "clean-*.js",
+    "test-*.js",
+    "verify-*.js"
+  ]
+}

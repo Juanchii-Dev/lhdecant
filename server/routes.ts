@@ -730,7 +730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Clear cart after successful order
       const sessionId = req.sessionID || `guest_${Date.now()}`;
-      await storage.clearCart(sessionId);
+      await storage.clearCart(sessionId || '');
       
       res.status(201).json(order);
     } catch (error) {
@@ -1464,15 +1464,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error creando sesión de Stripe:', error);
       
       // Manejo específico de errores de Stripe
-      if (error.type === 'StripeCardError') {
+      if ((error as any).type === 'StripeCardError') {
         return res.status(400).json({ 
           message: 'Error con la tarjeta de crédito. Verifica los datos.' 
         });
-      } else if (error.type === 'StripeInvalidRequestError') {
+      } else if ((error as any).type === 'StripeInvalidRequestError') {
         return res.status(400).json({ 
           message: 'Datos de pago inválidos. Verifica la información.' 
         });
-      } else if (error.type === 'StripeAPIError') {
+      } else if ((error as any).type === 'StripeAPIError') {
         return res.status(500).json({ 
           message: 'Error del servidor de pagos. Intenta más tarde.' 
         });
@@ -1493,16 +1493,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       event = stripe.webhooks.constructEvent(req.body, sig!, process.env.STRIPE_WEBHOOK_SECRET!);
     } catch (err) {
       console.error('Webhook signature error:', err);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+      return res.status(400).send(`Webhook Error: ${(err as any).message}`);
     }
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      const sessionId = session.metadata.sessionId;
+      const sessionId = session.metadata?.sessionId;
       
       try {
       // Obtener carrito y datos del cliente
-      const items = await storage.getCartItems(sessionId);
+      const items = await storage.getCartItems(sessionId || '');
         if (!items.length) {
           console.error('Carrito vacío en webhook para sesión:', sessionId);
           return res.status(400).json({ error: 'Carrito vacío' });
@@ -1516,7 +1516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error(`Stock insuficiente para ${(item as any).name} en sesión:`, sessionId);
             // Reembolsar automáticamente si no hay stock
             await stripe.refunds.create({
-              payment_intent: session.payment_intent,
+              payment_intent: session.payment_intent as string,
               reason: 'requested_by_customer'
             });
             return res.status(400).json({ 
@@ -1528,13 +1528,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const orderData = {
         customer_email: session.customer_email,
-        amount_total: session.amount_total / 100,
+        amount_total: (session.amount_total || 0) / 100,
         currency: session.currency,
-        payment_intent: session.payment_intent,
+        payment_intent: session.payment_intent as string,
         stripe_session_id: session.id,
           status: 'paid',
-          shipping_address: session.shipping_address,
-          billing_address: session.billing_address,
+          shipping_address: (session as any).shipping_address,
+          billing_address: (session as any).billing_address,
         };
 
         // Crear orden en Firebase
@@ -1552,18 +1552,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Limpiar carrito
-        await storage.clearCart(sessionId);
+        await storage.clearCart(sessionId || '');
 
         // Enviar emails
         try {
           const resumen = validatedItems.map(i => 
-            `<li>${(i as any).name} (${(i as any).size}) x${(i as any).quantity} - ${(i as any).price} ${session.currency.toUpperCase()}</li>`
+            `<li>${(i as any).name} (${(i as any).size}) x${(i as any).quantity} - ${(i as any).price} ${(session.currency || 'USD').toUpperCase()}</li>`
           ).join('');
 
           // Email al cliente
         await transporter.sendMail({
             from: 'lhdecant@gmail.com',
-          to: session.customer_email,
+          to: session.customer_email || 'customer@example.com',
             subject: '¡Gracias por tu compra en LhDecant!',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -1571,7 +1571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <p>Tu pedido ha sido procesado exitosamente.</p>
                 <h3>Resumen de tu compra:</h3>
                 <ul>${resumen}</ul>
-                <p><strong>Total: ${orderData.amount_total} ${session.currency.toUpperCase()}</strong></p>
+                <p><strong>Total: ${orderData.amount_total} ${(session.currency || 'USD').toUpperCase()}</strong></p>
                 <p>Número de orden: <strong>${order.id}</strong></p>
                 <p>Te enviaremos un email cuando tu pedido esté listo para envío.</p>
                 <p>Gracias por elegir LhDecant!</p>
@@ -1591,11 +1591,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <p><strong>Orden:</strong> ${order.id}</p>
                 <h3>Productos:</h3>
                 <ul>${resumen}</ul>
-                <p><strong>Total: ${orderData.amount_total} ${session.currency.toUpperCase()}</strong></p>
+                <p><strong>Total: ${orderData.amount_total} ${(session.currency || 'USD').toUpperCase()}</strong></p>
                 <p><strong>Dirección de envío:</strong></p>
-                <p>${session.shipping_address?.line1 || ''}<br>
-                ${session.shipping_address?.city || ''}, ${session.shipping_address?.state || ''}<br>
-                ${session.shipping_address?.postal_code || ''}, ${session.shipping_address?.country || ''}</p>
+                <p>${(session as any).shipping_address?.line1 || ''}<br>
+                ${(session as any).shipping_address?.city || ''}, ${(session as any).shipping_address?.state || ''}<br>
+                ${(session as any).shipping_address?.postal_code || ''}, ${(session as any).shipping_address?.country || ''}</p>
               </div>
             `
           });
@@ -1613,7 +1613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Intentar reembolsar en caso de error
         try {
           await stripe.refunds.create({
-            payment_intent: session.payment_intent,
+            payment_intent: session.payment_intent as string,
             reason: 'requested_by_customer'
           });
           console.log('Reembolso procesado por error en webhook');
@@ -1653,7 +1653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionId: session.id,
         status: session.status,
         paymentStatus: session.payment_status,
-        amount: session.amount_total / 100,
+        amount: (session.amount_total || 0) / 100,
         currency: session.currency,
         customerEmail: session.customer_email,
         createdAt: new Date(session.created * 1000),
@@ -2158,14 +2158,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const perfumeData = perfumeDoc.data();
       await perfumeRef.delete();
       
-      console.log(`✅ Eliminado: ${perfumeData.name} - ${perfumeData.brand}`);
+      console.log(`✅ Eliminado: ${perfumeData?.name || 'Unknown'} - ${perfumeData?.brand || 'Unknown'}`);
       
       res.json({ 
         message: "Perfume eliminado exitosamente",
         deletedPerfume: {
           id,
-          name: perfumeData.name,
-          brand: perfumeData.brand
+          name: perfumeData?.name || 'Unknown',
+          brand: perfumeData?.brand || 'Unknown'
         }
       });
       

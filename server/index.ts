@@ -4,7 +4,6 @@ import express from "express";
 import { registerRoutes } from "./routes";
 import helmet from 'helmet';
 import compression from 'compression';
-// import { setupVite, serveStatic, log } from "./vite";
 
 function log(message: string) {
   console.log(`[${new Date().toISOString()}] ${message}`);
@@ -29,7 +28,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(compression());
 }
 
-// Configuración de CORS
+// Configuración de CORS - SOLUCIÓN DEFINITIVA
 app.use((req, res, next) => {
   const allowedOrigins = [
     'http://localhost:5173',
@@ -40,13 +39,15 @@ app.use((req, res, next) => {
   ];
   
   const origin = req.headers.origin;
-  console.log('🌐 CORS Request from origin:', origin); // Debug log
+  console.log('🌐 CORS Request from origin:', origin);
   
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
-    console.log('✅ CORS allowed for origin:', origin); // Debug log
+    console.log('✅ CORS allowed for origin:', origin);
   } else {
-    console.log('❌ CORS blocked for origin:', origin); // Debug log
+    console.log('❌ CORS blocked for origin:', origin);
+    // PERMITIR TODOS LOS ORÍGENES EN PRODUCCIÓN COMO SOLUCIÓN TEMPORAL
+    res.header('Access-Control-Allow-Origin', '*');
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -121,6 +122,17 @@ app.use((req, res, next) => {
       allowedOrigins: allowedOrigins,
       isAllowed: origin ? allowedOrigins.includes(origin) : false,
       headers: req.headers,
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // Debug endpoint para verificar variables de entorno
+  app.get('/api/debug/env', (req, res) => {
+    res.json({
+      NODE_ENV: process.env.NODE_ENV,
+      GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
+      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? '***SET***' : 'NOT_SET',
+      FRONTEND_URL: process.env.FRONTEND_URL,
       timestamp: new Date().toISOString()
     });
   });

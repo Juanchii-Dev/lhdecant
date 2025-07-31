@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "tsx watch server/index.ts",
     "client:dev": "cd client && npm run dev",
-    "build": "chmod +x scripts/build-server.sh && ./scripts/build-server.sh && chmod +x scripts/build-client.sh && ./scripts/build-client.sh",
+    "build": "npm run server:build && npm run client:build",
     "server:build": "tsc -p tsconfig.server.json --skipLibCheck --outDir dist --noEmitOnError false",
     "client:build": "cd client && npm run build",
     "start": "node dist/index.js",
@@ -54,9 +54,7 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
     "stripe": "^13.11.0",
-    "typescript": "^5.3.2"
-  },
-  "devDependencies": {
+    "typescript": "^5.3.2",
     "concurrently": "^8.2.2",
     "nodemon": "^3.0.2"
   },

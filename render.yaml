@@ -22,7 +22,7 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
-      - key: GOOGLE_REDIRECT_URI
+      - key: GOOGLE_CALLBACK_URL
         value: https://lhdecant.com/api/auth/google/callback
       - key: STRIPE_SECRET_KEY
         sync: false
@@ -39,8 +39,8 @@ services:
       - key: SMTP_FROM
         sync: false
       - key: FRONTEND_URL
-        value: https://lhdecant.netlify.app
+        value: https://lhdecant.com
       - key: RESET_PASSWORD_URL
-        value: https://lhdecant.netlify.app/reset-password
+        value: https://lhdecant.com/reset-password
       - key: ADMIN_EMAIL
-        value: lhdecant@gmail.com 
+        value: lhdecant@gmail.com

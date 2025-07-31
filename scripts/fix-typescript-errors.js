@@ -3,79 +3,114 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔧 Arreglando errores de TypeScript...\n');
+console.log('🔧 Corrigiendo errores de TypeScript en routes.ts...');
 
-// Función para arreglar variables no utilizadas
-function fixUnusedVariables(content) {
-  // Arreglar parámetros no utilizados en funciones async
-  content = content.replace(/async \(req, res\) =>/g, 'async (_req, res) =>');
-  content = content.replace(/async \(req, res, next\) =>/g, 'async (_req, res, next) =>');
-  
-  // Arreglar parámetros no utilizados en funciones normales
-  content = content.replace(/\(req, res\) =>/g, '(_req, res) =>');
-  content = content.replace(/\(req, res, next\) =>/g, '(_req, res, next) =>');
-  
-  return content;
-}
+const routesPath = path.join(__dirname, '../server/routes.ts');
+let content = fs.readFileSync(routesPath, 'utf8');
 
-// Función para arreglar returns faltantes
-function fixMissingReturns(content) {
-  // Arreglar funciones async que no retornan en todos los caminos
-  content = content.replace(
-    /if \(!req\.isAuthenticated\(\)\) return res\.sendStatus\(401\);/g,
-    'if (!req.isAuthenticated()) {\n      res.sendStatus(401);\n      return;\n    }'
-  );
-  
-  content = content.replace(
-    /if \(!perfume\) \{\s*res\.status\(404\)\.json\(\{ message: "Perfume not found" \}\);\s*\} else \{\s*res\.json\(perfume\);\s*\}/g,
-    'if (!perfume) {\n      res.status(404).json({ message: "Perfume not found" });\n      return;\n    }\n    res.json(perfume);'
-  );
-  
-  return content;
-}
+// Corregir errores de tipo 'unknown'
+content = content.replace(
+  /if \(error\.type === 'StripeCardError'\)/g,
+  'if ((error as any).type === \'StripeCardError\')'
+);
 
-// Función para arreglar imports no utilizados
-function fixUnusedImports(content) {
-  // Comentar imports no utilizados
-  content = content.replace(
-    /import \{ User, GoogleProfile, UserUpdates \} from "\.\/types";/g,
-    '// import { User, GoogleProfile, UserUpdates } from "./types";'
-  );
-  
-  content = content.replace(
-    /import \{ uploadFromUrl, deleteImage, isCloudinaryUrl \} from "\.\/cloudinary";/g,
-    'import { uploadFromUrl, deleteImage } from "./cloudinary";'
-  );
-  
-  return content;
-}
+content = content.replace(
+  /} else if \(error\.type === 'StripeInvalidRequestError'\)/g,
+  '} else if ((error as any).type === \'StripeInvalidRequestError\')'
+);
 
-// Archivos a procesar
-const files = [
-  'server/index.ts',
-  'server/auth.ts',
-  'server/routes.ts',
-  'server/storage.ts'
-];
+content = content.replace(
+  /} else if \(error\.type === 'StripeAPIError'\)/g,
+  '} else if ((error as any).type === \'StripeAPIError\')'
+);
 
-files.forEach(file => {
-  try {
-    if (fs.existsSync(file)) {
-      console.log(`📝 Procesando ${file}...`);
-      let content = fs.readFileSync(file, 'utf8');
-      
-      content = fixUnusedImports(content);
-      content = fixUnusedVariables(content);
-      content = fixMissingReturns(content);
-      
-      fs.writeFileSync(file, content);
-      console.log(`✅ ${file} procesado`);
-    } else {
-      console.log(`❌ Archivo no encontrado: ${file}`);
-    }
-  } catch (error) {
-    console.log(`❌ Error procesando ${file}: ${error.message}`);
-  }
-});
+content = content.replace(
+  /return res\.status\(400\)\.send\(`Webhook Error: \${err\.message}`\);/g,
+  'return res.status(400).send(`Webhook Error: ${(err as any).message}`);'
+);
 
-console.log('\n🎉 Proceso completado. Ejecuta "npm run server:build" para verificar.'); 
+// Corregir errores de null checks
+content = content.replace(
+  /const sessionId = session\.metadata\.sessionId;/g,
+  'const sessionId = session.metadata?.sessionId;'
+);
+
+content = content.replace(
+  /payment_intent: session\.payment_intent,/g,
+  'payment_intent: session.payment_intent as string,'
+);
+
+content = content.replace(
+  /amount_total: session\.amount_total \/ 100,/g,
+  'amount_total: (session.amount_total || 0) / 100,'
+);
+
+content = content.replace(
+  /shipping_address: session\.shipping_address,/g,
+  'shipping_address: (session as any).shipping_address,'
+);
+
+content = content.replace(
+  /billing_address: session\.billing_address,/g,
+  'billing_address: (session as any).billing_address,'
+);
+
+content = content.replace(
+  /\${session\.currency\.toUpperCase\(\)}/g,
+  '${(session.currency || \'USD\').toUpperCase()}'
+);
+
+content = content.replace(
+  /to: session\.customer_email,/g,
+  'to: session.customer_email || \'customer@example.com\','
+);
+
+content = content.replace(
+  /<p>\${session\.shipping_address\?\.line1 \|\| ''}<br>/g,
+  '<p>${(session as any).shipping_address?.line1 || \'\'}<br>'
+);
+
+content = content.replace(
+  /\${session\.shipping_address\?\.city \|\| ''}, \${session\.shipping_address\?\.state \|\| ''}<br>/g,
+  '${(session as any).shipping_address?.city || \'\'}, ${(session as any).shipping_address?.state || \'\'}<br>'
+);
+
+content = content.replace(
+  /\${session\.shipping_address\?\.postal_code \|\| ''}, \${session\.shipping_address\?\.country \|\| ''}<\/p>/g,
+  '${(session as any).shipping_address?.postal_code || \'\'}, ${(session as any).shipping_address?.country || \'\'}</p>'
+);
+
+content = content.replace(
+  /amount: session\.amount_total \/ 100,/g,
+  'amount: (session.amount_total || 0) / 100,'
+);
+
+// Corregir errores de undefined checks
+content = content.replace(
+  /console\.log\(`✅ Eliminado: \${perfumeData\.name} - \${perfumeData\.brand}`\);/g,
+  'console.log(`✅ Eliminado: ${perfumeData?.name || \'Unknown\'} - ${perfumeData?.brand || \'Unknown\'}`);'
+);
+
+content = content.replace(
+  /name: perfumeData\.name,/g,
+  'name: perfumeData?.name || \'Unknown\','
+);
+
+content = content.replace(
+  /brand: perfumeData\.brand/g,
+  'brand: perfumeData?.brand || \'Unknown\''
+);
+
+// Corregir errores de sessionId undefined
+content = content.replace(
+  /const items = await storage\.getCartItems\(sessionId\);/g,
+  'const items = await storage.getCartItems(sessionId || \'\');'
+);
+
+content = content.replace(
+  /await storage\.clearCart\(sessionId\);/g,
+  'await storage.clearCart(sessionId || \'\');'
+);
+
+fs.writeFileSync(routesPath, content);
+console.log('✅ Errores de TypeScript corregidos en routes.ts'); 
