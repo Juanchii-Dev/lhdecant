@@ -12,16 +12,6 @@ export function useAuthRefresh() {
     refetchUser();
     lastCheckRef.current = Date.now();
 
-    // Configurar verificación periódica cada 10 segundos
-    refreshIntervalRef.current = setInterval(() => {
-      const now = Date.now();
-      const timeSinceLastCheck = now - lastCheckRef.current;
-      
-      console.log('🔄 useAuthRefresh - Verificación periódica');
-      refetchUser();
-      lastCheckRef.current = now;
-    }, 10000);
-
     // Verificar cuando la ventana vuelve a estar activa
     const handleVisibilityChange = () => {
       if (!document.hidden) {

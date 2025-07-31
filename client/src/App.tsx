@@ -30,18 +30,7 @@ import { useAuthRefresh } from "./hooks/use-auth-refresh";
 
 // Componente para verificación global de autenticación
 function GlobalAuthCheck() {
-  const { user, forceRefresh } = useAuthRefresh();
-  
-  // Verificar cuando cambia la URL (después de login)
-  React.useEffect(() => {
-    const handleUrlChange = () => {
-      console.log('🌐 GlobalAuthCheck - URL cambió, verificando autenticación...');
-      forceRefresh();
-    };
-    
-    window.addEventListener('popstate', handleUrlChange);
-    return () => window.removeEventListener('popstate', handleUrlChange);
-  }, [forceRefresh]);
+  const { user } = useAuthRefresh();
   
   React.useEffect(() => {
     console.log('👤 GlobalAuthCheck - Estado de usuario:', user ? 'Autenticado' : 'No autenticado');

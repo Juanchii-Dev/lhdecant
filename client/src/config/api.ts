@@ -41,8 +41,6 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
     headers: {
       ...API_CONFIG.REQUEST_CONFIG.headers,
       ...options.headers,
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache',
     },
   };
   
