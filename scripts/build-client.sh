@@ -22,6 +22,16 @@ if ! npx vite --version &> /dev/null; then
 fi
 
 echo "🚀 Construyendo cliente con Vite..."
-npx vite build
+# Asegurar que todas las dependencias estén instaladas
+npm install
+
+# Verificar que Vite esté realmente disponible
+if [ ! -f "node_modules/.bin/vite" ]; then
+    echo "❌ Vite no está disponible después de npm install"
+    exit 1
+fi
+
+# Usar la ruta directa a Vite
+./node_modules/.bin/vite build
 
 echo "✅ Build del cliente completado" 
