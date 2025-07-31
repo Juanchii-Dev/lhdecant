@@ -407,7 +407,7 @@ export default function AdminPage() {
 
   const updateCollectionMutation = useMutation({
     mutationFn: async (data: { id: string } & Partial<InsertCollection>) => {
-      const response = await fetch(buildApiUrl('/api/collections/${data.id}'), {
+      const response = await fetch(buildApiUrl(`/api/collections/${data.id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -449,7 +449,7 @@ export default function AdminPage() {
 
   const updateOrderStatusMutation = useMutation({
     mutationFn: async (data: { id: string; status: string }) => {
-      const response = await fetch(buildApiUrl('/api/admin/orders/${data.id}'), {
+      const response = await fetch(buildApiUrl(`/api/admin/orders/${data.id}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -488,7 +488,7 @@ export default function AdminPage() {
   // Session mutations
   const deleteSessionMutation = useMutation({
     mutationFn: async (sid: string) => {
-      const response = await fetch(buildApiUrl('/api/admin/sessions/${sid}'), {
+      const response = await fetch(buildApiUrl(`/api/admin/sessions/${sid}`), {
         method: "DELETE",
         credentials: "include"
       });

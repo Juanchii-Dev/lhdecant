@@ -65,7 +65,7 @@ export default function NotificationsPage() {
       if (!showRead) params.append('showRead', 'false');
       if (searchTerm) params.append('search', searchTerm);
       
-      const response = await fetch(buildApiUrl('/api/notifications?${params.toString()}'), {
+      const response = await fetch(buildApiUrl(`/api/notifications?${params.toString()}`), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching notifications');
@@ -124,7 +124,7 @@ export default function NotificationsPage() {
   // Mutación para eliminar notificación
   const deleteNotificationMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(buildApiUrl('/api/notifications/${id}'), {
+      const response = await fetch(buildApiUrl(`/api/notifications/${id}`), {
         method: 'DELETE',
         credentials: 'include',
       });

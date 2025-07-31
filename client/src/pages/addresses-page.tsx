@@ -110,7 +110,7 @@ export default function AddressesPage() {
   // Mutación para eliminar dirección
   const deleteAddressMutation = useMutation({
     mutationFn: async (addressId: string) => {
-      const response = await fetch(buildApiUrl('/api/addresses/${addressId}'), {
+      const response = await fetch(buildApiUrl(`/api/addresses/${addressId}`), {
         method: 'DELETE',
         credentials: 'include',
       });

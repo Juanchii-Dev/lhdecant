@@ -88,7 +88,7 @@ export default function PaymentMethodsPage() {
   // Mutación para eliminar método de pago
   const deletePaymentMethodMutation = useMutation({
     mutationFn: async (methodId: string) => {
-      const response = await fetch(buildApiUrl('/api/payment-methods/${methodId}'), {
+      const response = await fetch(buildApiUrl(`/api/payment-methods/${methodId}`), {
         method: 'DELETE',
         credentials: 'include',
       });

@@ -103,7 +103,7 @@ export function CartDrawer() {
     setItems(updatedItems);
 
     try {
-      const response = await fetch(buildApiUrl('/api/cart/${id}'), {
+      const response = await fetch(buildApiUrl(`/api/cart/${id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -139,7 +139,7 @@ export function CartDrawer() {
     setItems(updatedItems);
 
     try {
-      const response = await fetch(buildApiUrl('/api/cart/${id}'), {
+      const response = await fetch(buildApiUrl(`/api/cart/${id}`), {
         method: 'DELETE',
         credentials: 'include'
       });

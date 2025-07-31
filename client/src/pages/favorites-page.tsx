@@ -46,7 +46,7 @@ export default function FavoritesPage() {
   // Mutación para eliminar favoritos
   const removeFavoriteMutation = useMutation({
     mutationFn: async (favoriteId: string) => {
-      const response = await fetch(buildApiUrl('/api/favorites/${favoriteId}'), {
+      const response = await fetch(buildApiUrl(`/api/favorites/${favoriteId}`), {
         method: 'DELETE',
         credentials: 'include',
       });

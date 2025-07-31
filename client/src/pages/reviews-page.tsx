@@ -93,7 +93,7 @@ export default function ReviewsPage() {
       if (filterRating !== 'all') params.append('filter', filterRating);
       if (sortBy !== 'newest') params.append('sort', sortBy);
       
-      const response = await fetch(buildApiUrl('/api/reviews?${params.toString()}'), {
+      const response = await fetch(buildApiUrl(`/api/reviews?${params.toString()}`), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching reviews');
@@ -117,7 +117,7 @@ export default function ReviewsPage() {
   const { data: userReviews = [] } = useQuery<Review[]>({
     queryKey: ['user-reviews', user?.id],
     queryFn: async () => {
-      const response = await fetch(buildApiUrl('/api/reviews/user/${user?.id}'), {
+      const response = await fetch(buildApiUrl(`/api/reviews/user/${user?.id}`), {
         credentials: 'include'
       });
       if (!response.ok) throw new Error('Error fetching user reviews');
@@ -170,7 +170,7 @@ export default function ReviewsPage() {
   // Mutación para actualizar reseña
   const updateReviewMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<ReviewForm> }) => {
-      const response = await fetch(buildApiUrl('/api/reviews/${id}'), {
+      const response = await fetch(buildApiUrl(`/api/reviews/${id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -200,7 +200,7 @@ export default function ReviewsPage() {
   // Mutación para eliminar reseña
   const deleteReviewMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(buildApiUrl('/api/reviews/${id}'), {
+      const response = await fetch(buildApiUrl(`/api/reviews/${id}`), {
         method: 'DELETE',
         credentials: 'include',
       });

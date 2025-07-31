@@ -203,7 +203,7 @@ export default function SettingsPage() {
   // Mutación para exportar datos
   const exportDataMutation = useMutation({
     mutationFn: async (format: string) => {
-      const response = await fetch(buildApiUrl('/api/user/export-data?format=${format}'), {
+      const response = await fetch(buildApiUrl(`/api/user/export-data?format=${format}`), {
         method: 'GET',
       });
       if (!response.ok) throw new Error('Error al exportar datos');
