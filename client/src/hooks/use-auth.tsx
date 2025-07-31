@@ -16,6 +16,8 @@ type AuthContextType = {
   loginMutation: UseMutationResult<any, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<any, Error, any>;
+  refetchUser: () => void;
+  checkAuthAfterOAuth: () => void;
 };
 
 type LoginData = Pick<any, "username" | "password">;
@@ -39,14 +41,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
+    refetch: refetchUser,
   } = useQuery<any | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Cambiado a true para detectar cambios
     refetchOnMount: true,
     refetchOnReconnect: true,
-    staleTime: 300000, // 5 minutos
+    staleTime: 0, // Cambiado a 0 para siempre verificar
     cacheTime: 600000, // 10 minutos
     enabled: true,
   });
@@ -112,6 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Función para verificar autenticación después de OAuth
+  const checkAuthAfterOAuth = () => {
+    console.log('🔄 Verificando autenticación después de OAuth...');
+    setTimeout(() => {
+      refetchUser();
+    }, 1000); // Esperar 1 segundo para que la sesión se establezca
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -121,6 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        refetchUser,
+        checkAuthAfterOAuth,
       }}
     >
       {children}

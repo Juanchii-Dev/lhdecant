@@ -6,17 +6,40 @@ import { useAuth } from "../hooks/use-auth";
 import { useToast } from "../hooks/use-toast";
 
 export default function AuthPage() {
-  const { loginMutation, registerMutation } = useAuth();
+  const { loginMutation, registerMutation, checkAuthAfterOAuth } = useAuth();
   const { toast } = useToast();
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
   const emailParam = params.get("email");
+  const error = params.get("error");
+  const message = params.get("message");
   const [mode, setMode] = useState<"login" | "register" | "forgot" | "reset">(token && emailParam ? "reset" : "login");
   const [email, setEmail] = useState(emailParam || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
+
+  // Manejar errores de Google OAuth
+  React.useEffect(() => {
+    if (error === "google" && message) {
+      toast({
+        title: "Error de Google OAuth",
+        description: decodeURIComponent(message),
+        variant: "destructive"
+      });
+    }
+    
+    // Si no hay error y venimos de Google OAuth, verificar autenticación
+    if (!error && !token && !emailParam) {
+      // Verificar si venimos de Google OAuth (URL limpia)
+      const referrer = document.referrer;
+      if (referrer.includes('accounts.google.com') || referrer.includes('lhdecant.com')) {
+        console.log('🔄 Detectado retorno de Google OAuth, verificando autenticación...');
+        checkAuthAfterOAuth();
+      }
+    }
+  }, [error, message, token, emailParam, toast, checkAuthAfterOAuth]);
 
   // Google login mejorado
   const handleGoogle = async () => {
