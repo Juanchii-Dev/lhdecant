@@ -9,11 +9,23 @@
   VITE_APP_NAME = "LH Decants"
   VITE_APP_VERSION = "1.0.0"
 
+# Configuración específica para el dominio personalizado
+[context.production]
+  domain = "lhdecant.com"
+
 # Redirecciones para APIs - DEBE IR ANTES del redirect general
 [[redirects]]
   from = "/api/*"
   to = "https://lhdecant-backend.onrender.com/api/:splat"
   status = 200
+  force = true
+  headers = {Access-Control-Allow-Origin = "*"}
+
+# Redirección del subdominio de Netlify al dominio personalizado
+[[redirects]]
+  from = "https://imaginative-peony-206bd8.netlify.app/*"
+  to = "https://lhdecant.com/:splat"
+  status = 301
   force = true
 
 # Redirección general para SPA - DEBE IR DESPUÉS de las APIs
