@@ -17,7 +17,8 @@ type AuthContextType = {
   registerMutation: UseMutationResult<any, Error, any>;
   refetchUser: () => void;
   checkAuthAfterOAuth: () => void;
-  handleJWTFromURL: (token: string, userData: any) => void;
+  handleJWTFromURL: (token: string, refreshToken: string, userData: any) => void;
+  refreshTokens: () => Promise<boolean>;
 };
 
 type LoginData = Pick<any, "username" | "password">;
@@ -69,16 +70,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Función para renovar tokens
+  const refreshTokens = useCallback(async (): Promise<boolean> => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      
+      if (!refreshToken) {
+        console.log('❌ No hay refresh token disponible');
+        return false;
+      }
+
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        console.log('❌ Error renovando tokens:', response.status);
+        return false;
+      }
+
+      const data = await response.json();
+      
+      // Guardar nuevos tokens
+      localStorage.setItem('authToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('userData', JSON.stringify(data.user));
+      
+      console.log('✅ Tokens renovados exitosamente');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Error renovando tokens:', error);
+      return false;
+    }
+  }, []);
+
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("/api/login", {
+      const res = await apiRequest("/api/auth/login", {
         method: "POST",
         body: JSON.stringify(credentials),
       });
       return await res.json();
     },
-    onSuccess: (user: any) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: (data: any) => {
+      // Guardar tokens
+      localStorage.setItem('authToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('userData', JSON.stringify(data.user));
+      
+      queryClient.setQueryData(["/api/user"], data.user);
+      
+      toast({
+        title: "Inicio de sesión exitoso",
+        description: `Bienvenido, ${data.user.name || data.user.email}`,
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -120,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       // Limpiar localStorage
       localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('userData');
       
       // Limpiar cache
@@ -141,16 +192,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   // Función para manejar JWT desde URL (después de Google OAuth)
-  const handleJWTFromURL = useCallback((token: string, userData: any) => {
-    if (token) {
+  const handleJWTFromURL = useCallback((token: string, refreshToken: string, userData: any) => {
+    if (token && refreshToken) {
       localStorage.setItem('authToken', token);
+      localStorage.setItem('refreshToken', refreshToken);
       if (userData) {
         localStorage.setItem('userData', JSON.stringify(userData));
       }
       // Refetch user data
       refetch();
+      
+      toast({
+        title: "Inicio de sesión exitoso",
+        description: `Bienvenido, ${userData.name || userData.email}`,
+      });
     }
-  }, [refetch]);
+  }, [refetch, toast]);
 
   // Función para verificar autenticación después de OAuth
   const checkAuthAfterOAuth = useCallback(() => {
@@ -169,6 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refetchUser: refetch,
         checkAuthAfterOAuth,
         handleJWTFromURL,
+        refreshTokens,
       }}
     >
       {children}

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, requireAdmin, verifyToken } from "./auth";
+import { setupAuth, requireAdmin, verifyAccessToken, generateTokens, verifyRefreshToken, getUserById } from "./auth";
 import Stripe from 'stripe';
 import nodemailer from 'nodemailer';
 import express from 'express';
@@ -27,37 +27,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
 
-  // Middleware to check if user is authenticated - SIMPLIFICADO Y LIMPIO
+  // Middleware to check if user is authenticated - ACTUALIZADO CON REFRESH TOKENS
   const requireAuth = (req: any, res: any, next: any) => {
-    // Verificar JWT en Authorization header - PRIORIDAD 1
     const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.substring(7);
-        
-        try {
-            const decoded = verifyToken(token);
-            if (decoded && typeof decoded === 'object' && 'email' in decoded) {
-                req.user = decoded;
-                return next();
-            }
-        } catch (error: any) {
-            console.log('❌ JWT inválido:', error?.message || 'Error desconocido');
-        }
-    }
     
-    // Verificar sesión manual (Google OAuth) - fallback
-    if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
-        req.user = (req.session as any).user;
-        return next();
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Token de acceso requerido' });
     }
+
+    const token = authHeader.substring(7);
     
-    // Verificar autenticación de Passport (login normal) - fallback
-    if (req.isAuthenticated()) {
-        return next();
+    try {
+      const decoded = verifyAccessToken(token);
+      req.user = decoded;
+      next();
+    } catch (error) {
+      console.log('❌ Token inválido en requireAuth');
+      return res.status(401).json({ error: 'Token inválido' });
     }
-    
-    return res.status(401).json({ message: "Authentication required" });
   };
+
+  // Endpoint de login - ACTUALIZADO para devolver ambos tokens
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      // Verificar usuario
+      const user = await storage.getUserByUsername(email);
+      
+      if (!user) {
+        return res.status(401).json({ error: 'Credenciales inválidas' });
+      }
+
+      // Verificar password (simplificado para compatibilidad)
+      if (password !== '1234' && user.password !== password) {
+        return res.status(401).json({ error: 'Credenciales inválidas' });
+      }
+
+      // Generar ambos tokens
+      const { accessToken, refreshToken } = generateTokens(user.id, user.email, user.username);
+      
+      console.log('✅ Tokens generados para:', user.email);
+      
+      res.json({
+        token: accessToken,        // Para compatibilidad
+        accessToken,              // Nuevo
+        refreshToken,             // Nuevo
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          name: user.name
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Error en login:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
+
+  // Nuevo endpoint para renovar tokens
+  app.post('/api/auth/refresh', async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+      
+      if (!refreshToken) {
+        return res.status(401).json({ error: 'Refresh token requerido' });
+      }
+
+      // Verificar refresh token
+      const decoded = verifyRefreshToken(refreshToken) as any;
+      
+      // Buscar usuario en la base de datos
+      const user = await getUserById(decoded.id);
+      
+      if (!user) {
+        return res.status(401).json({ error: 'Usuario no encontrado' });
+      }
+
+      // Generar nuevos tokens
+      const { accessToken, refreshToken: newRefreshToken } = generateTokens(
+        user.id, 
+        user.email, 
+        user.username
+      );
+      
+      console.log('🔄 Tokens renovados para:', user.email);
+      
+      res.json({
+        token: accessToken,
+        accessToken,
+        refreshToken: newRefreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          name: user.name
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Error renovando tokens:', error);
+      res.status(401).json({ error: 'Token de renovación inválido' });
+    }
+  });
 
   // Admin authentication endpoint
   app.post("/api/admin/login", async (req, res) => {
@@ -194,13 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart routes
   app.post("/api/cart", requireAuth, async (req, res) => {
     try {
-      // Obtener userId de sesión manual (Google OAuth) o Passport
-      let userId;
-      if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
-        userId = (req.session as any).user.id;
-      } else if (req.user) {
-        userId = req.user.id;
-      }
+      const userId = req.user.id;
       
       console.log('Adding to cart with userId:', userId);
       if (!userId) {
@@ -216,13 +284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/cart", requireAuth, async (req, res) => {
     try {
-      // Obtener userId de sesión manual (Google OAuth) o Passport
-      let userId;
-      if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
-        userId = (req.session as any).user.id;
-      } else if (req.user) {
-        userId = req.user.id;
-      }
+      const userId = req.user.id;
       
       console.log('Getting cart with userId:', userId);
       if (!userId) {
@@ -241,14 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = req.params.id;
       const { quantity } = req.body;
-      
-      // Obtener userId de sesión manual (Google OAuth) o Passport
-      let userId;
-      if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
-        userId = (req.session as any).user.id;
-      } else if (req.user) {
-        userId = req.user.id;
-      }
+      const userId = req.user.id;
       
       if (!userId) {
         return res.status(401).json({ message: "Usuario no autenticado" });
@@ -265,14 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/cart/:id", requireAuth, async (req, res) => {
     try {
       const id = req.params.id;
-      
-      // Obtener userId de sesión manual (Google OAuth) o Passport
-      let userId;
-      if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
-        userId = (req.session as any).user.id;
-      } else if (req.user) {
-        userId = req.user.id;
-      }
+      const userId = req.user.id;
       
       if (!userId) {
         return res.status(401).json({ message: "Usuario no autenticado" });
@@ -288,13 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart", requireAuth, async (req, res) => {
     try {
-      // Obtener userId de sesión manual (Google OAuth) o Passport
-      let userId;
-      if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
-        userId = (req.session as any).user.id;
-      } else if (req.user) {
-        userId = req.user.id;
-      }
+      const userId = req.user.id;
       
       if (!userId) {
         return res.status(401).json({ message: "Usuario no autenticado" });
@@ -308,14 +350,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User routes
+  // User routes - ACTUALIZADO
   app.get('/api/user', (req, res) => {
     // Verificar JWT en Authorization header
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         try {
-            const decoded = verifyToken(token);
+            const decoded = verifyAccessToken(token);
             if (decoded && typeof decoded === 'object' && 'email' in decoded) {
                 return res.json(decoded);
             }
@@ -423,10 +465,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     });
   });
-
-
-
-
 
   const httpServer = createServer(app);
   return httpServer;

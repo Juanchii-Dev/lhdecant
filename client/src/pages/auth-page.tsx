@@ -1,328 +1,271 @@
-import React from "react";
-import { buildApiUrl } from "../config/api";
-import { useState } from "react";
-import { Button } from "../components/ui/button";
+import React, { useEffect } from "react";
 import { useAuth } from "../hooks/use-auth";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useToast } from "../hooks/use-toast";
+import { buildApiUrl } from "../config/api";
 
 export default function AuthPage() {
   const { loginMutation, registerMutation, handleJWTFromURL } = useAuth();
   const { toast } = useToast();
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
-  const emailParam = params.get("email");
-  const error = params.get("error");
-  const message = params.get("message");
-  const [mode, setMode] = useState<"login" | "register" | "forgot" | "reset">(token && emailParam ? "reset" : "login");
-  const [email, setEmail] = useState(emailParam || "");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [loadingGoogle, setLoadingGoogle] = useState(false);
 
-  // Manejar JWT desde URL (después de Google OAuth)
-  React.useEffect(() => {
-    if (token && !error) {
-      const userParam = params.get("user");
-      if (userParam) {
-        try {
-          const userData = JSON.parse(decodeURIComponent(userParam));
-          console.log('🔑 JWT recibido desde URL:', { token: token.substring(0, 20) + '...', userData });
-          handleJWTFromURL(token, userData);
-          
-          // Limpiar URL después de procesar
-          window.history.replaceState({}, document.title, '/');
-          return;
-        } catch (error) {
-          console.error('Error parsing user data from URL:', error);
-          toast({
-            title: "Error de autenticación",
-            description: "No se pudo procesar la información del usuario",
-            variant: "destructive"
-          });
-        }
-      } else {
-        console.error('No se encontró user data en la URL');
+  useEffect(() => {
+    // Verificar si hay tokens en la URL (después de Google OAuth)
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const refreshToken = urlParams.get('refreshToken');
+    const userData = urlParams.get('user');
+    const error = urlParams.get('error');
+    const message = urlParams.get('message');
+
+    if (error) {
+      toast({
+        title: "Error de autenticación",
+        description: message || "Error desconocido",
+        variant: "destructive",
+      });
+      // Limpiar URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    if (token && refreshToken && userData) {
+      try {
+        const user = JSON.parse(decodeURIComponent(userData));
+        handleJWTFromURL(token, refreshToken, user);
+        
+        // Limpiar URL y redirigir
+        window.history.replaceState({}, document.title, '/');
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Error procesando datos de autenticación:', error);
         toast({
           title: "Error de autenticación",
-          description: "Información de usuario incompleta",
-          variant: "destructive"
+          description: "Error procesando datos de autenticación",
+          variant: "destructive",
         });
       }
     }
-    
-    if (error === "google" && message) {
-      toast({
-        title: "Error de Google OAuth",
-        description: decodeURIComponent(message),
-        variant: "destructive"
-      });
-    }
-  }, [error, message, token, handleJWTFromURL, params, toast]);
+  }, [handleJWTFromURL, toast]);
 
-  // Google login
-  const handleGoogle = async () => {
-    setLoadingGoogle(true);
-    try {
-      window.location.href = buildApiUrl('/api/auth/google');
-    } catch (error) {
-      toast({ 
-        title: "Error de conexión", 
-        description: "No se pudo conectar con el servidor. Intenta más tarde.",
-        variant: "destructive"
-      });
-      setLoadingGoogle(false);
-    }
+  const handleGoogleLogin = () => {
+    window.location.href = buildApiUrl('/api/auth/google');
   };
 
-  // Login/Register
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (mode === "login") {
-      loginMutation.mutate({ username: email, password });
-    } else if (mode === "register") {
-      registerMutation.mutate({ username: email, password });
-    }
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get('username') as string;
+    const password = formData.get('password') as string;
+
+    loginMutation.mutate({ username, password });
   };
 
-  // Forgot password
-  const handleRequestReset = async (e: React.FormEvent) => {
+  const handleRegister = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    const res = await fetch(buildApiUrl('/api/forgot-password'), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    setLoading(false);
-    if (res.ok) {
-      setSuccess(true);
-      toast({ title: "Email enviado", description: "Revisa tu correo para el enlace de recuperación." });
-    } else {
-      toast({ title: "Error", description: "No se pudo enviar el email." });
-    }
-  };
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get('username') as string;
+    const password = formData.get('password') as string;
+    const email = formData.get('email') as string;
 
-  // Reset password
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const res = await fetch(buildApiUrl('/api/reset-password'), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: emailParam, token, password }),
-    });
-    setLoading(false);
-    if (res.ok) {
-      toast({ title: "Contraseña actualizada", description: "Tu contraseña ha sido actualizada correctamente." });
-      setMode("login");
-    } else {
-      toast({ title: "Error", description: "No se pudo actualizar la contraseña." });
-    }
+    registerMutation.mutate({ username, password, email });
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-luxury-gold mb-2">LH Decants</h1>
-          <p className="text-gray-400">
-            {mode === "login" && "Inicia sesión en tu cuenta"}
-            {mode === "register" && "Crea tu cuenta"}
-            {mode === "forgot" && "Recupera tu contraseña"}
-            {mode === "reset" && "Establece nueva contraseña"}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Acceso a tu cuenta
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Inicia sesión o crea una nueva cuenta
           </p>
         </div>
 
-        <div className="bg-charcoal rounded-lg p-6 border border-luxury-gold/20">
-          {mode === "login" && (
-            <>
-              <Button
-                onClick={handleGoogle}
-                disabled={loadingGoogle}
-                className="w-full mb-4 bg-white text-black hover:bg-gray-100"
-              >
-                {loadingGoogle ? "Conectando..." : "Continuar con Google"}
-              </Button>
-              
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-600"></div>
+        <Tabs defaultValue="login" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+            <TabsTrigger value="register">Registrarse</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="login">
+            <Card>
+              <CardHeader>
+                <CardTitle>Iniciar Sesión</CardTitle>
+                <CardDescription>
+                  Accede a tu cuenta existente
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <Label htmlFor="username">Email</Label>
+                    <Input
+                      id="username"
+                      name="username"
+                      type="email"
+                      required
+                      placeholder="tu@email.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password">Contraseña</Label>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      required
+                      placeholder="Tu contraseña"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loginMutation.isPending}
+                  >
+                    {loginMutation.isPending ? "Iniciando..." : "Iniciar Sesión"}
+                  </Button>
+                </form>
+
+                <div className="mt-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        O continúa con
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={handleGoogleLogin}
+                    type="button"
+                  >
+                    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                    Continuar con Google
+                  </Button>
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-charcoal text-gray-400">O continúa con email</span>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="register">
+            <Card>
+              <CardHeader>
+                <CardTitle>Crear Cuenta</CardTitle>
+                <CardDescription>
+                  Regístrate para crear una nueva cuenta
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div>
+                    <Label htmlFor="reg-username">Email</Label>
+                    <Input
+                      id="reg-username"
+                      name="username"
+                      type="email"
+                      required
+                      placeholder="tu@email.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="reg-email">Confirmar Email</Label>
+                    <Input
+                      id="reg-email"
+                      name="email"
+                      type="email"
+                      required
+                      placeholder="tu@email.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="reg-password">Contraseña</Label>
+                    <Input
+                      id="reg-password"
+                      name="password"
+                      type="password"
+                      required
+                      placeholder="Tu contraseña"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={registerMutation.isPending}
+                  >
+                    {registerMutation.isPending ? "Creando..." : "Crear Cuenta"}
+                  </Button>
+                </form>
+
+                <div className="mt-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        O continúa con
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={handleGoogleLogin}
+                    type="button"
+                  >
+                    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                    Continuar con Google
+                  </Button>
                 </div>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 bg-black border border-gray-600 rounded-md text-white focus:outline-none focus:border-luxury-gold"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Contraseña</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-black border border-gray-600 rounded-md text-white focus:outline-none focus:border-luxury-gold"
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={loginMutation.isPending}
-                  className="w-full bg-luxury-gold text-black hover:bg-luxury-gold/80"
-                >
-                  {loginMutation.isPending ? "Iniciando sesión..." : "Iniciar Sesión"}
-            </Button>
-              </form>
-
-              <div className="mt-4 text-center">
-                <button
-                  onClick={() => setMode("forgot")}
-                  className="text-sm text-luxury-gold hover:underline"
-                >
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
-
-              <div className="mt-6 text-center">
-                <span className="text-gray-400">¿No tienes cuenta? </span>
-                <button
-                  onClick={() => setMode("register")}
-                  className="text-luxury-gold hover:underline"
-                >
-                  Regístrate
-                </button>
-            </div>
-            </>
-          )}
-
-          {mode === "register" && (
-            <>
-              <Button
-                onClick={handleGoogle}
-                disabled={loadingGoogle}
-                className="w-full mb-4 bg-white text-black hover:bg-gray-100"
-              >
-                {loadingGoogle ? "Conectando..." : "Registrarse con Google"}
-              </Button>
-              
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-600"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-charcoal text-gray-400">O regístrate con email</span>
-                </div>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 bg-black border border-gray-600 rounded-md text-white focus:outline-none focus:border-luxury-gold"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Contraseña</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-black border border-gray-600 rounded-md text-white focus:outline-none focus:border-luxury-gold"
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={registerMutation.isPending}
-                  className="w-full bg-luxury-gold text-black hover:bg-luxury-gold/80"
-                >
-                  {registerMutation.isPending ? "Creando cuenta..." : "Crear Cuenta"}
-            </Button>
-              </form>
-
-              <div className="mt-6 text-center">
-                <span className="text-gray-400">¿Ya tienes cuenta? </span>
-                <button
-                  onClick={() => setMode("login")}
-                  className="text-luxury-gold hover:underline"
-                >
-                  Inicia sesión
-                </button>
-              </div>
-            </>
-            )}
-
-          {mode === "forgot" && (
-            <>
-              <form onSubmit={handleRequestReset} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 bg-black border border-gray-600 rounded-md text-white focus:outline-none focus:border-luxury-gold"
-                    required
-                  />
-            </div>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-luxury-gold text-black hover:bg-luxury-gold/80"
-                >
-                  {loading ? "Enviando..." : "Enviar Email de Recuperación"}
-                </Button>
-          </form>
-
-              <div className="mt-6 text-center">
-                <button
-                  onClick={() => setMode("login")}
-                  className="text-luxury-gold hover:underline"
-                >
-                  Volver al login
-                </button>
-            </div>
-            </>
-          )}
-
-          {mode === "reset" && (
-            <>
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Nueva Contraseña</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-black border border-gray-600 rounded-md text-white focus:outline-none focus:border-luxury-gold"
-                    required
-                  />
-            </div>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-luxury-gold text-black hover:bg-luxury-gold/80"
-                >
-                  {loading ? "Actualizando..." : "Actualizar Contraseña"}
-                </Button>
-          </form>
-            </>
-        )}
-        </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

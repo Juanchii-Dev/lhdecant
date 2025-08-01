@@ -5,7 +5,6 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-// // // import { User, GoogleProfile, UserUpdates } from "./types";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 
@@ -33,10 +32,64 @@ declare module "express-session" {
 
 const scryptAsync = promisify(scrypt);
 
-// JWT Secret - usar una variable de entorno o un valor por defecto
-const JWT_SECRET = process.env.JWT_SECRET || 'lhdecant-jwt-secret-2024';
+// Verificar que las variables estén disponibles
+const JWT_SECRET = process.env.JWT_SECRET!;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
 
-// Función para generar JWT
+console.log('🔑 JWT_SECRET disponible:', !!JWT_SECRET);
+console.log('🔄 REFRESH_TOKEN_SECRET disponible:', !!REFRESH_TOKEN_SECRET);
+
+// Función para generar tokens
+export function generateTokens(userId: string, email: string, username: string) {
+  // Access Token (corta duración)
+  const accessToken = jwt.sign(
+    { 
+      id: userId, 
+      email, 
+      username 
+    },
+    JWT_SECRET,
+    { expiresIn: '24h' } // 24 horas
+  );
+
+  // Refresh Token (larga duración)
+  const refreshToken = jwt.sign(
+    { 
+      id: userId,
+      type: 'refresh'
+    },
+    REFRESH_TOKEN_SECRET,
+    { expiresIn: '7d' } // 7 días
+  );
+
+  return { accessToken, refreshToken };
+}
+
+// Función para verificar Access Token
+export function verifyAccessToken(token: string) {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('🔐 Access Token verificado exitosamente');
+    return decoded;
+  } catch (error: any) {
+    console.log('❌ Error verificando Access Token:', error.message);
+    throw error;
+  }
+}
+
+// Función para verificar Refresh Token
+export function verifyRefreshToken(token: string) {
+  try {
+    const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET);
+    console.log('🔄 Refresh Token verificado exitosamente');
+    return decoded;
+  } catch (error: any) {
+    console.log('❌ Error verificando Refresh Token:', error.message);
+    throw error;
+  }
+}
+
+// Función legacy para compatibilidad
 function generateToken(user: any) {
   return jwt.sign(
     { 
@@ -49,16 +102,9 @@ function generateToken(user: any) {
   );
 }
 
-// Función para verificar JWT
+// Función legacy para compatibilidad
 function verifyToken(token: string) {
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('🔐 JWT verificado exitosamente:', decoded);
-    return decoded;
-  } catch (error: any) {
-    console.log('❌ Error verificando JWT:', error.message);
-    throw error; // Lanzar el error para que el middleware pueda manejarlo
-  }
+  return verifyAccessToken(token);
 }
 
 async function hashPassword(password: string) {
@@ -74,18 +120,50 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
+// Helper function para obtener usuario por ID
+async function getUserById(userId: string) {
+  try {
+    console.log('🔍 Buscando usuario:', userId);
+    const user = await storage.getUser(userId);
+    return user;
+  } catch (error) {
+    console.error('❌ Error obteniendo usuario:', error);
+    return null;
+  }
+}
+
+// Verificar variables de entorno al inicio
+function checkEnvironmentVariables() {
+  const requiredVars = [
+    'JWT_SECRET',
+    'REFRESH_TOKEN_SECRET',
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET'
+  ];
+
+  const missing = requiredVars.filter(varName => !process.env[varName]);
+  
+  if (missing.length > 0) {
+    console.error('❌ Variables de entorno faltantes:', missing);
+    console.error('⚠️ El servidor puede no funcionar correctamente');
+  } else {
+    console.log('✅ Todas las variables de entorno están configuradas');
+  }
+}
+
 export function setupAuth(app: Express) {
+  // Verificar variables al inicio
+  checkEnvironmentVariables();
+
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'lhdecants-secret-key-2024',
     resave: false,
     saveUninitialized: false,
-    // store: storage.sessionStore, // Comentado temporalmente para evitar errores de tipos
     cookie: {
-      secure: false, // Cambiado a false para evitar problemas con HTTPS
+      secure: false,
       httpOnly: true,
-      sameSite: 'lax' as const, // Cambiado a lax para mejor compatibilidad
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      // domain comentado temporalmente
+      sameSite: 'lax' as const,
+      maxAge: 24 * 60 * 60 * 1000,
     }
   };
 
@@ -102,12 +180,10 @@ export function setupAuth(app: Express) {
           return done(null, false);
         }
         
-        // For the admin user, check simple password
         if (username === 'lhdecants' && password === '1234') {
           return done(null, user);
         }
         
-        // For other users, use hashed password
         if (await comparePasswords(password, user.password)) {
           return done(null, user);
         }
@@ -190,23 +266,10 @@ export function setupAuth(app: Express) {
           grant_type: 'authorization_code',
         });
         
-        console.log('📤 Enviando datos de token:', {
-          code: code ? '✅ Presente' : '❌ Ausente',
-          client_id: googleClientId ? '✅ Presente' : '❌ Ausente',
-          client_secret: googleClientSecret ? '✅ Presente' : '❌ Ausente',
-          redirect_uri: googleRedirectUri,
-        });
-        
         const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', tokenData.toString(), {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-        });
-        
-        console.log('✅ Token response recibido:', {
-          access_token: tokenResponse.data.access_token ? '✅ Presente' : '❌ Ausente',
-          token_type: tokenResponse.data.token_type,
-          expires_in: tokenResponse.data.expires_in,
         });
         
         const { access_token } = tokenResponse.data;
@@ -242,11 +305,11 @@ export function setupAuth(app: Express) {
         
         let user = await storage.getUserByUsername(email);
         
-      if (!user) {
+        if (!user) {
           console.log('🆕 Creando nuevo usuario...');
           user = await storage.createUser({
             username: email,
-            password: "", // Usuarios de Google no tienen password
+            password: "",
             email: email,
             name: userInfo.name || email.split('@')[0],
             googleId: userInfo.id,
@@ -256,7 +319,6 @@ export function setupAuth(app: Express) {
         } else {
           console.log('👤 Usuario existente encontrado:', { id: user.id, email: user.email, name: user.name });
           
-          // Actualizar datos de Google si es necesario
           if (!user.googleId || user.name !== userInfo.name || user.avatar !== userInfo.picture) {
             console.log('🔄 Actualizando datos del usuario...');
             user = await storage.updateUser(user.id, {
@@ -268,14 +330,14 @@ export function setupAuth(app: Express) {
           }
         }
         
-        // Paso 4: Generar JWT y redirigir
-        console.log('🔐 Generando JWT para usuario:', user.email);
+        // Paso 4: Generar tokens y redirigir
+        console.log('🔐 Generando tokens para usuario:', user.email);
         
-        const token = generateToken(user);
-        console.log('✅ JWT generado exitosamente');
+        const { accessToken, refreshToken } = generateTokens(user.id, user.email, user.username);
+        console.log('✅ Tokens generados exitosamente');
         
-        // Redirigir al frontend con el token
-        const redirectUrl = `${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify({
+        // Redirigir al frontend con los tokens
+        const redirectUrl = `${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?token=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}&user=${encodeURIComponent(JSON.stringify({
           id: user.id,
           username: user.username,
           email: user.email,
@@ -284,7 +346,7 @@ export function setupAuth(app: Express) {
           avatar: user.avatar
         }))}`;
         
-        console.log('🎯 Redirigiendo con JWT...');
+        console.log('🎯 Redirigiendo con tokens...');
         res.redirect(redirectUrl);
         
       } catch (error: any) {
@@ -295,18 +357,7 @@ export function setupAuth(app: Express) {
             status: error.response.status,
             statusText: error.response.statusText,
             data: error.response.data,
-            headers: error.response.headers,
           });
-          
-          // Log específico para errores de credenciales
-          if (error.response.status === 401) {
-            console.error('🔐 Error 401 - Posibles causas:');
-            console.error('1. Client ID incorrecto');
-            console.error('2. Client Secret incorrecto');
-            console.error('3. Redirect URI no coincide');
-            console.error('4. Código de autorización expirado o usado');
-            console.error('5. Credenciales no configuradas en Google Console');
-          }
         }
         
         const errorMessage = error.response?.data?.error_description || 
@@ -314,27 +365,14 @@ export function setupAuth(app: Express) {
                            error.message || 
                            'Error desconocido';
         
-        console.error('💬 Mensaje de error:', errorMessage);
-        
-        // Redirigir con información más específica
         const redirectUrl = `${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=${encodeURIComponent(errorMessage)}`;
-        console.log('🔄 Redirigiendo a:', redirectUrl);
         res.redirect(redirectUrl);
       }
     });
     
   } else {
     console.log('❌ Google OAuth no configurado - faltan credenciales');
-    console.log('📋 Para configurar Google OAuth:');
-    console.log('1. Ve a https://console.cloud.google.com');
-    console.log('2. Crea un proyecto o selecciona uno existente');
-    console.log('3. Habilita Google+ API');
-    console.log('4. Crea credenciales OAuth 2.0');
-    console.log('5. Configura las URIs de redirección: https://lhdecant-backend.onrender.com/api/auth/google/callback');
-    console.log('6. Agrega orígenes autorizados: https://lhdecant.com');
-    console.log('7. Copia el Client ID y Client Secret a tu archivo .env');
     
-    // Endpoint de diagnóstico
     app.get("/api/auth/google/debug", (_req, res) => {
       res.json({
         configured: false,
@@ -343,30 +381,14 @@ export function setupAuth(app: Express) {
           GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "✅ Configurado" : "❌ Faltante",
           GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? "✅ Configurado" : "❌ Faltante",
           GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || "https://lhdecant-backend.onrender.com/api/auth/google/callback"
-        },
-        instructions: [
-          "1. Ve a https://console.cloud.google.com",
-          "2. Crea credenciales OAuth 2.0",
-          "3. Configura URIs de redirección: https://lhdecant-backend.onrender.com/api/auth/google/callback",
-          "4. Agrega orígenes autorizados: https://lhdecant.com",
-          "5. Copia Client ID y Client Secret a tu .env"
-        ]
+        }
       });
     });
 
-    // Registrar rutas de placeholder para evitar 404
     app.get("/api/auth/google", (_req, res) => {
       res.status(400).json({ 
         error: "Google OAuth no configurado", 
-        message: "Configura las credenciales de Google OAuth en tu archivo .env",
-        debug_url: "/api/auth/google/debug",
-        instructions: [
-          "1. Ve a https://console.cloud.google.com",
-          "2. Crea credenciales OAuth 2.0",
-          "3. Configura URIs de redirección: https://lhdecant-backend.onrender.com/api/auth/google/callback",
-          "4. Agrega orígenes autorizados: https://lhdecant.com",
-          "5. Copia Client ID y Client Secret a tu .env"
-        ]
+        message: "Configura las credenciales de Google OAuth en tu archivo .env"
       });
     });
 
@@ -431,7 +453,6 @@ export function setupAuth(app: Express) {
 
 // Middleware para proteger rutas de admin
 export function requireAdmin(req: any, res: any, next: any) {
-  // Verificar sesión de admin
   const isAdmin = req.session.isAdmin === true;
   const adminEmail = req.session.adminEmail;
   
@@ -442,4 +463,4 @@ export function requireAdmin(req: any, res: any, next: any) {
 }
 
 // Exportar funciones JWT
-export { generateToken, verifyToken };
+export { generateToken, verifyToken, getUserById };
