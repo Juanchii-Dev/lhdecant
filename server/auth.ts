@@ -52,9 +52,12 @@ function generateToken(user: any) {
 // Función para verificar JWT
 function verifyToken(token: string) {
   try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch (error) {
-    return null;
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('🔐 JWT verificado exitosamente:', decoded);
+    return decoded;
+  } catch (error: any) {
+    console.log('❌ Error verificando JWT:', error.message);
+    throw error; // Lanzar el error para que el middleware pueda manejarlo
   }
 }
 

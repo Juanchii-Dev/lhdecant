@@ -27,48 +27,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
 
-  // Middleware to check if user is authenticated - CORREGIDO DEFINITIVAMENTE
+  // Middleware to check if user is authenticated - SIMPLIFICADO Y LIMPIO
   const requireAuth = (req: any, res: any, next: any) => {
-    console.log('🔍 requireAuth - Headers completos:', req.headers);
-    console.log('🔐 Authorization header:', req.headers.authorization);
-    console.log('🎯 JWT_SECRET existe:', !!process.env.JWT_SECRET);
-    
     // Verificar JWT en Authorization header - PRIORIDAD 1
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
-        console.log('🔑 Token extraído:', token.substring(0, 20) + '...');
         
         try {
             const decoded = verifyToken(token);
-            console.log('✅ JWT válido para usuario:', decoded);
-            
             if (decoded && typeof decoded === 'object' && 'email' in decoded) {
                 req.user = decoded;
-                console.log('✅ Usuario autenticado via JWT:', decoded.email);
                 return next();
             }
         } catch (error: any) {
-            console.log('❌ requireAuth - Token JWT inválido:', error?.message || 'Error desconocido');
+            console.log('❌ JWT inválido:', error?.message || 'Error desconocido');
         }
     }
     
     // Verificar sesión manual (Google OAuth) - fallback
     if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
         req.user = (req.session as any).user;
-        console.log('✅ Usuario autenticado via sesión:', req.user.email);
         return next();
     }
     
     // Verificar autenticación de Passport (login normal) - fallback
     if (req.isAuthenticated()) {
-        console.log('✅ Usuario autenticado via Passport');
         return next();
     }
     
-    console.log('❌ Usuario NO autenticado - enviando 401');
     return res.status(401).json({ message: "Authentication required" });
-};
+  };
 
   // Admin authentication endpoint
   app.post("/api/admin/login", async (req, res) => {
@@ -331,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 return res.json(decoded);
             }
         } catch (error: any) {
-            console.log('❌ /api/user - Token JWT inválido:', error?.message || 'Error desconocido');
+            console.log('❌ /api/user - JWT inválido:', error?.message || 'Error desconocido');
         }
     }
     
