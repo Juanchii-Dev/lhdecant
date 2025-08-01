@@ -1,22 +1,6 @@
-// Configuración de API para el frontend - VERSIÓN FINAL CORREGIDA
+// Configuración de API para el frontend
 export const API_CONFIG = {
-  // URL base de la API - Usar variable de entorno o fallback
   BASE_URL: import.meta.env.VITE_API_URL || 'https://lhdecant-backend.onrender.com',
-  
-  // Endpoints específicos
-  ENDPOINTS: {
-    HEALTH: '/api/health',
-    AUTH: {
-      GOOGLE: '/api/auth/google',
-      GOOGLE_CALLBACK: '/api/auth/google/callback',
-      GOOGLE_STATUS: '/api/auth/google/status',
-    },
-    CART: '/api/cart',
-    PERFUMES: '/api/perfumes',
-    ORDERS: '/api/orders',
-  },
-  
-  // Configuración de requests
   REQUEST_CONFIG: {
     headers: {
       'Content-Type': 'application/json',
@@ -25,17 +9,30 @@ export const API_CONFIG = {
   },
 };
 
+// Función para normalizar endpoints - TODOS DEBEN EMPEZAR CON /api/
+const normalizeEndpoint = (endpoint: string): string => {
+  // Si ya empieza con /api/, dejarlo igual
+  if (endpoint.startsWith('/api/')) return endpoint;
+  
+  // Si empieza con / pero no con /api/, agregar api
+  if (endpoint.startsWith('/')) return `/api${endpoint}`;
+  
+  // Si no empieza con /, agregar /api/
+  return `/api/${endpoint}`;
+};
+
 // Función helper para construir URLs completas - CORREGIDA DEFINITIVAMENTE
 export const buildApiUrl = (endpoint: string): string => {
-  // Asegurar que el BASE_URL termine con / y el endpoint empiece con /
+  // Normalizar el endpoint para asegurar que siempre tenga /api/
+  const normalizedEndpoint = normalizeEndpoint(endpoint);
+  
+  // Asegurar que el BASE_URL termine sin / y el endpoint empiece con /
   const baseUrl = API_CONFIG.BASE_URL.endsWith('/') 
     ? API_CONFIG.BASE_URL.slice(0, -1) 
     : API_CONFIG.BASE_URL;
   
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  
-  const url = `${baseUrl}${cleanEndpoint}`;
-  console.log('🔗 API URL construida:', url); // Debug log mejorado
+  const url = `${baseUrl}${normalizedEndpoint}`;
+  console.log('🔗 API URL construida:', { original: endpoint, normalized: normalizedEndpoint, final: url });
   return url;
 };
 

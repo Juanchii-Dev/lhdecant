@@ -25,6 +25,8 @@ export async function apiRequest(
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
     console.log('🔑 Enviando JWT en petición:', { url, token: token.substring(0, 20) + '...' });
+    console.log('📤 Headers reales enviados:', headers);
+    console.log('🔑 Token completo:', token);
   } else {
     console.log('⚠️ No hay JWT disponible para:', url);
   }
@@ -62,6 +64,8 @@ export const getQueryFn: <T>(options: {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
       console.log('🔑 Enviando JWT en queryFn:', { url: queryKey[0], token: token.substring(0, 20) + '...' });
+      console.log('📤 Headers reales enviados en queryFn:', headers);
+      console.log('🔑 Token completo en queryFn:', token);
     } else {
       console.log('⚠️ No hay JWT disponible para queryFn:', queryKey[0]);
     }
