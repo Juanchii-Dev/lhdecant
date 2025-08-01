@@ -32,7 +32,6 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // Obtener JWT del localStorage
     const token = localStorage.getItem('authToken');
-    console.log('🔑 Token obtenido de localStorage para', queryKey[0], ':', token ? 'SÍ' : 'NO');
     
     const headers: Record<string, string> = {
       'Accept': 'application/json',
@@ -42,12 +41,7 @@ export const getQueryFn: <T>(options: {
     // Agregar JWT si existe
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-      console.log('📤 Authorization header agregado para', queryKey[0]);
-    } else {
-      console.log('❌ No hay token disponible para', queryKey[0]);
     }
-    
-    console.log('📋 Headers completos para', queryKey[0], ':', headers);
     
     const res = await fetch(buildApiUrl(queryKey[0] as string), {
       credentials: "include",

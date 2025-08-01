@@ -22,15 +22,12 @@ export default function AuthPage() {
 
   // Manejar errores de Google OAuth y verificar autenticación
   React.useEffect(() => {
-    console.log('🔍 Auth page effect - error:', error, 'message:', message, 'token:', token, 'emailParam:', emailParam);
-    
     // Manejar JWT desde URL (después de Google OAuth)
     if (token && !error) {
       const userParam = params.get("user");
       if (userParam) {
         try {
           const userData = JSON.parse(decodeURIComponent(userParam));
-          console.log('🔐 JWT recibido desde URL, procesando...');
           handleJWTFromURL(token, userData);
           
           // Limpiar URL después de procesar
@@ -50,31 +47,15 @@ export default function AuthPage() {
       });
     }
     
-    // Verificar autenticación en múltiples escenarios
+    // Verificar autenticación solo si es necesario
     const shouldCheckAuth = !error && !token && !emailParam;
     const referrer = document.referrer;
     const isFromGoogle = referrer.includes('accounts.google.com');
-    const isFromLhDecant = referrer.includes('lhdecant.com');
     const isDirectAccess = !referrer || referrer === '';
     const currentUrl = window.location.href;
     const isCleanUrl = currentUrl === 'https://lhdecant.com/' || currentUrl === 'https://lhdecant.com/auth';
     
-    console.log('🔍 Auth check conditions:', {
-      shouldCheckAuth,
-      isFromGoogle,
-      isFromLhDecant,
-      isDirectAccess,
-      isCleanUrl,
-      referrer,
-      currentUrl
-    });
-    
-    // Verificar autenticación si:
-    // 1. No hay errores y es una URL limpia
-    // 2. Viene de Google OAuth
-    // 3. Es acceso directo después de login
     if ((shouldCheckAuth && isCleanUrl) || isFromGoogle || (isDirectAccess && isCleanUrl)) {
-      console.log('🔄 Detectado posible retorno de Google OAuth, verificando autenticación...');
       checkAuthAfterOAuth();
     }
   }, [error, message, token, emailParam, toast, checkAuthAfterOAuth, handleJWTFromURL, params]);

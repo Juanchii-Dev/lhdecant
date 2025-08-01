@@ -133,40 +133,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Función para verificar autenticación después de OAuth
   const checkAuthAfterOAuth = () => {
-    console.log('🔄 Verificando autenticación después de OAuth...');
-    
     // Limpiar cache primero
     queryClient.removeQueries({ queryKey: ["/api/user"] });
     
     // Verificar inmediatamente
     refetchUser();
-    
-    // Verificación adicional después de 2 segundos
-    setTimeout(() => {
-      console.log('🔄 Verificación adicional...');
-      refetchUser();
-    }, 2000);
   };
 
   // Función para manejar JWT desde URL
   const handleJWTFromURL = (token: string, userData: any) => {
-    console.log('🔐 Procesando JWT desde URL...');
-    console.log('🔑 Token recibido:', token ? 'SÍ' : 'NO');
-    console.log('👤 User data recibido:', userData);
+    console.log('🔐 JWT procesado y guardado');
     
     // Guardar JWT en localStorage
     localStorage.setItem('authToken', token);
     localStorage.setItem('userData', JSON.stringify(userData));
     
-    // Verificar que se guardó correctamente
-    const savedToken = localStorage.getItem('authToken');
-    const savedUserData = localStorage.getItem('userData');
-    console.log('💾 Token guardado en localStorage:', savedToken ? 'SÍ' : 'NO');
-    console.log('💾 User data guardado en localStorage:', savedUserData ? 'SÍ' : 'NO');
-    
     // Limpiar cache y refetch
     queryClient.removeQueries({ queryKey: ["/api/user"] });
-    console.log('🔄 Ejecutando refetchUser después de guardar JWT...');
     refetchUser();
   };
 

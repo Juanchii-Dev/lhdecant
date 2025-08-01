@@ -31,25 +31,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Middleware to check if user is authenticated for admin routes
   const requireAuth = (req: any, res: any, next: any) => {
-    console.log('🔍 requireAuth - Headers recibidos:', req.headers);
-    console.log('🔑 Authorization header:', req.headers.authorization ? 'SÍ' : 'NO');
-    
     // Verificar JWT en Authorization header
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      console.log('🔐 Token JWT recibido:', token ? 'SÍ' : 'NO');
       const decoded = verifyToken(token);
       
       if (decoded && typeof decoded === 'object' && 'email' in decoded) {
-        console.log('✅ requireAuth - Usuario autenticado via JWT:', (decoded as any).email);
         req.user = decoded;
         return next();
-      } else {
-        console.log('❌ requireAuth - Token JWT inválido o expirado');
       }
-    } else {
-      console.log('❌ requireAuth - No se encontró Authorization header válido');
     }
     
     // Verificar sesión manual (Google OAuth) - fallback
@@ -319,24 +310,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User routes
   app.get('/api/user', (req, res) => {
-    console.log('🔍 /api/user - Headers recibidos:', req.headers);
-    console.log('🔑 /api/user - Authorization header:', req.headers.authorization ? 'SÍ' : 'NO');
-    
     // Verificar JWT en Authorization header
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      console.log('🔐 /api/user - Token JWT recibido:', token ? 'SÍ' : 'NO');
       const decoded = verifyToken(token);
       
       if (decoded && typeof decoded === 'object' && 'email' in decoded) {
-        console.log('✅ /api/user - Usuario autenticado via JWT:', (decoded as any).email);
         return res.json(decoded);
-      } else {
-        console.log('❌ /api/user - Token JWT inválido o expirado');
       }
-    } else {
-      console.log('❌ /api/user - No se encontró Authorization header válido');
     }
     
     // Verificar sesión manual (Google OAuth) - fallback
