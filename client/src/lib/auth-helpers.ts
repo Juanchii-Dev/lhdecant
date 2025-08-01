@@ -1,10 +1,14 @@
+import { getApiBaseUrl } from '../config/production';
+
 // Funciones helper para manejo de autenticación
 
 // Función para obtener token de autenticación
 export const getAuthToken = (): string | null => {
   const token = localStorage.getItem('authToken');
   if (!token) {
-    console.warn('⚠️ No auth token found');
+    if (import.meta.env.DEV) {
+      console.warn('⚠️ No auth token found');
+    }
     return null;
   }
   return token;
@@ -14,7 +18,9 @@ export const getAuthToken = (): string | null => {
 export const getRefreshToken = (): string | null => {
   const refreshToken = localStorage.getItem('refreshToken');
   if (!refreshToken) {
-    console.warn('⚠️ No refresh token found');
+    if (import.meta.env.DEV) {
+      console.warn('⚠️ No refresh token found');
+    }
     return null;
   }
   return refreshToken;
@@ -35,13 +41,17 @@ export const refreshToken = async (): Promise<boolean> => {
   try {
     const refreshToken = getRefreshToken();
     if (!refreshToken) {
-      console.warn('⚠️ No refresh token available');
+      if (import.meta.env.DEV) {
+        console.warn('⚠️ No refresh token available');
+      }
       return false;
     }
     
-    console.log('🔄 Intentando renovar token...');
+    if (import.meta.env.DEV) {
+      console.log('🔄 Intentando renovar token...');
+    }
     
-    const response = await fetch('https://lhdecant-backend.onrender.com/api/auth/refresh', {
+    const response = await fetch(`${getApiBaseUrl()}/api/auth/refresh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -61,22 +71,30 @@ export const refreshToken = async (): Promise<boolean> => {
         localStorage.setItem('userData', JSON.stringify(data.user));
       }
       
-      console.log('✅ Token renovado exitosamente');
+      if (import.meta.env.DEV) {
+        console.log('✅ Token renovado exitosamente');
+      }
       return true;
     } else {
-      console.error('❌ Error renovando token:', response.status, response.statusText);
+      if (import.meta.env.DEV) {
+        console.error('❌ Error renovando token:', response.status, response.statusText);
+      }
       return false;
     }
     
   } catch (error) {
-    console.error('❌ Error renovando token:', error);
+    if (import.meta.env.DEV) {
+      console.error('❌ Error renovando token:', error);
+    }
     return false;
   }
 };
 
 // Función para logout completo
 export const handleLogout = (): void => {
-  console.log('🚪 Ejecutando logout...');
+  if (import.meta.env.DEV) {
+    console.log('🚪 Ejecutando logout...');
+  }
   
   // Limpiar tokens
   localStorage.removeItem('authToken');
@@ -88,11 +106,15 @@ export const handleLogout = (): void => {
     window.queryClient.clear();
   }
   
-  console.log('✅ Logout completado');
+  if (import.meta.env.DEV) {
+    console.log('✅ Logout completado');
+  }
 };
 
-// Función para debug de autenticación
+// Función para debug de autenticación (solo en desarrollo)
 export const debugAuth = (): void => {
+  if (!import.meta.env.DEV) return;
+  
   console.log('🔍 Auth Debug:', {
     hasAuthToken: !!localStorage.getItem('authToken'),
     hasRefreshToken: !!localStorage.getItem('refreshToken'),

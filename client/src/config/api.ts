@@ -1,6 +1,7 @@
-// Configuración de API para el frontend
+import { getApiBaseUrl } from './production';
+
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_URL || 'https://lhdecant-backend.onrender.com',
+  baseUrl: getApiBaseUrl(),
   timeout: 10000,
 };
 
@@ -36,11 +37,14 @@ export const buildApiUrl = (endpoint: any): string => {
     const normalizedEndpoint = normalizeEndpoint(endpoint);
     const url = `${API_CONFIG.baseUrl}${normalizedEndpoint}`;
     
-    console.log('🔗 API URL construida:', {
-      original: endpoint,
-      normalized: normalizedEndpoint,
-      final: url
-    });
+    // Solo mostrar logs en desarrollo
+    if (import.meta.env.DEV) {
+      console.log('🔗 API URL construida:', {
+        original: endpoint,
+        normalized: normalizedEndpoint,
+        final: url
+      });
+    }
     
     return url;
   } catch (error) {

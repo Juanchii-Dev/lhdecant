@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import axios from "axios";
 import jwt from "jsonwebtoken";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
 declare global {
   namespace Express {
@@ -195,39 +196,52 @@ export function setupAuth(app: Express) {
     }),
   );
 
-  // Google OAuth 2.0 Implementation - Manual flow
-  const googleClientId = process.env.GOOGLE_CLIENT_ID;
-  const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const googleRedirectUri = process.env.GOOGLE_CALLBACK_URL || 'https://lhdecant-backend.onrender.com/api/auth/google/callback';
+  // Configuración de Google OAuth para producción
+  const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+  const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+  const FRONTEND_URL = process.env.FRONTEND_URL || 'https://lhdecant.com';
+  const BACKEND_URL = process.env.BACKEND_URL || 'https://lhdecant-backend.onrender.com';
 
-  if (googleClientId && googleClientSecret) {
-    console.log('✅ Configurando Google OAuth 2.0 con credenciales...');
-    console.log('📋 Client ID:', googleClientId);
-    console.log('🔗 Redirect URI:', googleRedirectUri);
+  // Función para buscar o crear usuario
+  async function findOrCreateUser(profile: any) {
+    const email = profile.emails[0].value;
+    let user = await storage.getUserByUsername(email);
     
-    // Endpoint de verificación para Google OAuth configurado
-    app.get("/api/auth/google/status", (_req, res) => {
-      res.json({
-        configured: true,
-        message: "Google OAuth configurado correctamente",
-        client_id: googleClientId ? "✅ Configurado" : "❌ Faltante",
-        client_secret: googleClientSecret ? "✅ Configurado" : "❌ Faltante",
-        redirect_uri: googleRedirectUri,
-        endpoints: {
-          auth: "/api/auth/google",
-          callback: "/api/auth/google/callback",
-          status: "/api/auth/google/status"
-        }
+    if (!user) {
+      user = await storage.createUser({
+        username: email,
+        password: "",
+        email: email,
+        name: profile.displayName || email.split('@')[0],
+        googleId: profile.id,
+        avatar: profile.photos[0]?.value || null
       });
-    });
+    } else {
+      // Actualizar datos si es necesario
+      if (!user.googleId || user.name !== profile.displayName || user.avatar !== profile.photos[0]?.value) {
+        user = await storage.updateUser(user.id, {
+          googleId: profile.id,
+          name: profile.displayName || user.name,
+          avatar: profile.photos[0]?.value || user.avatar
+        });
+      }
+    }
+    
+    return user;
+  }
+
+  if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
+    console.log('✅ Configurando Google OAuth 2.0 con credenciales...');
+    console.log('📋 Client ID:', GOOGLE_CLIENT_ID);
+    console.log('🔗 Redirect URI:', `${BACKEND_URL}/api/auth/google/callback`);
     
     // Ruta para iniciar el flujo OAuth
     app.get("/api/auth/google", (_req, res) => {
       console.log('🚀 Iniciando flujo Google OAuth 2.0...');
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${encodeURIComponent(googleClientId)}` +
-        `&redirect_uri=${encodeURIComponent(googleRedirectUri)}` +
+        `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
+        `&redirect_uri=${encodeURIComponent(`${BACKEND_URL}/api/auth/google/callback`)}` +
         `&response_type=code` +
         `&scope=${encodeURIComponent('email profile')}` +
         `&access_type=offline` +
@@ -247,12 +261,12 @@ export function setupAuth(app: Express) {
         
         if (error) {
           console.error('❌ Error de Google OAuth:', error);
-          return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=${encodeURIComponent(error as string)}`);
+          return res.redirect(`${FRONTEND_URL}/auth?error=google&message=${encodeURIComponent(error as string)}`);
         }
         
         if (!code) {
           console.error('❌ No se recibió código de autorización');
-          return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=No se recibió código de autorización`);
+          return res.redirect(`${FRONTEND_URL}/auth?error=google&message=No se recibió código de autorización`);
         }
         
         console.log('🔑 Intercambiando código por access token...');
@@ -260,9 +274,9 @@ export function setupAuth(app: Express) {
         // Paso 1: Intercambiar código por access token
         const tokenData = new URLSearchParams({
           code: code as string,
-          client_id: googleClientId,
-          client_secret: googleClientSecret,
-          redirect_uri: googleRedirectUri,
+          client_id: GOOGLE_CLIENT_ID,
+          client_secret: GOOGLE_CLIENT_SECRET,
+          redirect_uri: `${BACKEND_URL}/api/auth/google/callback`,
           grant_type: 'authorization_code',
         });
         
@@ -276,7 +290,7 @@ export function setupAuth(app: Express) {
         
         if (!access_token) {
           console.error('❌ No se recibió access token');
-          return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=No se recibió access token`);
+          return res.redirect(`${FRONTEND_URL}/auth?error=google&message=No se recibió access token`);
         }
         
         console.log('👤 Obteniendo información del usuario...');
@@ -300,7 +314,7 @@ export function setupAuth(app: Express) {
         const email = userInfo.email;
         if (!email) {
           console.error('❌ No se recibió email del usuario');
-          return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=No se recibió email del usuario`);
+          return res.redirect(`${FRONTEND_URL}/auth?error=google&message=No se recibió email del usuario`);
         }
         
         let user = await storage.getUserByUsername(email);
@@ -337,7 +351,7 @@ export function setupAuth(app: Express) {
         console.log('✅ Tokens generados exitosamente');
         
         // Redirigir al frontend con los tokens
-        const redirectUrl = `${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?token=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}&user=${encodeURIComponent(JSON.stringify({
+        const redirectUrl = `${FRONTEND_URL}/auth?token=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}&user=${encodeURIComponent(JSON.stringify({
           id: user.id,
           username: user.username,
           email: user.email,
@@ -365,7 +379,7 @@ export function setupAuth(app: Express) {
                            error.message || 
                            'Error desconocido';
         
-        const redirectUrl = `${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=${encodeURIComponent(errorMessage)}`;
+        const redirectUrl = `${FRONTEND_URL}/auth?error=google&message=${encodeURIComponent(errorMessage)}`;
         res.redirect(redirectUrl);
       }
     });
@@ -373,18 +387,6 @@ export function setupAuth(app: Express) {
   } else {
     console.log('❌ Google OAuth no configurado - faltan credenciales');
     
-    app.get("/api/auth/google/debug", (_req, res) => {
-      res.json({
-        configured: false,
-        message: "Google OAuth no configurado",
-        required_vars: {
-          GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "✅ Configurado" : "❌ Faltante",
-          GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? "✅ Configurado" : "❌ Faltante",
-          GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || "https://lhdecant-backend.onrender.com/api/auth/google/callback"
-        }
-      });
-    });
-
     app.get("/api/auth/google", (_req, res) => {
       res.status(400).json({ 
         error: "Google OAuth no configurado", 

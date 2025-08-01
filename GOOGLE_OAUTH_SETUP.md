@@ -1,75 +1,52 @@
-# Configuración de Google OAuth para LH Decants
+# Configuración de Google OAuth 2.0 para Producción
 
-## Pasos para configurar Google OAuth real:
+## 🚀 Configuración para Producción
 
-### 1. Ir a Google Cloud Console
-- Ve a: https://console.cloud.google.com
-- Inicia sesión con tu cuenta de Google
-
-### 2. Crear o seleccionar un proyecto
-- Si no tienes un proyecto, crea uno nuevo
-- Dale un nombre como "LH Decants OAuth"
-
-### 3. Habilitar APIs necesarias
-- Ve a "APIs y servicios" > "Biblioteca"
-- Busca y habilita:
-  - Google+ API
-  - Google Identity API
-
-### 4. Crear credenciales OAuth 2.0
-- Ve a "APIs y servicios" > "Credenciales"
-- Haz clic en "Crear credenciales" > "ID de cliente de OAuth 2.0"
-- Selecciona "Aplicación web"
-
-### 5. Configurar la aplicación OAuth
-- **Nombre:** LH Decants
-- **Orígenes autorizados de JavaScript:**
-  ```
-  http://localhost:5173
-  ```
-- **URIs de redirección autorizados:**
-  ```
-  http://localhost:5000/api/auth/google/callback
-  ```
-
-### 6. Obtener las credenciales
-- Después de crear, copia:
-  - **ID de cliente** (Client ID)
-  - **Secreto del cliente** (Client Secret)
-
-### 7. Configurar el archivo .env
-Agrega estas líneas a tu archivo `.env`:
+### 1. Variables de Entorno Requeridas
 
 ```env
-# Google OAuth Configuration
-GOOGLE_CLIENT_ID=TU_CLIENT_ID_AQUI
-GOOGLE_CLIENT_SECRET=TU_CLIENT_SECRET_AQUI
-GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
+# PRODUCCIÓN - NO localhost
+GOOGLE_CLIENT_ID=tu_google_client_id_real
+GOOGLE_CLIENT_SECRET=tu_google_client_secret_real
+FRONTEND_URL=https://lhdecant.com
+BACKEND_URL=https://lhdecant-backend.onrender.com
 ```
 
-### 8. Reiniciar el servidor
-```bash
-npm run dev
-```
+### 2. Configuración en Google Cloud Console
 
-### 9. Probar la autenticación
-- Ve a: http://localhost:5173/auth
-- Haz clic en "Continuar con Google"
-- Deberías poder usar tu cuenta real de Google
+#### Authorized JavaScript origins:
+- `https://lhdecant.com`
+- `https://lhdecant-backend.onrender.com`
 
-## Solución de problemas:
+#### Authorized redirect URIs:
+- `https://lhdecant-backend.onrender.com/api/auth/google/callback`
 
-### Error "redirect_uri_mismatch"
-- Verifica que la URI de redirección en Google Console coincida exactamente con: `http://localhost:5000/api/auth/google/callback`
+### 3. URLs de Producción
 
-### Error "unauthorized_client"
-- Verifica que el Client ID y Client Secret estén correctos en tu archivo .env
+- **Frontend**: https://lhdecant.com
+- **Backend**: https://lhdecant-backend.onrender.com
+- **Callback URL**: https://lhdecant-backend.onrender.com/api/auth/google/callback
 
-### Error 500 en el callback
-- Verifica que las APIs estén habilitadas en Google Console
-- Revisa los logs del servidor para más detalles
+### 4. Testing en Producción
 
-## Notas importantes:
-- Las credenciales de desarrollo solo funcionan en localhost
-- Para producción, necesitarás configurar dominios adicionales
-- Nunca compartas tu Client Secret públicamente 
+1. Ve a: https://lhdecant.com/auth
+2. Haz clic en "Continuar con Google"
+3. Selecciona tu cuenta de Google
+4. Verifica que la URI de redirección en Google Console coincida exactamente con: `https://lhdecant-backend.onrender.com/api/auth/google/callback`
+
+### 5. Troubleshooting
+
+#### Error: "redirect_uri_mismatch"
+- Verifica que la URI de redirección en Google Console sea exactamente: `https://lhdecant-backend.onrender.com/api/auth/google/callback`
+- Las credenciales de producción solo funcionan con URLs de producción
+
+#### Error: "invalid_client"
+- Verifica que GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET estén configurados correctamente
+- Asegúrate de usar las credenciales de producción, no las de desarrollo
+
+### 6. Seguridad
+
+- ✅ Usa HTTPS en todas las URLs
+- ✅ Configura CORS correctamente para producción
+- ✅ Usa variables de entorno para las credenciales
+- ❌ NO uses localhost en producción 

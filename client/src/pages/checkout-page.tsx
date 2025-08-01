@@ -216,7 +216,7 @@ export default function CheckoutPage() {
               {/* Información del cliente */}
               <div className="bg-gray-800 p-4 rounded-lg">
                 <h3 className="font-semibold mb-2">Cliente</h3>
-                <p className="text-gray-300">{user.name || user.username}</p>
+                <p className="text-gray-300">{user.name}</p>
                 <p className="text-gray-400">{user.email}</p>
               </div>
 

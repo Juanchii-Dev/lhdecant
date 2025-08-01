@@ -29,24 +29,21 @@ if (process.env.NODE_ENV === 'production') {
   app.use(compression());
 }
 
-// CORS ULTRA AGRESIVO - SOLUCIÓN DEFINITIVA
+// Configuración CORS ultra-permisiva para producción
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // SOLUCIÓN ULTRA AGRESIVA - FORZAR CORS CORRECTO SIEMPRE
-  if (origin && (origin.includes('lhdecant.com') || origin.includes('netlify.app'))) {
-    res.header('Access-Control-Allow-Origin', origin);
-  } else if (origin && origin.includes('localhost')) {
-    res.header('Access-Control-Allow-Origin', origin);
+  // Permitir todos los orígenes de producción
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
-    // Para cualquier otro origen, usar el dominio de producción
-    res.header('Access-Control-Allow-Origin', 'https://lhdecant.com');
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
   
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '86400');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Origin, Accept, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400');
   
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
