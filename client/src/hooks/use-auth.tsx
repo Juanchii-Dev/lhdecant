@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
@@ -42,10 +42,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
-    refetch: refetchUser,
+    refetch,
   } = useQuery<any | undefined, Error>({
     queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: () => getQueryFn("/api/user"),
     retry: false,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -71,7 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
+      const res = await apiRequest("/api/login", {
+        method: "POST",
+        body: JSON.stringify(credentials),
+      });
       return await res.json();
     },
     onSuccess: (user: any) => {
@@ -88,7 +91,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: any) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
+      const res = await apiRequest("/api/register", {
+        method: "POST",
+        body: JSON.stringify(credentials),
+      });
       return await res.json();
     },
     onSuccess: (user: any) => {
@@ -109,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      await apiRequest("/api/logout", { method: "POST" });
     },
     onSuccess: () => {
       // Limpiar localStorage
@@ -134,31 +140,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Función para verificar autenticación después de OAuth
-  const checkAuthAfterOAuth = () => {
-    queryClient.removeQueries({ queryKey: ["/api/user"] });
-    refetchUser();
-  };
+  // Función para manejar JWT desde URL (después de Google OAuth)
+  const handleJWTFromURL = useCallback((token: string, userData: any) => {
+    if (token) {
+      localStorage.setItem('authToken', token);
+      if (userData) {
+        localStorage.setItem('userData', JSON.stringify(userData));
+      }
+      // Refetch user data
+      refetch();
+    }
+  }, [refetch]);
 
-  // Función para manejar JWT desde URL
-  const handleJWTFromURL = (token: string, userData: any) => {
-    console.log('🔐 Guardando JWT en localStorage:', { token: token.substring(0, 20) + '...', userData });
-    
-    // Guardar JWT en localStorage
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('userData', JSON.stringify(userData));
-    
-    // Limpiar cache y refetch
-    queryClient.removeQueries({ queryKey: ["/api/user"] });
-    queryClient.setQueryData(["/api/user"], userData);
-    
-    console.log('✅ JWT guardado correctamente');
-    
-    toast({
-      title: "Inicio de sesión exitoso",
-      description: `Bienvenido, ${userData.name || userData.email}`,
-    });
-  };
+  // Función para verificar autenticación después de OAuth
+  const checkAuthAfterOAuth = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   return (
     <AuthContext.Provider
@@ -169,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
-        refetchUser,
+        refetchUser: refetch,
         checkAuthAfterOAuth,
         handleJWTFromURL,
       }}

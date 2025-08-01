@@ -8,85 +8,56 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  // Obtener JWT del localStorage
-  const token = localStorage.getItem('authToken');
+// Función para hacer peticiones a la API
+export const apiRequest = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const authToken = localStorage.getItem('authToken');
+  
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response;
+};
+
+// Función para obtener datos con React Query
+export const getQueryFn = async (endpoint: string) => {
+  const url = buildApiUrl(endpoint);
+  const authToken = localStorage.getItem('authToken');
   
   const headers: Record<string, string> = {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
   };
-  
-  // Agregar JWT si existe
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-    console.log('🔑 Enviando JWT en petición:', { url, token: token.substring(0, 20) + '...' });
-    console.log('📤 Headers reales enviados:', headers);
-    console.log('🔑 Token completo:', token);
-  } else {
-    console.log('⚠️ No hay JWT disponible para:', url);
+
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
   }
-  
-  // Usar buildApiUrl CORREGIDA
-  const fullUrl = buildApiUrl(url);
-  console.log('🔗 URL completa construida:', fullUrl);
-  
-  const res = await fetch(fullUrl, {
-    method,
+
+  const response = await fetch(url, {
     headers,
-    credentials: "include",
-    body: data ? JSON.stringify(data) : undefined,
   });
 
-  await throwIfResNotOk(res);
-  return res;
-}
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
 
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    // Obtener JWT del localStorage
-    const token = localStorage.getItem('authToken');
-    
-    const headers: Record<string, string> = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
-    
-    // Agregar JWT si existe
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-      console.log('🔑 Enviando JWT en queryFn:', { url: queryKey[0], token: token.substring(0, 20) + '...' });
-      console.log('📤 Headers reales enviados en queryFn:', headers);
-      console.log('🔑 Token completo en queryFn:', token);
-    } else {
-      console.log('⚠️ No hay JWT disponible para queryFn:', queryKey[0]);
-    }
-    
-    // Usar buildApiUrl CORREGIDA
-    const fullUrl = buildApiUrl(queryKey[0] as string);
-    console.log('🔗 URL completa construida en queryFn:', fullUrl);
-    
-    const res = await fetch(fullUrl, {
-      credentials: "include",
-      headers,
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      console.log('❌ 401 Unauthorized para:', queryKey[0]);
-      return null;
-    }
-
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
+  return response.json();
+};
 
 export const queryClient = new QueryClient({
   defaultOptions: {
