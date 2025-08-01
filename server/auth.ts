@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 // // // import { User, GoogleProfile, UserUpdates } from "./types";
 import axios from "axios";
+import jwt from "jsonwebtoken";
 
 declare global {
   namespace Express {
@@ -31,6 +32,31 @@ declare module "express-session" {
 }
 
 const scryptAsync = promisify(scrypt);
+
+// JWT Secret - usar una variable de entorno o un valor por defecto
+const JWT_SECRET = process.env.JWT_SECRET || 'lhdecant-jwt-secret-2024';
+
+// Función para generar JWT
+function generateToken(user: any) {
+  return jwt.sign(
+    { 
+      id: user.id, 
+      email: user.email, 
+      username: user.username 
+    },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+}
+
+// Función para verificar JWT
+function verifyToken(token: string) {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    return null;
+  }
+}
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -239,44 +265,24 @@ export function setupAuth(app: Express) {
           }
         }
         
-        // Paso 4: Crear sesión MANUALMENTE
-        console.log('🔐 Configurando sesión para usuario:', user.email);
+        // Paso 4: Generar JWT y redirigir
+        console.log('🔐 Generando JWT para usuario:', user.email);
         
-        // Guardar usuario en la sesión
-        (req.session as any).user = {
+        const token = generateToken(user);
+        console.log('✅ JWT generado exitosamente');
+        
+        // Redirigir al frontend con el token
+        const redirectUrl = `${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify({
           id: user.id,
           username: user.username,
           email: user.email,
           name: user.name,
           googleId: user.googleId,
           avatar: user.avatar
-        };
+        }))}`;
         
-        // Marcar como autenticado
-        (req.session as any).isAuthenticated = true;
-        
-        console.log('🍪 Configuración de cookie:', {
-          sessionId: req.sessionID,
-          secure: req.session.cookie.secure,
-          sameSite: req.session.cookie.sameSite,
-          domain: req.session.cookie.domain,
-          httpOnly: req.session.cookie.httpOnly,
-          maxAge: req.session.cookie.maxAge
-        });
-        
-        // Guardar la sesión
-        req.session.save((err) => {
-          if (err) {
-            console.error('❌ Error al guardar sesión:', err);
-            return res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/auth?error=google&message=Error al guardar sesión`);
-          }
-          
-          console.log('✅ Sesión guardada exitosamente para:', user.email);
-          console.log('🎯 Redirigiendo a la aplicación...');
-          
-          // Redirigir al frontend
-          res.redirect(`${process.env.FRONTEND_URL || 'https://lhdecant.com'}/`);
-        });
+        console.log('🎯 Redirigiendo con JWT...');
+        res.redirect(redirectUrl);
         
       } catch (error: any) {
         console.error('❌ Error en callback de Google OAuth:', error);
@@ -431,3 +437,6 @@ export function requireAdmin(req: any, res: any, next: any) {
   }
   next();
 }
+
+// Exportar funciones JWT
+export { generateToken, verifyToken };

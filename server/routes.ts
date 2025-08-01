@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, requireAdmin } from "./auth";
+import { setupAuth, requireAdmin, verifyToken } from "./auth";
 import Stripe from 'stripe';
 import nodemailer from 'nodemailer';
 import express from 'express';
@@ -32,18 +32,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to check if user is authenticated for admin routes
   const requireAuth = (req: any, res: any, next: any) => {
     console.log('🔍 requireAuth - Headers:', req.headers);
-    console.log('🍪 requireAuth - Cookies:', req.cookies);
-    console.log('🔐 requireAuth - Session:', req.session);
-    console.log('👤 requireAuth - req.user:', req.user);
-    console.log('✅ requireAuth - req.isAuthenticated():', req.isAuthenticated());
     
-    // Verificar sesión manual (Google OAuth)
+    // Verificar JWT en Authorization header
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const decoded = verifyToken(token);
+      
+      if (decoded && typeof decoded === 'object' && 'email' in decoded) {
+        console.log('✅ requireAuth - Usuario autenticado via JWT:', (decoded as any).email);
+        req.user = decoded;
+        return next();
+      }
+    }
+    
+    // Verificar sesión manual (Google OAuth) - fallback
     if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
       console.log('✅ requireAuth - Usuario autenticado via sesión manual');
       return next();
     }
     
-    // Verificar autenticación de Passport (login normal)
+    // Verificar autenticación de Passport (login normal) - fallback
     if (req.isAuthenticated()) {
       console.log('✅ requireAuth - Usuario autenticado via Passport');
       return next();
@@ -305,19 +314,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
   app.get('/api/user', (req, res) => {
     console.log('🔍 /api/user - Headers recibidos:', req.headers);
-    console.log('🍪 /api/user - Cookies recibidas:', req.cookies);
-    console.log('🔐 /api/user - Session ID:', req.sessionID);
-    console.log('🔐 /api/user - Session:', req.session);
-    console.log('👤 /api/user - req.user:', req.user);
-    console.log('✅ /api/user - req.isAuthenticated():', req.isAuthenticated());
     
-    // Verificar sesión manual (Google OAuth)
+    // Verificar JWT en Authorization header
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const decoded = verifyToken(token);
+      
+      if (decoded && typeof decoded === 'object' && 'email' in decoded) {
+        console.log('✅ /api/user - Usuario autenticado via JWT:', (decoded as any).email);
+        return res.json(decoded);
+      }
+    }
+    
+    // Verificar sesión manual (Google OAuth) - fallback
     if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
       console.log('✅ /api/user - Usuario autenticado via sesión manual');
       return res.json((req.session as any).user);
     }
     
-    // Verificar autenticación de Passport (login normal)
+    // Verificar autenticación de Passport (login normal) - fallback
     if (req.isAuthenticated() && req.user) {
       console.log('✅ /api/user - Usuario autenticado via Passport');
       return res.json(req.user);

@@ -18,6 +18,7 @@ type AuthContextType = {
   registerMutation: UseMutationResult<any, Error, any>;
   refetchUser: () => void;
   checkAuthAfterOAuth: () => void;
+  handleJWTFromURL: (token: string, userData: any) => void;
 };
 
 type LoginData = Pick<any, "username" | "password">;
@@ -46,12 +47,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
-    refetchOnWindowFocus: false, // Cambiado a false para evitar spam
+    refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: true,
-    staleTime: 30000, // 30 segundos para evitar verificaciones excesivas
-    gcTime: 600000, // 10 minutos
+    staleTime: 30000,
+    gcTime: 600000,
     enabled: true,
+    // Función para obtener datos iniciales desde localStorage
+    initialData: () => {
+      const userData = localStorage.getItem('userData');
+      const token = localStorage.getItem('authToken');
+      
+      if (userData && token) {
+        try {
+          return JSON.parse(userData);
+        } catch (error) {
+          console.error('Error parsing userData from localStorage:', error);
+          return undefined;
+        }
+      }
+      return undefined;
+    },
   });
 
   const loginMutation = useMutation({
@@ -132,6 +148,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 2000);
   };
 
+  // Función para manejar JWT desde URL
+  const handleJWTFromURL = (token: string, userData: any) => {
+    console.log('🔐 Procesando JWT desde URL...');
+    
+    // Guardar JWT en localStorage
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('userData', JSON.stringify(userData));
+    
+    // Limpiar cache y refetch
+    queryClient.removeQueries({ queryKey: ["/api/user"] });
+    refetchUser();
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -143,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         registerMutation,
         refetchUser,
         checkAuthAfterOAuth,
+        handleJWTFromURL,
       }}
     >
       {children}

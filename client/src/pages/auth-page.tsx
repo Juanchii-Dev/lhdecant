@@ -6,7 +6,7 @@ import { useAuth } from "../hooks/use-auth";
 import { useToast } from "../hooks/use-toast";
 
 export default function AuthPage() {
-  const { loginMutation, registerMutation, checkAuthAfterOAuth } = useAuth();
+  const { loginMutation, registerMutation, checkAuthAfterOAuth, handleJWTFromURL } = useAuth();
   const { toast } = useToast();
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
@@ -23,6 +23,24 @@ export default function AuthPage() {
   // Manejar errores de Google OAuth y verificar autenticación
   React.useEffect(() => {
     console.log('🔍 Auth page effect - error:', error, 'message:', message, 'token:', token, 'emailParam:', emailParam);
+    
+    // Manejar JWT desde URL (después de Google OAuth)
+    if (token && !error) {
+      const userParam = params.get("user");
+      if (userParam) {
+        try {
+          const userData = JSON.parse(decodeURIComponent(userParam));
+          console.log('🔐 JWT recibido desde URL, procesando...');
+          handleJWTFromURL(token, userData);
+          
+          // Limpiar URL después de procesar
+          window.history.replaceState({}, document.title, '/auth');
+          return;
+        } catch (error) {
+          console.error('Error parsing user data from URL:', error);
+        }
+      }
+    }
     
     if (error === "google" && message) {
       toast({
@@ -59,7 +77,7 @@ export default function AuthPage() {
       console.log('🔄 Detectado posible retorno de Google OAuth, verificando autenticación...');
       checkAuthAfterOAuth();
     }
-  }, [error, message, token, emailParam, toast, checkAuthAfterOAuth]);
+  }, [error, message, token, emailParam, toast, checkAuthAfterOAuth, handleJWTFromURL, params]);
 
   // Google login mejorado
   const handleGoogle = async () => {

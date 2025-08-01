@@ -30,12 +30,22 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Obtener JWT del localStorage
+    const token = localStorage.getItem('authToken');
+    
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    
+    // Agregar JWT si existe
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(buildApiUrl(queryKey[0] as string), {
       credentials: "include",
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
