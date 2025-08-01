@@ -5,7 +5,6 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-// import { insertUserSchema, User, InsertUser } from "@shared/schema"; // ELIMINADO
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "./use-toast";
 
@@ -38,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return <div>Error: Toast context not available</div>;
   }
   const { toast } = toastContext;
+  
   const {
     data: user,
     error,
@@ -47,13 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
-    staleTime: 30000,
+    staleTime: 0,
     gcTime: 600000,
     enabled: true,
-    // Función para obtener datos iniciales desde localStorage
     initialData: () => {
       const userData = localStorage.getItem('userData');
       const token = localStorage.getItem('authToken');
@@ -73,9 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
-      if (!res.ok) {
-        throw new Error("Invalid credentials");
-      }
       return await res.json();
     },
     onSuccess: (user: any) => {
@@ -116,7 +112,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
+      // Limpiar localStorage
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      
+      // Limpiar cache
       queryClient.setQueryData(["/api/user"], null);
+      queryClient.removeQueries({ queryKey: ["/api/user"] });
+      
       toast({
         title: "Sesión cerrada",
         description: "Has cerrado sesión correctamente",
@@ -133,24 +136,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Función para verificar autenticación después de OAuth
   const checkAuthAfterOAuth = () => {
-    // Limpiar cache primero
     queryClient.removeQueries({ queryKey: ["/api/user"] });
-    
-    // Verificar inmediatamente
     refetchUser();
   };
 
   // Función para manejar JWT desde URL
   const handleJWTFromURL = (token: string, userData: any) => {
-    console.log('🔐 JWT procesado y guardado');
-    
     // Guardar JWT en localStorage
     localStorage.setItem('authToken', token);
     localStorage.setItem('userData', JSON.stringify(userData));
     
     // Limpiar cache y refetch
     queryClient.removeQueries({ queryKey: ["/api/user"] });
-    refetchUser();
+    queryClient.setQueryData(["/api/user"], userData);
+    
+    toast({
+      title: "Inicio de sesión exitoso",
+      description: `Bienvenido, ${userData.name || userData.email}`,
+    });
   };
 
   return (

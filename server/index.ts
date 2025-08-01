@@ -33,34 +33,20 @@ if (process.env.NODE_ENV === 'production') {
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Solo loggear si hay un origen definido para evitar spam
-  if (origin) {
-    console.log('🌐 CORS Request from origin:', origin);
-  }
-  
   // SOLUCIÓN ULTRA AGRESIVA - FORZAR CORS CORRECTO SIEMPRE
   if (origin && (origin.includes('lhdecant.com') || origin.includes('netlify.app'))) {
     res.header('Access-Control-Allow-Origin', origin);
-    console.log('🎯 CORS SET for production:', origin);
   } else if (origin && origin.includes('localhost')) {
     res.header('Access-Control-Allow-Origin', origin);
-    console.log('🎯 CORS SET for localhost:', origin);
   } else {
     // Para cualquier otro origen, usar el dominio de producción
     res.header('Access-Control-Allow-Origin', 'https://lhdecant.com');
-    console.log('🎯 CORS SET for fallback to lhdecant.com');
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Max-Age', '86400');
-  
-  // Solo loggear si hay un origen definido
-  if (origin) {
-    console.log('✅ CORS headers set for origin:', origin);
-    console.log('🔧 Access-Control-Allow-Origin:', res.getHeader('Access-Control-Allow-Origin'));
-  }
   
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);

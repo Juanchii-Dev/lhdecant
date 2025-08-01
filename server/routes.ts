@@ -34,30 +34,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Verificar JWT en Authorization header
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      const decoded = verifyToken(token);
-      
-      if (decoded && typeof decoded === 'object' && 'email' in decoded) {
-        req.user = decoded;
-        return next();
-      }
+        const token = authHeader.substring(7);
+        try {
+            const decoded = verifyToken(token);
+            if (decoded && typeof decoded === 'object' && 'email' in decoded) {
+                req.user = decoded;
+                return next();
+            }
+        } catch (error: any) {
+            console.log('❌ requireAuth - Token JWT inválido:', error?.message || 'Error desconocido');
+        }
     }
     
     // Verificar sesión manual (Google OAuth) - fallback
     if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
-      console.log('✅ requireAuth - Usuario autenticado via sesión manual');
-      return next();
+        req.user = (req.session as any).user;
+        return next();
     }
     
     // Verificar autenticación de Passport (login normal) - fallback
     if (req.isAuthenticated()) {
-      console.log('✅ requireAuth - Usuario autenticado via Passport');
-      return next();
+        return next();
     }
     
-    console.log('❌ requireAuth - Usuario NO autenticado');
     return res.status(401).json({ message: "Authentication required" });
-  };
+};
 
   // Admin authentication endpoint
   app.post("/api/admin/login", async (req, res) => {
@@ -313,27 +314,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Verificar JWT en Authorization header
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      const decoded = verifyToken(token);
-      
-      if (decoded && typeof decoded === 'object' && 'email' in decoded) {
-        return res.json(decoded);
-      }
+        const token = authHeader.substring(7);
+        try {
+            const decoded = verifyToken(token);
+            if (decoded && typeof decoded === 'object' && 'email' in decoded) {
+                return res.json(decoded);
+            }
+        } catch (error: any) {
+            console.log('❌ /api/user - Token JWT inválido:', error?.message || 'Error desconocido');
+        }
     }
     
     // Verificar sesión manual (Google OAuth) - fallback
     if ((req.session as any)?.isAuthenticated && (req.session as any)?.user) {
-      console.log('✅ /api/user - Usuario autenticado via sesión manual');
-      return res.json((req.session as any).user);
+        return res.json((req.session as any).user);
     }
     
     // Verificar autenticación de Passport (login normal) - fallback
     if (req.isAuthenticated() && req.user) {
-      console.log('✅ /api/user - Usuario autenticado via Passport');
-      return res.json(req.user);
+        return res.json(req.user);
     }
     
-    console.log('❌ /api/user - Usuario NO autenticado');
     return res.status(401).json({ message: 'Authentication required' });
   });
 

@@ -6,7 +6,7 @@ import { useAuth } from "../hooks/use-auth";
 import { useToast } from "../hooks/use-toast";
 
 export default function AuthPage() {
-  const { loginMutation, registerMutation, checkAuthAfterOAuth, handleJWTFromURL } = useAuth();
+  const { loginMutation, registerMutation, handleJWTFromURL } = useAuth();
   const { toast } = useToast();
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
@@ -20,9 +20,8 @@ export default function AuthPage() {
   const [success, setSuccess] = useState(false);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
 
-  // Manejar errores de Google OAuth y verificar autenticación
+  // Manejar JWT desde URL (después de Google OAuth)
   React.useEffect(() => {
-    // Manejar JWT desde URL (después de Google OAuth)
     if (token && !error) {
       const userParam = params.get("user");
       if (userParam) {
@@ -31,7 +30,7 @@ export default function AuthPage() {
           handleJWTFromURL(token, userData);
           
           // Limpiar URL después de procesar
-          window.history.replaceState({}, document.title, '/auth');
+          window.history.replaceState({}, document.title, '/');
           return;
         } catch (error) {
           console.error('Error parsing user data from URL:', error);
@@ -46,26 +45,13 @@ export default function AuthPage() {
         variant: "destructive"
       });
     }
-    
-    // Verificar autenticación solo si es necesario
-    const shouldCheckAuth = !error && !token && !emailParam;
-    const referrer = document.referrer;
-    const isFromGoogle = referrer.includes('accounts.google.com');
-    const isDirectAccess = !referrer || referrer === '';
-    const currentUrl = window.location.href;
-    const isCleanUrl = currentUrl === 'https://lhdecant.com/' || currentUrl === 'https://lhdecant.com/auth';
-    
-    if ((shouldCheckAuth && isCleanUrl) || isFromGoogle || (isDirectAccess && isCleanUrl)) {
-      checkAuthAfterOAuth();
-    }
-  }, [error, message, token, emailParam, toast, checkAuthAfterOAuth, handleJWTFromURL, params]);
+  }, [error, message, token, handleJWTFromURL, params, toast]);
 
-  // Google login mejorado
+  // Google login
   const handleGoogle = async () => {
     setLoadingGoogle(true);
     try {
-      // Redirección directa al servidor backend para Google OAuth
-      window.location.href = '/api/auth/google';
+      window.location.href = buildApiUrl('/api/auth/google');
     } catch (error) {
       toast({ 
         title: "Error de conexión", 

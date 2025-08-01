@@ -13,11 +13,24 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  // Obtener JWT del localStorage
+  const token = localStorage.getItem('authToken');
+  
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
+  
+  // Agregar JWT si existe
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const res = await fetch(buildApiUrl(url), {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers,
     credentials: "include",
+    body: data ? JSON.stringify(data) : undefined,
   });
 
   await throwIfResNotOk(res);
@@ -49,14 +62,11 @@ export const getQueryFn: <T>(options: {
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      console.log('❌ 401 Unauthorized, returning null for', queryKey[0]);
       return null;
     }
 
     await throwIfResNotOk(res);
-    const data = await res.json();
-    console.log('✅ Success response for', queryKey[0], ':', data);
-    return data;
+    return await res.json();
   };
 
 export const queryClient = new QueryClient({
@@ -64,7 +74,7 @@ export const queryClient = new QueryClient({
     queries: {
       refetchInterval: false,
       refetchOnWindowFocus: true,
-      staleTime: 0, // Cambiar de Infinity a 0 para que siempre refetch
+      staleTime: 0,
       retry: false,
     },
     mutations: {
