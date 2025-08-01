@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
@@ -109,6 +109,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Verificar tokens al cargar la página
+  useEffect(() => {
+    const checkTokens = async () => {
+      const token = localStorage.getItem('authToken');
+      const refreshToken = localStorage.getItem('refreshToken');
+      
+      if (token && refreshToken) {
+        // Intentar renovar tokens si es necesario
+        const refreshed = await refreshTokens();
+        if (refreshed) {
+          refetch();
+        }
+      }
+    };
+    
+    checkTokens();
+  }, [refreshTokens, refetch]);
+
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("/api/auth/login", {
@@ -183,22 +201,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      // Aún limpiar localStorage en caso de error
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userData');
+      
+      queryClient.setQueryData(["/api/user"], null);
+      queryClient.removeQueries({ queryKey: ["/api/user"] });
+      
       toast({
-        title: "Error al cerrar sesión",
-        description: error.message,
-        variant: "destructive",
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión correctamente",
       });
     },
   });
 
   // Función para manejar JWT desde URL (después de Google OAuth)
   const handleJWTFromURL = useCallback((token: string, refreshToken: string, userData: any) => {
+    console.log('🔐 handleJWTFromURL llamado con:', { token: token.substring(0, 20) + '...', refreshToken: refreshToken.substring(0, 20) + '...', userData });
+    
     if (token && refreshToken) {
+      // Guardar tokens en localStorage
       localStorage.setItem('authToken', token);
       localStorage.setItem('refreshToken', refreshToken);
       if (userData) {
         localStorage.setItem('userData', JSON.stringify(userData));
       }
+      
+      console.log('✅ Tokens guardados en localStorage');
+      
+      // Actualizar el cache de React Query
+      queryClient.setQueryData(["/api/user"], userData);
+      
       // Refetch user data
       refetch();
       

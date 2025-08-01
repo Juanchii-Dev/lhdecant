@@ -35,11 +35,17 @@ export default function AuthPage() {
     if (token && refreshToken && userData) {
       try {
         const user = JSON.parse(decodeURIComponent(userData));
+        console.log('🔐 Procesando tokens de Google OAuth:', { token: token.substring(0, 20) + '...', refreshToken: refreshToken.substring(0, 20) + '...', user });
+        
         handleJWTFromURL(token, refreshToken, user);
         
-        // Limpiar URL y redirigir
-        window.history.replaceState({}, document.title, '/');
-        window.location.href = '/';
+        // Esperar un momento antes de redirigir para que se procesen los tokens
+        setTimeout(() => {
+          // Limpiar URL y redirigir
+          window.history.replaceState({}, document.title, '/');
+          window.location.href = '/';
+        }, 1000);
+        
       } catch (error) {
         console.error('Error procesando datos de autenticación:', error);
         toast({

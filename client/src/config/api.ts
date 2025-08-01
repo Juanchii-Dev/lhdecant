@@ -10,19 +10,22 @@ export const API_CONFIG = {
 };
 
 // Función para normalizar endpoints - TODOS DEBEN EMPEZAR CON /api/
-const normalizeEndpoint = (endpoint: string): string => {
+const normalizeEndpoint = (endpoint: any): string => {
+  // Convertir a string si no lo es
+  const endpointStr = String(endpoint || '');
+  
   // Si ya empieza con /api/, dejarlo igual
-  if (endpoint.startsWith('/api/')) return endpoint;
+  if (endpointStr.startsWith('/api/')) return endpointStr;
   
   // Si empieza con / pero no con /api/, agregar api
-  if (endpoint.startsWith('/')) return `/api${endpoint}`;
+  if (endpointStr.startsWith('/')) return `/api${endpointStr}`;
   
   // Si no empieza con /, agregar /api/
-  return `/api/${endpoint}`;
+  return `/api/${endpointStr}`;
 };
 
 // Función helper para construir URLs completas - CORREGIDA DEFINITIVAMENTE
-export const buildApiUrl = (endpoint: string): string => {
+export const buildApiUrl = (endpoint: any): string => {
   // Normalizar el endpoint para asegurar que siempre tenga /api/
   const normalizedEndpoint = normalizeEndpoint(endpoint);
   
@@ -32,7 +35,6 @@ export const buildApiUrl = (endpoint: string): string => {
     : API_CONFIG.BASE_URL;
   
   const url = `${baseUrl}${normalizedEndpoint}`;
-  console.log('🔗 API URL construida:', { original: endpoint, normalized: normalizedEndpoint, final: url });
   return url;
 };
 

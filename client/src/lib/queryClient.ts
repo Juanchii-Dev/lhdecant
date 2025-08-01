@@ -62,9 +62,11 @@ async function refreshTokensIfNeeded(): Promise<boolean> {
     localStorage.setItem('refreshToken', data.refreshToken);
     localStorage.setItem('userData', JSON.stringify(data.user));
     
+    console.log('✅ Tokens renovados automáticamente');
     return true;
     
   } catch (error) {
+    console.error('❌ Error renovando tokens:', error);
     return false;
   }
 }
