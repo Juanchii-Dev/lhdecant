@@ -142,6 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Función para manejar JWT desde URL
   const handleJWTFromURL = (token: string, userData: any) => {
+    console.log('🔐 Guardando JWT en localStorage:', { token: token.substring(0, 20) + '...', userData });
+    
     // Guardar JWT en localStorage
     localStorage.setItem('authToken', token);
     localStorage.setItem('userData', JSON.stringify(userData));
@@ -149,6 +151,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Limpiar cache y refetch
     queryClient.removeQueries({ queryKey: ["/api/user"] });
     queryClient.setQueryData(["/api/user"], userData);
+    
+    console.log('✅ JWT guardado correctamente');
     
     toast({
       title: "Inicio de sesión exitoso",

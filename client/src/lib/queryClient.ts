@@ -24,6 +24,9 @@ export async function apiRequest(
   // Agregar JWT si existe
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+    console.log('🔑 Enviando JWT en petición:', { url, token: token.substring(0, 20) + '...' });
+  } else {
+    console.log('⚠️ No hay JWT disponible para:', url);
   }
   
   const res = await fetch(buildApiUrl(url), {
@@ -54,6 +57,9 @@ export const getQueryFn: <T>(options: {
     // Agregar JWT si existe
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log('🔑 Enviando JWT en queryFn:', { url: queryKey[0], token: token.substring(0, 20) + '...' });
+    } else {
+      console.log('⚠️ No hay JWT disponible para queryFn:', queryKey[0]);
     }
     
     const res = await fetch(buildApiUrl(queryKey[0] as string), {
@@ -62,6 +68,7 @@ export const getQueryFn: <T>(options: {
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+      console.log('❌ 401 Unauthorized para:', queryKey[0]);
       return null;
     }
 

@@ -27,6 +27,7 @@ export default function AuthPage() {
       if (userParam) {
         try {
           const userData = JSON.parse(decodeURIComponent(userParam));
+          console.log('🔑 JWT recibido desde URL:', { token: token.substring(0, 20) + '...', userData });
           handleJWTFromURL(token, userData);
           
           // Limpiar URL después de procesar
@@ -34,7 +35,19 @@ export default function AuthPage() {
           return;
         } catch (error) {
           console.error('Error parsing user data from URL:', error);
+          toast({
+            title: "Error de autenticación",
+            description: "No se pudo procesar la información del usuario",
+            variant: "destructive"
+          });
         }
+      } else {
+        console.error('No se encontró user data en la URL');
+        toast({
+          title: "Error de autenticación",
+          description: "Información de usuario incompleta",
+          variant: "destructive"
+        });
       }
     }
     
