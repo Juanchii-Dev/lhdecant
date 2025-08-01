@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { buildApiUrl } from "../config/api";
-import { useAuth } from '../hooks/use-auth';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getQueryFn } from '../lib/queryClient';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
-import { useToast } from '../hooks/use-toast';
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../hooks/use-auth";
+import { useToast } from "../hooks/use-toast";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { getQueryFn, apiRequest } from "../lib/queryClient";
 import { 
   Gift, 
   Copy, 
@@ -57,53 +57,34 @@ export default function CouponsPage() {
   // Obtener cupones disponibles
   const { data: availableCoupons = [], isLoading: couponsLoading } = useQuery<Coupon[]>({
     queryKey: ['coupons', 'available'],
-    queryFn: async () => {
-      const response = await fetch(buildApiUrl('/api/coupons'), {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Error fetching available coupons');
-      return response.json();
-    },
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
   // Obtener cupones del usuario
   const { data: userCoupons = [], isLoading: userCouponsLoading } = useQuery<UserCoupon[]>({
     queryKey: ['user-coupons', user?.id],
-    queryFn: async () => {
-      const response = await fetch(buildApiUrl('/api/coupons/user'), {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Error fetching user coupons');
-      return response.json();
-    },
+    queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user?.id,
   });
 
   // Mutación para aplicar cupón
   const applyCouponMutation = useMutation({
-    mutationFn: async (code: string) => {
-      const response = await fetch(buildApiUrl('/api/coupons/apply'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ code }),
-      });
-      if (!response.ok) throw new Error('Cupón inválido o expirado');
+    mutationFn: async (couponCode: string) => {
+      const response = await apiRequest('POST', '/api/coupons/apply', { code: couponCode });
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-coupons'] });
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
       setCouponCode('');
       toast({
-        title: "¡Cupón aplicado!",
-        description: `Descuento de ${data.discount} aplicado a tu carrito`,
+        title: "Cupón aplicado",
+        description: "El cupón se aplicó correctamente a tu cuenta",
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: error.message || "No se pudo aplicar el cupón",
+        description: "No se pudo aplicar el cupón",
         variant: "destructive",
       });
     },

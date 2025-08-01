@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from "react";
 import { buildApiUrl } from "../config/api";
 import { useAuth } from '../hooks/use-auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getQueryFn } from '../lib/queryClient';
+import { getQueryFn, apiRequest } from '../lib/queryClient';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -12,7 +12,7 @@ import {
   Bell, 
   Mail, 
   Settings, 
-  CheckCircle, 
+  CheckCircle,
   AlertCircle,
   Info,
   ShoppingBag,
@@ -59,42 +59,21 @@ export default function NotificationsPage() {
   // Obtener notificaciones del usuario
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['notifications', user?.id, filterType, showRead, searchTerm],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (filterType !== 'all') params.append('filter', filterType);
-      if (!showRead) params.append('showRead', 'false');
-      if (searchTerm) params.append('search', searchTerm);
-      
-      const response = await fetch(buildApiUrl(`/api/notifications?${params.toString()}`), {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Error fetching notifications');
-      return response.json();
-    },
+    queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user?.id,
   });
 
   // Obtener configuración de notificaciones
   const { data: settings } = useQuery<NotificationSettings>({
     queryKey: ['notification-settings', user?.id],
-    queryFn: async () => {
-      const response = await fetch(buildApiUrl('/api/notification-settings'), {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Error fetching notification settings');
-      return response.json();
-    },
+    queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user?.id,
   });
 
   // Mutación para marcar como leída
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(buildApiUrl('/api/notifications/${id}/read'), {
-        method: 'PUT',
-        credentials: 'include',
-      });
-      if (!response.ok) throw new Error('Error al marcar como leída');
+      const response = await apiRequest('PUT', `/api/notifications/${id}/read`);
       return response.json();
     },
     onSuccess: () => {
@@ -105,11 +84,7 @@ export default function NotificationsPage() {
   // Mutación para marcar todas como leídas
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(buildApiUrl('/api/notifications/read-all'), {
-        method: 'PUT',
-        credentials: 'include',
-      });
-      if (!response.ok) throw new Error('Error al marcar todas como leídas');
+      const response = await apiRequest('PUT', '/api/notifications/read-all');
       return response.json();
     },
     onSuccess: () => {
@@ -124,11 +99,7 @@ export default function NotificationsPage() {
   // Mutación para eliminar notificación
   const deleteNotificationMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(buildApiUrl(`/api/notifications/${id}`), {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!response.ok) throw new Error('Error al eliminar notificación');
+      await apiRequest('DELETE', `/api/notifications/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -142,13 +113,7 @@ export default function NotificationsPage() {
   // Mutación para actualizar configuración
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: Partial<NotificationSettings>) => {
-      const response = await fetch(buildApiUrl('/api/notifications/settings'), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(newSettings),
-      });
-      if (!response.ok) throw new Error('Error al actualizar configuración');
+      const response = await apiRequest('PUT', '/api/notifications/settings', newSettings);
       return response.json();
     },
     onSuccess: () => {

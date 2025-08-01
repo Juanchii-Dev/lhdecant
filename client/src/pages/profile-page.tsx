@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { User, Mail, Phone, Calendar, Edit, Save, X, Camera, Crown, Heart, ShoppingBag, Star } from 'lucide-react';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
-import { getQueryFn } from '../lib/queryClient';
+import { getQueryFn, apiRequest } from '../lib/queryClient';
 
 interface UserStats {
   favoritesCount: number;
@@ -40,26 +40,14 @@ export default function ProfilePage() {
   // Obtener estadísticas reales del usuario
   const { data: userStats, isLoading: statsLoading } = useQuery<UserStats>({
     queryKey: ['user-stats', user?.id],
-    queryFn: async () => {
-      const response = await fetch(buildApiUrl('/api/user-stats'), {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Error fetching user stats');
-      return response.json();
-    },
+    queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user?.id,
   });
 
   // Obtener actividad reciente real
   const { data: recentActivity = [], isLoading: activityLoading } = useQuery<RecentActivity[]>({
     queryKey: ['user-activity', user?.id],
-    queryFn: async () => {
-      const response = await fetch(buildApiUrl('/api/user-activity'), {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Error fetching user activity');
-      return response.json();
-    },
+    queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!user?.id,
   });
 
@@ -84,13 +72,7 @@ export default function ProfilePage() {
   // Mutación para actualizar perfil
   const updateProfileMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch(buildApiUrl('/api/profile'), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Error al actualizar perfil');
+      const response = await apiRequest('PUT', '/api/profile', data);
       return response.json();
     },
     onSuccess: () => {
@@ -113,13 +95,7 @@ export default function ProfilePage() {
   // Mutación para cambiar contraseña
   const changePasswordMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
-      const response = await fetch(buildApiUrl('/api/profile/password'), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Error al cambiar contraseña');
+      const response = await apiRequest('PUT', '/api/profile/password', data);
       return response.json();
     },
     onSuccess: () => {
