@@ -29,7 +29,11 @@ export async function apiRequest(
     console.log('⚠️ No hay JWT disponible para:', url);
   }
   
-  const res = await fetch(buildApiUrl(url), {
+  // Usar buildApiUrl CORREGIDA
+  const fullUrl = buildApiUrl(url);
+  console.log('🔗 URL completa construida:', fullUrl);
+  
+  const res = await fetch(fullUrl, {
     method,
     headers,
     credentials: "include",
@@ -62,7 +66,11 @@ export const getQueryFn: <T>(options: {
       console.log('⚠️ No hay JWT disponible para queryFn:', queryKey[0]);
     }
     
-    const res = await fetch(buildApiUrl(queryKey[0] as string), {
+    // Usar buildApiUrl CORREGIDA
+    const fullUrl = buildApiUrl(queryKey[0] as string);
+    console.log('🔗 URL completa construida en queryFn:', fullUrl);
+    
+    const res = await fetch(fullUrl, {
       credentials: "include",
       headers,
     });

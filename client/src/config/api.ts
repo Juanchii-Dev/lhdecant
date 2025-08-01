@@ -1,4 +1,4 @@
-// Configuración de API para el frontend
+// Configuración de API para el frontend - VERSIÓN FINAL CORREGIDA
 export const API_CONFIG = {
   // URL base de la API - Usar variable de entorno o fallback
   BASE_URL: import.meta.env.VITE_API_URL || 'https://lhdecant-backend.onrender.com',
@@ -25,10 +25,17 @@ export const API_CONFIG = {
   },
 };
 
-// Función helper para construir URLs completas
+// Función helper para construir URLs completas - CORREGIDA DEFINITIVAMENTE
 export const buildApiUrl = (endpoint: string): string => {
-  const url = `${API_CONFIG.BASE_URL}${endpoint}`;
-  console.log('🔗 API URL:', url); // Debug log
+  // Asegurar que el BASE_URL termine con / y el endpoint empiece con /
+  const baseUrl = API_CONFIG.BASE_URL.endsWith('/') 
+    ? API_CONFIG.BASE_URL.slice(0, -1) 
+    : API_CONFIG.BASE_URL;
+  
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  
+  const url = `${baseUrl}${cleanEndpoint}`;
+  console.log('🔗 API URL construida:', url); // Debug log mejorado
   return url;
 };
 
@@ -56,4 +63,4 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
     console.error('API request failed:', error);
     throw error;
   }
-};
+}; 
