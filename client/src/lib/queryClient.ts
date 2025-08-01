@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { buildApiUrl } from "../config/api";
+import { getAuthHeaders, refreshToken, handleLogout } from "./auth-helpers";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -8,19 +9,12 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Función para hacer peticiones a la API
+// Función para hacer peticiones a la API con manejo de autenticación
 export const apiRequest = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  const authToken = localStorage.getItem('authToken');
-  
-  const headers: Record<string, string> = {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
+  const headers = {
+    ...getAuthHeaders(),
     ...(options.headers as Record<string, string>),
   };
-
-  if (authToken) {
-    headers['Authorization'] = `Bearer ${authToken}`;
-  }
 
   const response = await fetch(url, {
     ...options,
@@ -34,73 +28,32 @@ export const apiRequest = async (url: string, options: RequestInit = {}): Promis
   return response;
 };
 
-// Función para renovar tokens automáticamente
-async function refreshTokensIfNeeded(): Promise<boolean> {
-  try {
-    const refreshToken = localStorage.getItem('refreshToken');
-    
-    if (!refreshToken) {
-      return false;
-    }
-
-    const response = await fetch(buildApiUrl('/api/auth/refresh'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!response.ok) {
-      return false;
-    }
-
-    const data = await response.json();
-    
-    // Guardar nuevos tokens
-    localStorage.setItem('authToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    localStorage.setItem('userData', JSON.stringify(data.user));
-    
-    console.log('✅ Tokens renovados automáticamente');
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Error renovando tokens:', error);
-    return false;
-  }
-}
-
-// Función para obtener datos con React Query - CON RENOVACIÓN AUTOMÁTICA
+// Función para obtener datos con React Query - CON RENOVACIÓN AUTOMÁTICA MEJORADA
 export const getQueryFn = async (endpoint: string) => {
   const url = buildApiUrl(endpoint);
-  const authToken = localStorage.getItem('authToken');
   
-  const headers: Record<string, string> = {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-  };
-
-  if (authToken) {
-    headers['Authorization'] = `Bearer ${authToken}`;
+  if (!url) {
+    throw new Error('Invalid endpoint');
   }
 
-  const response = await fetch(url, {
-    headers,
-  });
+  const headers = getAuthHeaders();
 
-  // Si el token expiró, intentar renovarlo
-  if (response.status === 401 && authToken) {
-    const refreshed = await refreshTokensIfNeeded();
-    
-    if (refreshed) {
-      // Reintentar la petición con el nuevo token
-      const newAuthToken = localStorage.getItem('authToken');
-      if (newAuthToken) {
-        headers['Authorization'] = `Bearer ${newAuthToken}`;
+  try {
+    const response = await fetch(url, {
+      headers,
+    });
+
+    // Si el token expiró, intentar renovarlo
+    if (response.status === 401) {
+      console.log('🔄 Token expirado, intentando renovar...');
+      const refreshed = await refreshToken();
+      
+      if (refreshed) {
+        // Reintentar la petición con el nuevo token
+        const newHeaders = getAuthHeaders();
         
         const retryResponse = await fetch(url, {
-          headers,
+          headers: newHeaders,
         });
 
         if (!retryResponse.ok) {
@@ -108,15 +61,24 @@ export const getQueryFn = async (endpoint: string) => {
         }
 
         return retryResponse.json();
+      } else {
+        // No se pudo renovar el token, hacer logout
+        console.log('❌ No se pudo renovar el token, haciendo logout...');
+        handleLogout();
+        throw new Error('Authentication failed');
       }
     }
-  }
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-  return response.json();
+    return response.json();
+    
+  } catch (error) {
+    console.error('❌ Error en getQueryFn:', error);
+    throw error;
+  }
 };
 
 export const queryClient = new QueryClient({
@@ -132,3 +94,8 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Exponer queryClient globalmente para las funciones helper
+if (typeof window !== 'undefined') {
+  (window as any).queryClient = queryClient;
+}

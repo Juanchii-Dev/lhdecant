@@ -1,41 +1,52 @@
 // Configuración de API para el frontend
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL || 'https://lhdecant-backend.onrender.com',
-  REQUEST_CONFIG: {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include' as const,
-  },
+  baseUrl: import.meta.env.VITE_API_URL || 'https://lhdecant-backend.onrender.com',
+  timeout: 10000,
 };
 
-// Función para normalizar endpoints - TODOS DEBEN EMPEZAR CON /api/
+// Función para normalizar endpoints con validaciones robustas
 const normalizeEndpoint = (endpoint: any): string => {
-  // Convertir a string si no lo es
-  const endpointStr = String(endpoint || '');
+  // Validar que endpoint existe y es string
+  if (!endpoint) {
+    console.error('❌ Endpoint is required');
+    return '/';
+  }
   
-  // Si ya empieza con /api/, dejarlo igual
-  if (endpointStr.startsWith('/api/')) return endpointStr;
+  if (typeof endpoint !== 'string') {
+    console.error('❌ Endpoint must be a string, received:', typeof endpoint, endpoint);
+    return '/';
+  }
   
-  // Si empieza con / pero no con /api/, agregar api
-  if (endpointStr.startsWith('/')) return `/api${endpointStr}`;
+  // Limpiar y normalizar el endpoint
+  const cleanEndpoint = endpoint.trim();
   
-  // Si no empieza con /, agregar /api/
-  return `/api/${endpointStr}`;
+  // Si está vacío después de limpiar, retornar '/'
+  if (!cleanEndpoint) {
+    console.warn('⚠️ Empty endpoint after trimming, using "/"');
+    return '/';
+  }
+  
+  // Asegurar que empiece con '/'
+  return cleanEndpoint.startsWith('/') ? cleanEndpoint : `/${cleanEndpoint}`;
 };
 
-// Función helper para construir URLs completas - CORREGIDA DEFINITIVAMENTE
+// Función para construir URLs de API con validaciones
 export const buildApiUrl = (endpoint: any): string => {
-  // Normalizar el endpoint para asegurar que siempre tenga /api/
-  const normalizedEndpoint = normalizeEndpoint(endpoint);
-  
-  // Asegurar que el BASE_URL termine sin / y el endpoint empiece con /
-  const baseUrl = API_CONFIG.BASE_URL.endsWith('/') 
-    ? API_CONFIG.BASE_URL.slice(0, -1) 
-    : API_CONFIG.BASE_URL;
-  
-  const url = `${baseUrl}${normalizedEndpoint}`;
-  return url;
+  try {
+    const normalizedEndpoint = normalizeEndpoint(endpoint);
+    const url = `${API_CONFIG.baseUrl}${normalizedEndpoint}`;
+    
+    console.log('🔗 API URL construida:', {
+      original: endpoint,
+      normalized: normalizedEndpoint,
+      final: url
+    });
+    
+    return url;
+  } catch (error) {
+    console.error('❌ Error construyendo API URL:', error);
+    return `${API_CONFIG.baseUrl}/`;
+  }
 };
 
 // Función helper para hacer requests a la API

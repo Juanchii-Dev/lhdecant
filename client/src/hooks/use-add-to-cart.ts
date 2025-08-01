@@ -1,59 +1,40 @@
-import { useAuth } from './use-auth';
-import { buildApiUrl } from "../config/api";
-import { useToast } from './use-toast';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "./use-toast";
+import { addToCart } from "../lib/cart-helpers";
 
 export function useAddToCart() {
-  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const addToCart = async (perfumeId: string, size: string, price: string) => {
-    if (!user) {
+  const mutation = useMutation({
+    mutationFn: async ({ productId, quantity, size }: { productId: string; quantity?: number; size?: string }) => {
+      return addToCart(productId, quantity || 1, size);
+    },
+    onSuccess: (data) => {
+      console.log('✅ Producto agregado al carrito:', data);
+      
+      // Invalidar queries relacionadas con el carrito
+      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+      
       toast({
-        title: "Inicia sesión para continuar",
-        description: "Necesitas estar registrado para agregar productos al carrito",
-        variant: "destructive",
+        title: "Producto agregado",
+        description: "El producto se agregó correctamente al carrito",
       });
-      window.location.href = '/auth?message=login-required';
-      return;
-    }
-
-    // Mostrar toast inmediato
-    toast({
-      title: "Agregando al carrito...",
-      description: "El producto se está agregando",
-    });
-
-    try {
-      const response = await fetch(buildApiUrl('/api/cart'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          perfumeId,
-          size,
-          price,
-          quantity: 1,
-        }),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Agregado al carrito",
-          description: "El producto se ha agregado correctamente",
-        });
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al agregar al carrito');
-      }
-    } catch (error) {
-      console.error('Error adding to cart:', error);
+    },
+    onError: (error: any) => {
+      console.error('❌ Error agregando al carrito:', error);
+      
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo agregar el producto al carrito",
+        description: error.message || "Error al agregar el producto al carrito",
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
-  return { addToCart };
+  return {
+    addToCart: mutation.mutate,
+    isAdding: mutation.isPending,
+    error: mutation.error,
+  };
 } 
