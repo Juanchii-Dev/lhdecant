@@ -1,7 +1,7 @@
 // Configuración de API para el frontend
 export const API_CONFIG = {
-  // URL base de la API - FORZADA para producción
-  BASE_URL: 'https://lhdecant-backend.onrender.com',
+  // URL base de la API - Usar variable de entorno o fallback
+  BASE_URL: import.meta.env.VITE_API_URL || 'https://lhdecant-backend.onrender.com',
   
   // Endpoints específicos
   ENDPOINTS: {
@@ -43,8 +43,6 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
       ...options.headers,
     },
   };
-  
-  
   
   try {
     const response = await fetch(url, config);
