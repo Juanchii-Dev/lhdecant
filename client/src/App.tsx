@@ -6,6 +6,7 @@ import { ToastProvider } from "./components/ui/toast";
 import { TooltipProvider } from "./components/ui/tooltip";
 import Navigation from "./components/navigation";
 import { Toaster } from "./components/ui/toaster";
+import { ErrorBoundary } from "./components/error-boundary";
 import Home from "./pages/home";
 import CatalogPage from "./pages/catalog-page";
 import AuthPage from "./pages/auth-page";
@@ -47,13 +48,14 @@ const queryClient = new QueryClient({
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <TooltipProvider>
-          <AuthProvider>
-              <GlobalAuthCheck />
-              <Navigation />
-              <Switch>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <TooltipProvider>
+            <AuthProvider>
+                <GlobalAuthCheck />
+                <Navigation />
+                <Switch>
                 <Route path="/" component={Home} />
                 <Route path="/catalogo" component={CatalogPage} />
                 <Route path="/auth" component={AuthPage} />
@@ -79,9 +81,10 @@ export default function App() {
                 <Route component={NotFound} />
               </Switch>
               <Toaster />
-          </AuthProvider>
-        </TooltipProvider>
-      </ToastProvider>
-    </QueryClientProvider>
+            </AuthProvider>
+          </TooltipProvider>
+        </ToastProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

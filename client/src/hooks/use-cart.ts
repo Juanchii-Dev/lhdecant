@@ -22,7 +22,7 @@ export function useCart() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Query para obtener el carrito
+  // Query para obtener el carrito con fallback
   const { data: cartItems = [], isLoading, error, refetch } = useQuery({
     queryKey: ['/api/cart'],
     queryFn: async () => {
@@ -33,25 +33,33 @@ export function useCart() {
 
       const response = await apiService.getCart();
       
-      if (response.error) {
+      if (!response.success) {
+        if (response.status === 404) {
+          // Backend no disponible, usar localStorage como fallback
+          const localCart = localStorage.getItem('localCart');
+          return localCart ? JSON.parse(localCart) : [];
+        }
+        
         if (response.status === 401) {
           return [];
         }
-        throw new Error(response.error);
+        
+        // Otros errores, retornar carrito vacío
+        return [];
       }
 
       return response.data || [];
     },
     enabled: !!getAuthToken(),
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    cacheTime: 10 * 60 * 1000, // 10 minutos
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
   });
 
   // Calcular total de items
   const totalItems = cartItems.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
 
-  // Función para agregar al carrito
+  // Función para agregar al carrito con fallback
   const addToCart = useCallback(async (productId: string, quantity: number = 1, size?: string) => {
     try {
       const token = getAuthToken();
@@ -66,7 +74,31 @@ export function useCart() {
 
       const response = await apiService.addToCart(productId, quantity, size);
 
-      if (response.error) {
+      if (!response.success) {
+        if (response.status === 404) {
+          // Backend no disponible, usar localStorage
+          const localCart = JSON.parse(localStorage.getItem('localCart') || '[]');
+          const newItem = {
+            id: Date.now().toString(),
+            productId,
+            size,
+            price: '0',
+            quantity,
+            perfume: { id: productId, name: 'Producto', brand: 'Marca' }
+          };
+          localCart.push(newItem);
+          localStorage.setItem('localCart', JSON.stringify(localCart));
+          
+          // Actualizar cache
+          queryClient.setQueryData(['/api/cart'], localCart);
+          
+          toast({
+            title: "Producto agregado (modo offline)",
+            description: "El producto se agregó al carrito local",
+          });
+          return true;
+        }
+        
         if (response.status === 401) {
           toast({
             title: "Error de autenticación",
@@ -87,7 +119,7 @@ export function useCart() {
 
         toast({
           title: "Error",
-          description: response.error,
+          description: response.error || "Error desconocido",
           variant: "destructive",
         });
         return false;
@@ -120,12 +152,23 @@ export function useCart() {
 
       const response = await apiService.updateCartItem(itemId, quantity);
 
-      if (response.error) {
-        return false;
+      if (!response.success && response.status === 404) {
+        // Backend no disponible, actualizar localStorage
+        const localCart = JSON.parse(localStorage.getItem('localCart') || '[]');
+        const updatedCart = localCart.map((item: CartItem) => 
+          item.id === itemId ? { ...item, quantity } : item
+        );
+        localStorage.setItem('localCart', JSON.stringify(updatedCart));
+        queryClient.setQueryData(['/api/cart'], updatedCart);
+        return true;
       }
 
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-      return true;
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+        return true;
+      }
+
+      return false;
     } catch (error) {
       return false;
     }
@@ -139,12 +182,21 @@ export function useCart() {
 
       const response = await apiService.removeCartItem(itemId);
 
-      if (response.error) {
-        return false;
+      if (!response.success && response.status === 404) {
+        // Backend no disponible, actualizar localStorage
+        const localCart = JSON.parse(localStorage.getItem('localCart') || '[]');
+        const updatedCart = localCart.filter((item: CartItem) => item.id !== itemId);
+        localStorage.setItem('localCart', JSON.stringify(updatedCart));
+        queryClient.setQueryData(['/api/cart'], updatedCart);
+        return true;
       }
 
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-      return true;
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+        return true;
+      }
+
+      return false;
     } catch (error) {
       return false;
     }
@@ -158,12 +210,19 @@ export function useCart() {
 
       const response = await apiService.clearCart();
 
-      if (response.error) {
-        return false;
+      if (!response.success && response.status === 404) {
+        // Backend no disponible, limpiar localStorage
+        localStorage.removeItem('localCart');
+        queryClient.setQueryData(['/api/cart'], []);
+        return true;
       }
 
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-      return true;
+      if (response.success) {
+        queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+        return true;
+      }
+
+      return false;
     } catch (error) {
       return false;
     }
