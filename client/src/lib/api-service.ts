@@ -44,6 +44,17 @@ class ApiService {
       if (refreshed) {
         return { status: 401, error: 'Token refreshed', success: false };
       }
+      
+      // Limpiar tokens y redirigir al login
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userData');
+      
+      // Redirigir al login solo si no estamos ya en la página de login
+      if (window.location.pathname !== '/auth' && window.location.pathname !== '/login') {
+        window.location.href = '/auth?message=session-expired';
+      }
+      
       return { status: 401, error: 'Authentication failed', success: false };
     }
 

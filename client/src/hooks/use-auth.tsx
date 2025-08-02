@@ -90,16 +90,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return response.data;
     },
     onSuccess: (data) => {
-      // Guardar tokens
-      localStorage.setItem('authToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      if (data.user) {
+      // Validar que los datos existen
+      if (!data || typeof data !== 'object') {
+        console.error('Invalid login response data:', data);
+        return;
+      }
+      
+      // Guardar tokens con validación
+      if (data.accessToken && typeof data.accessToken === 'string') {
+        localStorage.setItem('authToken', data.accessToken);
+      }
+      if (data.refreshToken && typeof data.refreshToken === 'string') {
+        localStorage.setItem('refreshToken', data.refreshToken);
+      }
+      if (data.user && typeof data.user === 'object') {
         localStorage.setItem('userData', JSON.stringify(data.user));
       }
       
-      // Actualizar estado
-      setUser(data.user);
-      queryClient.setQueryData(["/api/user"], data.user);
+      // Actualizar estado con validación
+      if (data.user && typeof data.user === 'object') {
+        setUser(data.user as User);
+        queryClient.setQueryData(["/api/user"], data.user);
+      }
       
       toast({
         title: "Inicio de sesión exitoso",

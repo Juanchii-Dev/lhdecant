@@ -70,12 +70,12 @@ export default function CatalogPage() {
     }
   });
 
-  const uniqueBrands = perfumes?.reduce((brands: string[], perfume: Perfume) => {
+  const uniqueBrands = (Array.isArray(perfumes) ? perfumes : []).reduce((brands: string[], perfume: Perfume) => {
     if (!brands.includes(perfume.brand)) {
       brands.push(perfume.brand);
     }
     return brands;
-  }, []).sort() || [];
+  }, []).sort();
 
   const handleSizeChange = (perfumeId: number, size: string) => {
     setSelectedSizes(prev => ({

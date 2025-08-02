@@ -36,8 +36,13 @@ export function useCart() {
       if (!response.success) {
         if (response.status === 404) {
           // Backend no disponible, usar localStorage como fallback
-          const localCart = localStorage.getItem('localCart');
-          return localCart ? JSON.parse(localCart) : [];
+          try {
+            const localCart = localStorage.getItem('localCart');
+            return localCart ? JSON.parse(localCart) : [];
+          } catch (error) {
+            console.error('Error parsing local cart:', error);
+            return [];
+          }
         }
         
         if (response.status === 401) {
@@ -48,7 +53,13 @@ export function useCart() {
         return [];
       }
 
-      return response.data || [];
+      // Validar que response.data es un array
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      console.warn('Invalid cart data received:', response.data);
+      return [];
     },
     enabled: !!getAuthToken(),
     retry: false,
@@ -57,7 +68,7 @@ export function useCart() {
   });
 
   // Calcular total de items
-  const totalItems = (cartItems as CartItem[]).reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
+  const totalItems = (Array.isArray(cartItems) ? cartItems : []).reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
 
   // Función para agregar al carrito con fallback
   const addToCart = useCallback(async (productId: string, quantity: number = 1, size?: string) => {
@@ -77,26 +88,38 @@ export function useCart() {
       if (!response.success) {
         if (response.status === 404) {
           // Backend no disponible, usar localStorage
-          const localCart = JSON.parse(localStorage.getItem('localCart') || '[]');
-          const newItem = {
-            id: Date.now().toString(),
-            productId,
-            size,
-            price: '0',
-            quantity,
-            perfume: { id: productId, name: 'Producto', brand: 'Marca' }
-          };
-          localCart.push(newItem);
-          localStorage.setItem('localCart', JSON.stringify(localCart));
-          
-          // Actualizar cache
-          queryClient.setQueryData(['/api/cart'], localCart);
-          
-          toast({
-            title: "Producto agregado (modo offline)",
-            description: "El producto se agregó al carrito local",
-          });
-          return true;
+          try {
+            const localCartStr = localStorage.getItem('localCart') || '[]';
+            const localCart = JSON.parse(localCartStr);
+            
+            if (!Array.isArray(localCart)) {
+              console.error('Invalid local cart format:', localCart);
+              return false;
+            }
+            
+            const newItem = {
+              id: Date.now().toString(),
+              productId,
+              size,
+              price: '0',
+              quantity,
+              perfume: { id: productId, name: 'Producto', brand: 'Marca' }
+            };
+            localCart.push(newItem);
+            localStorage.setItem('localCart', JSON.stringify(localCart));
+            
+            // Actualizar cache
+            queryClient.setQueryData(['/api/cart'], localCart);
+            
+            toast({
+              title: "Producto agregado (modo offline)",
+              description: "El producto se agregó al carrito local",
+            });
+            return true;
+          } catch (error) {
+            console.error('Error handling offline cart:', error);
+            return false;
+          }
         }
         
         if (response.status === 401) {

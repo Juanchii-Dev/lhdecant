@@ -163,7 +163,7 @@ export default function CheckoutPage() {
     );
   }
 
-  const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+  const totalAmount = (Array.isArray(items) ? items : []).reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
   return (
     <div className="min-h-screen bg-black text-white p-6">
