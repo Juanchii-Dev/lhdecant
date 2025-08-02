@@ -294,8 +294,18 @@ export class FirestoreStorage {
     console.log('🛒 addToCart - userId:', userId);
     console.log('🛒 addToCart - item:', item);
     
+    // Validar que userId no esté vacío
+    if (!userId || userId.trim() === '') {
+      throw new Error('userId is required and cannot be empty');
+    }
+    
+    // Validar que item.productId no esté vacío
+    if (!item.productId || item.productId.trim() === '') {
+      throw new Error('productId is required and cannot be empty');
+    }
+    
     // Obtener la información completa del perfume
-    const perfumeRef = db.collection('perfumes').doc(item.perfumeId);
+    const perfumeRef = db.collection('perfumes').doc(item.productId);
     const perfumeSnap = await perfumeRef.get();
     const perfumeData = perfumeSnap.exists ? perfumeSnap.data() : null;
     
@@ -303,8 +313,8 @@ export class FirestoreStorage {
     console.log('🛒 addToCart - cartRef path:', cartRef.path);
     const itemsRef = cartRef.collection('items');
     
-    // Buscar si ya existe el item (por perfumeId y size)
-    const query = await itemsRef.where('perfumeId', '==', item.perfumeId).where('size', '==', item.size).limit(1).get();
+    // Buscar si ya existe el item (por productId y size)
+    const query = await itemsRef.where('productId', '==', item.productId).where('size', '==', item.size).limit(1).get();
     console.log('🛒 addToCart - query size:', query.size);
     
     if (!query.empty) {
@@ -320,7 +330,9 @@ export class FirestoreStorage {
     } else {
       // Si no existe, agregar nuevo
       const newDoc = await itemsRef.add({ 
-        ...item, 
+        productId: item.productId,
+        size: item.size,
+        price: item.price,
         quantity: item.quantity || 1, 
         createdAt: new Date(),
         perfume: perfumeData // Incluir la información completa del perfume

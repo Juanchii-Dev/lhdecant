@@ -84,14 +84,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return response.json();
     },
     enabled: !!getAuthToken(),
-    retry: (failureCount, error) => {
-      // Reintentar solo si no es un error de autenticación
-      if (error.message === 'Authentication failed') {
-        return false;
-      }
-      return failureCount < 3;
-    },
-    retryDelay: 1000,
+    retry: false, // NO REINTENTAR - EVITAR SPAM DE 401
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 10 * 60 * 1000, // 10 minutos
   });
 
   // Mutation para login

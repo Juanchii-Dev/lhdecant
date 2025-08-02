@@ -28,8 +28,6 @@ export default function CatalogPage() {
         throw new Error('Failed to fetch perfumes');
       }
       const data = await response.json();
-      console.log('🔍 Perfumes cargados:', data.length, 'items');
-      console.log('🔍 Primer perfume:', data[0]);
       return data;
     },
   });
@@ -55,11 +53,7 @@ export default function CatalogPage() {
     return true;
   }) || [];
 
-  // Debug logs
-  console.log('🔍 Total perfumes:', perfumes?.length || 0);
-  console.log('🔍 Filtrados:', filteredPerfumes.length);
-  console.log('🔍 Search term:', searchTerm);
-  console.log('🔍 Selected brand:', selectedBrand);
+
 
   const sortedPerfumes = [...filteredPerfumes].sort((a: Perfume, b: Perfume) => {
     switch (sortBy) {
