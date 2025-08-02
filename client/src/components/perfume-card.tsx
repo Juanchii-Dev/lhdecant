@@ -20,7 +20,7 @@ export default function PerfumeCard({
 }: PerfumeCardProps) {
   const [localSelectedSize, setLocalSelectedSize] = useState(perfume.sizes[0]);
   const { toast } = useToast();
-  const { addToCart } = useAddToCart();
+  const { addToCart, isAdding } = useAddToCart();
 
   // Use external size state if provided, otherwise use local state
   const selectedSize = selectedSizes[perfume.id] || localSelectedSize;
@@ -175,9 +175,10 @@ export default function PerfumeCard({
             
             <Button
               onClick={() => handleAddToCart(selectedSize, parseFloat(getOriginalPrice(perfume, selectedSize)))}
+              disabled={isAdding}
               className="luxury-button font-montserrat font-semibold px-6 py-2 rounded-xl"
             >
-              Agregar
+              {isAdding ? 'Agregando...' : 'Agregar'}
             </Button>
           </div>
         </div>

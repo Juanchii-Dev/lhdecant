@@ -48,8 +48,6 @@ export function CartDrawer() {
   const { toast } = useToast();
 
   const handleUpdateQuantity = async (id: string, quantity: number) => {
-    if (!user) return;
-
     const success = await updateQuantity(id, quantity);
     if (success) {
       toast({
@@ -66,8 +64,6 @@ export function CartDrawer() {
   };
 
   const handleRemoveItem = async (id: string) => {
-    if (!user) return;
-
     const success = await removeItem(id);
     if (success) {
       toast({
@@ -84,8 +80,6 @@ export function CartDrawer() {
   };
 
   const handleClearCart = async () => {
-    if (!user) return;
-
     const success = await clearCart();
     if (success) {
       toast({
@@ -102,6 +96,16 @@ export function CartDrawer() {
   };
 
   const goToCheckout = () => {
+    if ((Array.isArray(cartItems) ? cartItems : []).length === 0) {
+      toast({
+        title: "Carrito vacío",
+        description: "Agrega productos antes de proceder al pago",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Si no hay usuario, redirigir al login con mensaje
     if (!user) {
       toast({
         title: "Inicia sesión para continuar",
@@ -109,15 +113,6 @@ export function CartDrawer() {
         variant: "destructive",
       });
       window.location.href = '/auth?message=login-required';
-      return;
-    }
-
-    if (cartItems.length === 0) {
-      toast({
-        title: "Carrito vacío",
-        description: "Agrega productos antes de proceder al pago",
-        variant: "destructive",
-      });
       return;
     }
 

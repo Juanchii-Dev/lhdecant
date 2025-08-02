@@ -18,7 +18,7 @@ export default function CatalogPage() {
   const [selectedSizes, setSelectedSizes] = useState<{ [key: number]: string }>({});
   
   const { toast } = useToast();
-  const { addToCart } = useAddToCart();
+  const { addToCart, isAdding } = useAddToCart();
 
   const { data: perfumes, isLoading, error } = useQuery({
     queryKey: ["/api/perfumes"],
@@ -342,9 +342,10 @@ export default function CatalogPage() {
                       </div>
                       <Button
                         onClick={() => handleAddToCart(perfume, selectedSize)}
+                        disabled={isAdding}
                         className="luxury-button font-montserrat font-semibold px-6 py-2 rounded-xl"
                       >
-                        Agregar
+                        {isAdding ? 'Agregando...' : 'Agregar'}
                       </Button>
                     </div>
                   </div>
