@@ -8,6 +8,7 @@ import { useAddToCart } from "../hooks/use-add-to-cart";
 import { useQuery } from "@tanstack/react-query";
 import { buildApiUrl } from "../config/api";
 import { Perfume } from "../types/perfume";
+import { CatalogSEO } from "../components/seo";
 
 export default function CatalogPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -154,6 +155,7 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-black text-white py-12">
+      <CatalogSEO />
       <div className="container mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
