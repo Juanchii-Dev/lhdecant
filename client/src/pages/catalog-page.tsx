@@ -27,32 +27,39 @@ export default function CatalogPage() {
       if (!response.ok) {
         throw new Error('Failed to fetch perfumes');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('🔍 Perfumes cargados:', data.length, 'items');
+      console.log('🔍 Primer perfume:', data[0]);
+      return data;
     },
   });
 
-  // Filter and sort perfumes
+  // Filter and sort perfumes - SIMPLIFICADO PARA PRODUCCIÓN
   const filteredPerfumes = perfumes?.filter((perfume: Perfume) => {
-    // Filter by search term
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
+    // Solo filtrar por término de búsqueda si existe
+    if (searchTerm && searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
       const matchesName = perfume.name.toLowerCase().includes(searchLower);
       const matchesBrand = perfume.brand.toLowerCase().includes(searchLower);
-      const matchesDescription = perfume.description.toLowerCase().includes(searchLower);
-      const matchesNotes = perfume.notes?.some((note: string) => note.toLowerCase().includes(searchLower)) || false;
       
-      if (!matchesName && !matchesBrand && !matchesDescription && !matchesNotes) {
+      if (!matchesName && !matchesBrand) {
         return false;
       }
     }
 
-    // Filter by brand
+    // Solo filtrar por marca si no es "all"
     if (selectedBrand && selectedBrand !== "all" && perfume.brand !== selectedBrand) {
       return false;
     }
 
     return true;
   }) || [];
+
+  // Debug logs
+  console.log('🔍 Total perfumes:', perfumes?.length || 0);
+  console.log('🔍 Filtrados:', filteredPerfumes.length);
+  console.log('🔍 Search term:', searchTerm);
+  console.log('🔍 Selected brand:', selectedBrand);
 
   const sortedPerfumes = [...filteredPerfumes].sort((a: Perfume, b: Perfume) => {
     switch (sortBy) {

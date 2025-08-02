@@ -290,6 +290,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const userData = JSON.parse(userDataStr);
           setUser(userData);
           queryClient.setQueryData(["/api/user"], userData);
+        } else {
+          // Limpiar estado si no hay token válido
+          setUser(null);
+          queryClient.removeQueries({ queryKey: ["/api/user"] });
         }
       } catch (error) {
         console.error('❌ Error inicializando autenticación:', error);
