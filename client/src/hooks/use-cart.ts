@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { buildApiUrl } from '../config/api';
-import { getAuthToken, refreshToken } from '../lib/auth-helpers';
+import { getAuthToken } from '../lib/auth-helpers';
+import { apiService } from '../lib/api-service';
 import { useToast } from './use-toast';
 
 interface CartItem {
   id: string;
-  perfumeId: string;
+  productId: string;
   size: string;
   price: string;
   quantity: number;
@@ -31,50 +31,21 @@ export function useCart() {
         return [];
       }
 
-      const response = await fetch(buildApiUrl('/api/cart'), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
+      const response = await apiService.getCart();
+      
+      if (response.error) {
         if (response.status === 401) {
-          // Token expirado, intentar renovar
-          const refreshed = await refreshToken();
-          if (refreshed) {
-            // Reintentar con el nuevo token
-            const newToken = getAuthToken();
-            const retryResponse = await fetch(buildApiUrl('/api/cart'), {
-              headers: {
-                'Authorization': `Bearer ${newToken}`,
-                'Content-Type': 'application/json',
-              }
-            });
-
-            if (!retryResponse.ok) {
-              throw new Error('Failed to fetch cart after token refresh');
-            }
-
-            return retryResponse.json();
-          } else {
-            // No se pudo renovar el token
-            return [];
-          }
+          return [];
         }
-        throw new Error('Failed to fetch cart');
+        throw new Error(response.error);
       }
 
-      return response.json();
+      return response.data || [];
     },
     enabled: !!getAuthToken(),
-    retry: (failureCount, error) => {
-      if (error.message === 'Failed to fetch cart after token refresh') {
-        return false;
-      }
-      return failureCount < 3;
-    },
-    retryDelay: 1000,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 10 * 60 * 1000, // 10 minutos
   });
 
   // Calcular total de items
@@ -93,62 +64,38 @@ export function useCart() {
         return false;
       }
 
-      const response = await fetch(buildApiUrl('/api/cart'), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId,
-          quantity,
-          size,
-        }),
-      });
+      const response = await apiService.addToCart(productId, quantity, size);
 
-      if (!response.ok) {
+      if (response.error) {
         if (response.status === 401) {
-          // Token expirado, intentar renovar
-          const refreshed = await refreshToken();
-          if (refreshed) {
-            // Reintentar con el nuevo token
-            const newToken = getAuthToken();
-            const retryResponse = await fetch(buildApiUrl('/api/cart'), {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${newToken}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                productId,
-                quantity,
-                size,
-              }),
-            });
-
-            if (!retryResponse.ok) {
-              throw new Error('Failed to add to cart after token refresh');
-            }
-
-            // Actualizar cache
-            queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-            return true;
-          } else {
-            toast({
-              title: "Error de autenticación",
-              description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
-              variant: "destructive",
-            });
-            return false;
-          }
+          toast({
+            title: "Error de autenticación",
+            description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+            variant: "destructive",
+          });
+          return false;
         }
-        throw new Error('Failed to add to cart');
+        
+        if (response.status === 500) {
+          toast({
+            title: "Error del servidor",
+            description: "No se pudo agregar el producto al carrito. Inténtalo de nuevo.",
+            variant: "destructive",
+          });
+          return false;
+        }
+
+        toast({
+          title: "Error",
+          description: response.error,
+          variant: "destructive",
+        });
+        return false;
       }
 
       // Actualizar cache
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
       
-      // Solo mostrar toast de éxito si realmente se agregó
       toast({
         title: "Producto agregado",
         description: "El producto se agregó correctamente al carrito",
@@ -156,7 +103,6 @@ export function useCart() {
 
       return true;
     } catch (error) {
-      console.error('Error adding to cart:', error);
       toast({
         title: "Error",
         description: "No se pudo agregar el producto al carrito",
@@ -172,45 +118,15 @@ export function useCart() {
       const token = getAuthToken();
       if (!token) return false;
 
-      const response = await fetch(buildApiUrl(`/api/cart/${itemId}`), {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ quantity }),
-      });
+      const response = await apiService.updateCartItem(itemId, quantity);
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          const refreshed = await refreshToken();
-          if (refreshed) {
-            const newToken = getAuthToken();
-            const retryResponse = await fetch(buildApiUrl(`/api/cart/${itemId}`), {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${newToken}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ quantity }),
-            });
-
-            if (!retryResponse.ok) {
-              throw new Error('Failed to update quantity after token refresh');
-            }
-
-            queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-            return true;
-          }
-          return false;
-        }
-        throw new Error('Failed to update quantity');
+      if (response.error) {
+        return false;
       }
 
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
       return true;
     } catch (error) {
-      console.error('Error updating quantity:', error);
       return false;
     }
   }, [queryClient]);
@@ -221,43 +137,15 @@ export function useCart() {
       const token = getAuthToken();
       if (!token) return false;
 
-      const response = await fetch(buildApiUrl(`/api/cart/${itemId}`), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiService.removeCartItem(itemId);
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          const refreshed = await refreshToken();
-          if (refreshed) {
-            const newToken = getAuthToken();
-            const retryResponse = await fetch(buildApiUrl(`/api/cart/${itemId}`), {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${newToken}`,
-                'Content-Type': 'application/json',
-              },
-            });
-
-            if (!retryResponse.ok) {
-              throw new Error('Failed to remove item after token refresh');
-            }
-
-            queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-            return true;
-          }
-          return false;
-        }
-        throw new Error('Failed to remove item');
+      if (response.error) {
+        return false;
       }
 
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
       return true;
     } catch (error) {
-      console.error('Error removing item:', error);
       return false;
     }
   }, [queryClient]);
@@ -268,43 +156,15 @@ export function useCart() {
       const token = getAuthToken();
       if (!token) return false;
 
-      const response = await fetch(buildApiUrl('/api/cart'), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiService.clearCart();
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          const refreshed = await refreshToken();
-          if (refreshed) {
-            const newToken = getAuthToken();
-            const retryResponse = await fetch(buildApiUrl('/api/cart'), {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${newToken}`,
-                'Content-Type': 'application/json',
-              },
-            });
-
-            if (!retryResponse.ok) {
-              throw new Error('Failed to clear cart after token refresh');
-            }
-
-            queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-            return true;
-          }
-          return false;
-        }
-        throw new Error('Failed to clear cart');
+      if (response.error) {
+        return false;
       }
 
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
       return true;
     } catch (error) {
-      console.error('Error clearing cart:', error);
       return false;
     }
   }, [queryClient]);

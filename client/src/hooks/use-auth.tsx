@@ -1,8 +1,8 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "./use-toast";
-import { buildApiUrl } from "../config/api";
-import { getAuthToken, getRefreshToken, handleLogout as logoutHelper, debugAuth, refreshToken } from "../lib/auth-helpers";
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from './use-toast';
+import { getAuthToken, getRefreshToken, handleLogout as logoutHelper } from '../lib/auth-helpers';
+import { apiService } from '../lib/api-service';
 
 interface User {
   id: string;
@@ -34,8 +34,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Query para obtener datos del usuario
   const { data: userData, refetch, isLoading: userLoading } = useQuery({
@@ -46,45 +46,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No auth token available');
       }
       
-      const response = await fetch(buildApiUrl("/api/user"), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiService.getUser();
       
-      if (!response.ok) {
+      if (response.error) {
         if (response.status === 401) {
           // Token expirado, intentar renovar
-          const refreshed = await refreshToken();
+          const refreshed = await refreshTokens();
           if (refreshed) {
             // Reintentar con el nuevo token
-            const newToken = getAuthToken();
-            const retryResponse = await fetch(buildApiUrl("/api/user"), {
-              headers: {
-                'Authorization': `Bearer ${newToken}`,
-                'Content-Type': 'application/json',
-              },
-            });
+            const retryResponse = await apiService.getUser();
             
-            if (!retryResponse.ok) {
+            if (retryResponse.error) {
               throw new Error('Failed to fetch user after token refresh');
             }
             
-            return retryResponse.json();
+            return retryResponse.data;
           } else {
             // No se pudo renovar el token, limpiar estado
-            handleLogout();
+            logoutHelper();
             throw new Error('Authentication failed');
           }
         }
-        throw new Error('Failed to fetch user');
+        throw new Error(response.error);
       }
       
-      return response.json();
+      return response.data;
     },
     enabled: !!getAuthToken(),
-    retry: false, // NO REINTENTAR - EVITAR SPAM DE 401
+    retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutos
     cacheTime: 10 * 60 * 1000, // 10 minutos
   });
@@ -92,18 +81,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Mutation para login
   const loginMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {
-      const response = await fetch(buildApiUrl("/api/auth/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-      });
+      const response = await apiService.login(credentials);
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error en el login");
+      if (response.error) {
+        throw new Error(response.error);
       }
       
-      return response.json();
+      return response.data;
     },
     onSuccess: (data) => {
       // Guardar tokens
@@ -134,18 +118,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Mutation para registro
   const registerMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string; email: string }) => {
-      const response = await fetch(buildApiUrl("/api/auth/register"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-      });
+      const response = await apiService.register(credentials);
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error en el registro");
+      if (response.error) {
+        throw new Error(response.error);
       }
       
-      return response.json();
+      return response.data;
     },
     onSuccess: (data) => {
       toast({
@@ -165,19 +144,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Mutation para logout
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(buildApiUrl("/api/logout"), {
-        method: "POST",
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Error en logout');
-      }
-      
-      return response.json();
+      const response = await apiService.logout();
+      return response;
     },
     onSuccess: () => {
       // Limpiar estado local
@@ -197,8 +165,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Función para manejar JWT desde URL (después de Google OAuth)
   const handleJWTFromURL = useCallback((token: string, refreshToken: string, userData: any) => {
-    console.log('🔐 handleJWTFromURL llamado con:', { token: token.substring(0, 20) + '...', refreshToken: refreshToken.substring(0, 20) + '...', userData });
-    
     if (token && refreshToken) {
       // Guardar tokens en localStorage
       localStorage.setItem('authToken', token);
@@ -206,8 +172,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (userData) {
         localStorage.setItem('userData', JSON.stringify(userData));
       }
-      
-      console.log('✅ Tokens guardados en localStorage');
       
       // Actualizar el cache de React Query
       queryClient.setQueryData(["/api/user"], userData);
@@ -225,11 +189,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const refreshTokenValue = getRefreshToken();
       if (!refreshTokenValue) {
-        console.warn('No refresh token available');
-        return;
+        return false;
       }
 
-      const response = await fetch(buildApiUrl('/api/auth/refresh'), {
+      const response = await fetch('https://lhdecant-backend.onrender.com/api/auth/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -244,10 +207,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (data.user) {
           localStorage.setItem('userData', JSON.stringify(data.user));
         }
-        console.log('✅ Tokens renovados manualmente');
+        return true;
       }
+      return false;
     } catch (error) {
-      console.error('❌ Error renovando tokens:', error);
+      return false;
     }
   }, []);
 
@@ -283,7 +247,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           queryClient.removeQueries({ queryKey: ["/api/user"] });
         }
       } catch (error) {
-        console.error('❌ Error inicializando autenticación:', error);
         logoutHelper();
       } finally {
         setIsLoading(false);
@@ -293,7 +256,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
   }, [queryClient]);
 
-  // Efecto para actualizar usuario cuando cambian los datos
+  // Efecto para sincronizar el estado del usuario
   useEffect(() => {
     if (userData) {
       setUser(userData);
@@ -313,13 +276,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshTokens,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
