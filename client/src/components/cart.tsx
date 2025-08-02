@@ -28,8 +28,14 @@ export function CartIcon() {
   useEffect(() => {
     const fetchCart = async () => {
       try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+        
         const response = await fetch(buildApiUrl('/api/cart'), {
-          credentials: 'include'
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
         });
         if (response.ok) {
           const items = await response.json();
@@ -72,8 +78,14 @@ export function CartDrawer() {
     
     setLoading(true);
     try {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+      
       const response = await fetch(buildApiUrl('/api/cart'), {
-        credentials: 'include'
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
       });
       if (response.ok) {
         const cartItems = await response.json();
@@ -103,10 +115,15 @@ export function CartDrawer() {
     setItems(updatedItems);
 
     try {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+      
       const response = await fetch(buildApiUrl(`/api/cart/${id}`), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ quantity })
       });
 
@@ -139,9 +156,15 @@ export function CartDrawer() {
     setItems(updatedItems);
 
     try {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+      
       const response = await fetch(buildApiUrl(`/api/cart/${id}`), {
         method: 'DELETE',
-        credentials: 'include'
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
       });
 
       if (!response.ok) {
@@ -172,9 +195,15 @@ export function CartDrawer() {
     setItems([]);
 
     try {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+      
       const response = await fetch(buildApiUrl('/api/cart'), {
         method: 'DELETE',
-        credentials: 'include'
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
       });
 
       if (!response.ok) {
