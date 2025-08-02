@@ -148,6 +148,7 @@ export function useCart() {
       // Actualizar cache
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
       
+      // Solo mostrar toast de éxito si realmente se agregó
       toast({
         title: "Producto agregado",
         description: "El producto se agregó correctamente al carrito",

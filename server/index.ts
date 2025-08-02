@@ -7,7 +7,7 @@ import compression from 'compression';
 import cookieParser from "cookie-parser";
 
 function log(message: string) {
-  console.log(`[${new Date().toISOString()}] ${message}`);
+  // console.log(`[${new Date().toISOString()}] ${message}`);
 }
 
 const app = express();

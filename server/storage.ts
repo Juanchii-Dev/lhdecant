@@ -291,8 +291,6 @@ export class FirestoreStorage {
     return { id: newMessageRef.id, ...newMessageSnap.data() };
   }
   async addToCart(userId: string, item: any) {
-    console.log('🛒 addToCart - userId:', userId);
-    console.log('🛒 addToCart - item:', item);
     
     // Validar que userId no esté vacío
     if (!userId || userId.trim() === '') {
@@ -310,12 +308,10 @@ export class FirestoreStorage {
     const perfumeData = perfumeSnap.exists ? perfumeSnap.data() : null;
     
     const cartRef = db.collection('carts').doc(userId);
-    console.log('🛒 addToCart - cartRef path:', cartRef.path);
     const itemsRef = cartRef.collection('items');
     
     // Buscar si ya existe el item (por productId y size)
     const query = await itemsRef.where('productId', '==', item.productId).where('size', '==', item.size).limit(1).get();
-    console.log('🛒 addToCart - query size:', query.size);
     
     if (!query.empty) {
       // Si existe, actualizar cantidad
@@ -325,7 +321,6 @@ export class FirestoreStorage {
         quantity: newQuantity,
         perfume: perfumeData // Actualizar también la información del perfume
       });
-      console.log('🛒 addToCart - updated existing item, new quantity:', newQuantity);
       return { id: doc.id, ...doc.data(), quantity: newQuantity, perfume: perfumeData };
     } else {
       // Si no existe, agregar nuevo
@@ -338,7 +333,6 @@ export class FirestoreStorage {
         perfume: perfumeData // Incluir la información completa del perfume
       });
       const newItem = await newDoc.get();
-      console.log('🛒 addToCart - created new item with id:', newDoc.id);
       return { id: newDoc.id, ...newItem.data() };
     }
   }

@@ -184,22 +184,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logoutHelper();
       setUser(null);
       queryClient.clear();
-      
-      toast({
-        title: "Sesión cerrada",
-        description: "Has cerrado sesión correctamente",
-      });
+      // NO mostrar toast al cerrar sesión
     },
     onError: () => {
       // Aún así limpiar el estado local
       logoutHelper();
       setUser(null);
       queryClient.clear();
-      
-      toast({
-        title: "Sesión cerrada",
-        description: "Has cerrado sesión correctamente",
-      });
+      // NO mostrar toast al cerrar sesión
     },
   });
 

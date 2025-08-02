@@ -266,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.id;
       
-      console.log('Adding to cart with userId:', userId);
+  
       if (!userId) {
         return res.status(401).json({ message: "Usuario no autenticado" });
       }
@@ -286,7 +286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Usuario no autenticado" });
       }
       const items = await storage.getCartItems(userId);
-      console.log('Cart items found:', items.length);
+  
       res.json(items);
     } catch (error) {
       console.error('Error getting cart:', error);
@@ -357,7 +357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 return res.json(decoded);
             }
         } catch (error: any) {
-            console.log('❌ /api/user - JWT inválido:', error?.message || 'Error desconocido');
+        
         }
     }
     
@@ -376,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ENDPOINTS FALTANTES - AGREGADOS
   app.get('/api/user-stats', requireAuth, (req, res) => {
-    console.log('📊 /api/user-stats - Usuario autenticado:', req.user?.email);
+
     res.json({ 
       stats: {
         totalOrders: 5,
@@ -388,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get('/api/notifications', requireAuth, (req, res) => {
-    console.log('🔔 /api/notifications - Usuario autenticado:', req.user?.email);
+
     res.json({ 
       notifications: [
         {
@@ -410,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get('/api/coupons', requireAuth, (req, res) => {
-    console.log('🎫 /api/coupons - Usuario autenticado:', req.user?.email);
+
     res.json({ 
       coupons: [
         {
@@ -434,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Endpoint de prueba para crear sesión manual
   app.get('/api/test-session', (req, res) => {
-    console.log('🧪 Creando sesión de prueba...');
+
     
     // Crear sesión de prueba
     (req.session as any).user = {
@@ -452,7 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: 'Error al guardar sesión' });
       }
       
-      console.log('✅ Sesión de prueba creada:', req.sessionID);
+  
       res.json({ 
         message: 'Sesión de prueba creada',
         sessionId: req.sessionID,

@@ -37,8 +37,7 @@ const scryptAsync = promisify(scrypt);
 const JWT_SECRET = process.env.JWT_SECRET!;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
 
-console.log('🔑 JWT_SECRET disponible:', !!JWT_SECRET);
-console.log('🔄 REFRESH_TOKEN_SECRET disponible:', !!REFRESH_TOKEN_SECRET);
+
 
 // Función para generar tokens
 export function generateTokens(userId: string, email: string, username: string) {
@@ -120,7 +119,7 @@ async function comparePasswords(supplied: string, stored: string) {
 // Helper function para obtener usuario por ID
 async function getUserById(userId: string) {
   try {
-    console.log('🔍 Buscando usuario:', userId);
+
     const user = await storage.getUser(userId);
     return user;
   } catch (error) {
@@ -144,7 +143,7 @@ function checkEnvironmentVariables() {
     console.error('❌ Variables de entorno faltantes:', missing);
     console.error('⚠️ El servidor puede no funcionar correctamente');
   } else {
-    console.log('✅ Todas las variables de entorno están configuradas');
+    
   }
 }
 
