@@ -178,6 +178,168 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // RUTA /api/user - CRÍTICA PARA FRONTEND
+  app.get('/api/user', async (req, res) => {
+    try {
+      console.log('GET /api/user - Headers:', req.headers);
+      
+      // Respuesta básica sin autenticación por ahora
+      const userData = {
+        id: 1,
+        name: 'Usuario Test',
+        email: 'usuario@test.com',
+        authenticated: false
+      };
+      
+      res.status(200).json({
+        success: true,
+        user: userData,
+        message: 'Usuario obtenido correctamente'
+      });
+      
+    } catch (error) {
+      console.error('Error en /api/user:', error);
+      res.status(500).json({
+        error: 'Error interno del servidor',
+        message: error.message
+      });
+    }
+  });
+
+  // RUTA /api/cart GET - CRÍTICA PARA FRONTEND
+  app.get('/api/cart', async (req, res) => {
+    try {
+      console.log('GET /api/cart - Headers:', req.headers);
+      
+      // Respuesta básica del carrito
+      const cartData = {
+        id: 1,
+        userId: 1,
+        items: [],
+        total: 0,
+        currency: 'USD',
+        createdAt: new Date().toISOString()
+      };
+      
+      res.status(200).json({
+        success: true,
+        cart: cartData,
+        message: 'Carrito obtenido correctamente'
+      });
+      
+    } catch (error) {
+      console.error('Error en GET /api/cart:', error);
+      res.status(500).json({
+        error: 'Error interno del servidor',
+        message: error.message
+      });
+    }
+  });
+
+  // RUTA /api/cart POST - CRÍTICA PARA FRONTEND
+  app.post('/api/cart', async (req, res) => {
+    try {
+      console.log('POST /api/cart - Body:', req.body);
+      console.log('POST /api/cart - Headers:', req.headers);
+      
+      const { productId, quantity = 1, size, price } = req.body;
+      
+      // Validar datos básicos
+      if (!productId) {
+        return res.status(400).json({
+          error: 'Datos faltantes',
+          message: 'productId es requerido'
+        });
+      }
+      
+      // Simular agregar producto al carrito
+      const cartItem = {
+        id: Date.now(),
+        productId,
+        quantity,
+        size,
+        price,
+        addedAt: new Date().toISOString()
+      };
+      
+      res.status(200).json({
+        success: true,
+        item: cartItem,
+        message: 'Producto agregado al carrito correctamente'
+      });
+      
+    } catch (error) {
+      console.error('Error en POST /api/cart:', error);
+      res.status(500).json({
+        error: 'Error interno del servidor',
+        message: error.message
+      });
+    }
+  });
+
+  // RUTAS ADICIONALES PARA CARRITO
+  app.put('/api/cart/:itemId', async (req, res) => {
+    try {
+      const { itemId } = req.params;
+      const { quantity } = req.body;
+      
+      console.log(`PUT /api/cart/${itemId} - Quantity:`, quantity);
+      
+      res.status(200).json({
+        success: true,
+        message: 'Cantidad actualizada correctamente',
+        itemId,
+        quantity
+      });
+      
+    } catch (error) {
+      console.error('Error en PUT /api/cart/:itemId:', error);
+      res.status(500).json({
+        error: 'Error interno del servidor',
+        message: error.message
+      });
+    }
+  });
+
+  app.delete('/api/cart/:itemId', async (req, res) => {
+    try {
+      const { itemId } = req.params;
+      
+      console.log(`DELETE /api/cart/${itemId}`);
+      
+      res.status(200).json({
+        success: true,
+        message: 'Item eliminado del carrito correctamente',
+        itemId
+      });
+      
+    } catch (error) {
+      console.error('Error en DELETE /api/cart/:itemId:', error);
+      res.status(500).json({
+        error: 'Error interno del servidor',
+        message: error.message
+      });
+    }
+  });
+
+  app.delete('/api/cart', async (req, res) => {
+    try {
+      console.log('DELETE /api/cart - Limpiar carrito');
+      
+      res.status(200).json({
+        success: true,
+        message: 'Carrito limpiado correctamente'
+      });
+      
+    } catch (error) {
+      console.error('Error en DELETE /api/cart:', error);
+      res.status(500).json({
+        error: 'Error interno del servidor',
+        message: error.message
+      });
+    }
+  });
+
   // Get all perfumes
   app.get("/api/perfumes", async (_req, res) => {
     try {

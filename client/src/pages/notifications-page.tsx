@@ -10,7 +10,7 @@ import {
   Bell, 
   CheckCircle, 
   XCircle, 
-  Settings,
+  Settings, 
   Trash2,
   Mail,
   Smartphone,
@@ -126,7 +126,7 @@ export default function NotificationsPage() {
   };
 
   const handleDeleteNotification = (id: string) => {
-    deleteNotificationMutation.mutate(id);
+      deleteNotificationMutation.mutate(id);
   };
 
   const handleSettingChange = (setting: keyof NotificationSettings, value: boolean) => {
@@ -143,12 +143,12 @@ export default function NotificationsPage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
+        year: 'numeric',
       month: 'short',
-      day: 'numeric',
+        day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    });
+      });
   };
 
   const getNotificationIcon = (type: string) => {
@@ -212,9 +212,9 @@ export default function NotificationsPage() {
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-green-500">{notifications.length - unreadCount}</div>
               <div className="text-gray-400">Leídas</div>
-            </CardContent>
-          </Card>
-        </div>
+          </CardContent>
+        </Card>
+              </div>
 
         {/* Filters and Actions */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
@@ -240,9 +240,9 @@ export default function NotificationsPage() {
             >
               Leídas
             </Button>
-          </div>
+              </div>
           
-          {unreadCount > 0 && (
+              {unreadCount > 0 && (
             <Button
               onClick={handleMarkAllAsRead}
               variant="outline"
@@ -250,9 +250,9 @@ export default function NotificationsPage() {
               disabled={markAllAsReadMutation.isPending}
             >
               {markAllAsReadMutation.isPending ? 'Marcando...' : 'Marcar todas como leídas'}
-            </Button>
-          )}
-        </div>
+                </Button>
+              )}
+            </div>
 
         {/* Notifications List */}
         <div className="space-y-4">
@@ -268,12 +268,12 @@ export default function NotificationsPage() {
                     : 'No tienes notificaciones leídas'
                   }
                 </p>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
           ) : (
             filteredNotifications.map((notification) => (
-              <Card 
-                key={notification.id} 
+              <Card
+                key={notification.id}
                 className={`bg-charcoal border-luxury-gold/20 ${
                   !notification.isRead ? 'border-luxury-gold/40' : ''
                 }`}
@@ -281,7 +281,7 @@ export default function NotificationsPage() {
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4 flex-1">
-                      {getNotificationIcon(notification.type)}
+                        {getNotificationIcon(notification.type)}
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="font-semibold text-white">
