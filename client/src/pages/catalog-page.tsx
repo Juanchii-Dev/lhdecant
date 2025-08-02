@@ -23,24 +23,16 @@ export default function CatalogPage() {
   const { data: perfumes, isLoading, error } = useQuery({
     queryKey: ["/api/perfumes"],
     queryFn: async () => {
-      console.log('🔄 Fetching perfumes...'); // Debug log
       const response = await fetch(buildApiUrl('/api/perfumes'));
-      console.log('📡 Response status:', response.status); // Debug log
       if (!response.ok) {
-        console.error('❌ Failed to fetch perfumes:', response.status, response.statusText); // Debug log
         throw new Error('Failed to fetch perfumes');
       }
-      const data = await response.json();
-      console.log('✅ Perfumes loaded:', data.length, 'items'); // Debug log
-      return data;
+      return response.json();
     },
   });
 
   // Filter and sort perfumes
   const filteredPerfumes = perfumes?.filter((perfume: Perfume) => {
-    // Debug log
-    console.log('🔍 Filtering perfume:', perfume.name, 'Brand:', perfume.brand, 'Search term:', searchTerm, 'Selected brand:', selectedBrand);
-    
     // Filter by search term
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
@@ -50,18 +42,15 @@ export default function CatalogPage() {
       const matchesNotes = perfume.notes?.some((note: string) => note.toLowerCase().includes(searchLower)) || false;
       
       if (!matchesName && !matchesBrand && !matchesDescription && !matchesNotes) {
-        console.log('❌ Perfume filtered out by search term:', perfume.name);
         return false;
       }
     }
 
     // Filter by brand
     if (selectedBrand && selectedBrand !== "all" && perfume.brand !== selectedBrand) {
-      console.log('❌ Perfume filtered out by brand:', perfume.name, 'Expected:', selectedBrand, 'Got:', perfume.brand);
       return false;
     }
 
-    console.log('✅ Perfume passed filters:', perfume.name);
     return true;
   }) || [];
 

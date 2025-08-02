@@ -290,9 +290,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const userData = JSON.parse(userDataStr);
           setUser(userData);
           queryClient.setQueryData(["/api/user"], userData);
-          console.log('✅ Usuario autenticado encontrado:', userData);
-        } else {
-          console.log('ℹ️ No hay usuario autenticado');
         }
       } catch (error) {
         console.error('❌ Error inicializando autenticación:', error);

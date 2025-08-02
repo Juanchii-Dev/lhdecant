@@ -27,7 +27,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
 
-  // Middleware to check if user is authenticated - ACTUALIZADO CON REFRESH TOKENS
+  // Middleware to check if user is authenticated - MEJORADO PARA PRODUCCIÓN
   const requireAuth = (req: any, res: any, next: any) => {
     const authHeader = req.headers.authorization;
     
@@ -42,7 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.user = decoded;
       next();
     } catch (error) {
-      console.log('❌ Token inválido en requireAuth');
+      // En producción, no loggear errores de token para evitar spam
       return res.status(401).json({ error: 'Token inválido' });
     }
   };
@@ -66,8 +66,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generar ambos tokens
       const { accessToken, refreshToken } = generateTokens(user.id, user.email, user.username);
-      
-      console.log('✅ Tokens generados para:', user.email);
       
       res.json({
         token: accessToken,        // Para compatibilidad
@@ -112,8 +110,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user.email, 
         user.username
       );
-      
-      console.log('🔄 Tokens renovados para:', user.email);
       
       res.json({
         token: accessToken,
@@ -286,7 +282,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.id;
       
-      console.log('Getting cart with userId:', userId);
       if (!userId) {
         return res.status(401).json({ message: "Usuario no autenticado" });
       }

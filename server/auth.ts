@@ -70,10 +70,8 @@ export function generateTokens(userId: string, email: string, username: string) 
 export function verifyAccessToken(token: string) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('🔐 Access Token verificado exitosamente');
     return decoded;
   } catch (error: any) {
-    console.log('❌ Error verificando Access Token:', error.message);
     throw error;
   }
 }
@@ -82,10 +80,8 @@ export function verifyAccessToken(token: string) {
 export function verifyRefreshToken(token: string) {
   try {
     const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET);
-    console.log('🔄 Refresh Token verificado exitosamente');
     return decoded;
   } catch (error: any) {
-    console.log('❌ Error verificando Refresh Token:', error.message);
     throw error;
   }
 }

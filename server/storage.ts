@@ -332,13 +332,9 @@ export class FirestoreStorage {
   }
 
   async getCartItems(userId: string) {
-    console.log('🔍 getCartItems - userId:', userId);
     const cartRef = db.collection('carts').doc(userId);
-    console.log('🔍 getCartItems - cartRef path:', cartRef.path);
     const itemsSnap = await cartRef.collection('items').get();
-    console.log('🔍 getCartItems - itemsSnap size:', itemsSnap.size);
     const items = itemsSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-    console.log('🔍 getCartItems - items found:', items.length);
     return items;
   }
 
