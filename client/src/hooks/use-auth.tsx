@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "./use-toast";
 import { buildApiUrl } from "../config/api";
-import { getAuthToken, getRefreshToken, handleLogout as logoutHelper, debugAuth } from "../lib/auth-helpers";
+import { getAuthToken, getRefreshToken, handleLogout as logoutHelper, debugAuth, refreshToken } from "../lib/auth-helpers";
 
 interface User {
   id: string;
@@ -40,17 +40,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Query para obtener datos del usuario
   const { data: userData, refetch, isLoading: userLoading } = useQuery({
     queryKey: ["/api/user"],
-    queryFn: () => fetch(buildApiUrl("/api/user"), {
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json',
-      },
-    }).then(res => {
-      if (!res.ok) throw new Error('Failed to fetch user');
-      return res.json();
-    }),
+    queryFn: async () => {
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('No auth token available');
+      }
+      
+      const response = await fetch(buildApiUrl("/api/user"), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Token expirado, intentar renovar
+          const refreshed = await refreshToken();
+          if (refreshed) {
+            // Reintentar con el nuevo token
+            const newToken = getAuthToken();
+            const retryResponse = await fetch(buildApiUrl("/api/user"), {
+              headers: {
+                'Authorization': `Bearer ${newToken}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            
+            if (!retryResponse.ok) {
+              throw new Error('Failed to fetch user after token refresh');
+            }
+            
+            return retryResponse.json();
+          } else {
+            // No se pudo renovar el token, limpiar estado
+            handleLogout();
+            throw new Error('Authentication failed');
+          }
+        }
+        throw new Error('Failed to fetch user');
+      }
+      
+      return response.json();
+    },
     enabled: !!getAuthToken(),
-    retry: false,
+    retry: (failureCount, error) => {
+      // Reintentar solo si no es un error de autenticación
+      if (error.message === 'Authentication failed') {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    retryDelay: 1000,
   });
 
   // Mutation para login

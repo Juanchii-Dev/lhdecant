@@ -1,11 +1,11 @@
 
-import { useState, useEffect } from "react"
-import { buildApiUrl } from "../config/api";;
+import { useState } from "react"
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../hooks/use-auth";
+import { useCart } from "../hooks/use-cart";
 import { useToast } from "../hooks/use-toast";
 
 interface CartItem {
@@ -23,32 +23,7 @@ interface CartItem {
 }
 
 export function CartIcon() {
-  const [totalItems, setTotalItems] = useState(0);
-
-  useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        const token = localStorage.getItem('authToken');
-        if (!token) return;
-        
-        const response = await fetch(buildApiUrl('/api/cart'), {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
-        });
-        if (response.ok) {
-          const items = await response.json();
-          const total = items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
-          setTotalItems(total);
-        }
-      } catch (error) {
-        console.error('Error fetching cart:', error);
-      }
-    };
-
-    fetchCart();
-  }, []);
+  const { totalItems } = useCart();
 
   return (
     <div className="relative">
@@ -68,77 +43,20 @@ export function CartIcon() {
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const { cartItems, totalItems, isLoading, updateQuantity, removeItem, clearCart } = useCart();
   const { toast } = useToast();
 
-  const fetchCart = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
-      
-      const response = await fetch(buildApiUrl('/api/cart'), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-      if (response.ok) {
-        const cartItems = await response.json();
-        setItems(cartItems);
-      }
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (open) {
-      fetchCart();
-    }
-  }, [open, user]);
-
-  const updateQuantity = async (id: string, quantity: number) => {
+  const handleUpdateQuantity = async (id: string, quantity: number) => {
     if (!user) return;
 
-    // Actualización optimista
-    const previousItems = [...items];
-    const updatedItems = items.map(item => 
-      item.id === id ? { ...item, quantity } : item
-    );
-    setItems(updatedItems);
-
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
-      
-      const response = await fetch(buildApiUrl(`/api/cart/${id}`), {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ quantity })
-      });
-
-      if (!response.ok) {
-        // Revertir si hay error
-        setItems(previousItems);
-        throw new Error('Error updating quantity');
-      }
-
+    const success = await updateQuantity(id, quantity);
+    if (success) {
       toast({
         title: "Cantidad actualizada",
         description: "La cantidad se ha actualizado correctamente",
       });
-    } catch (error) {
-      console.error('Error updating quantity:', error);
+    } else {
       toast({
         title: "Error",
         description: "No se pudo actualizar la cantidad",
@@ -147,38 +65,16 @@ export function CartDrawer() {
     }
   };
 
-  const removeItem = async (id: string) => {
+  const handleRemoveItem = async (id: string) => {
     if (!user) return;
 
-    // Actualización optimista
-    const previousItems = [...items];
-    const updatedItems = items.filter(item => item.id !== id);
-    setItems(updatedItems);
-
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
-      
-      const response = await fetch(buildApiUrl(`/api/cart/${id}`), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        // Revertir si hay error
-        setItems(previousItems);
-        throw new Error('Error removing item');
-      }
-
+    const success = await removeItem(id);
+    if (success) {
       toast({
         title: "Producto eliminado",
         description: "El producto se ha eliminado del carrito",
       });
-    } catch (error) {
-      console.error('Error removing item:', error);
+    } else {
       toast({
         title: "Error",
         description: "No se pudo eliminar el producto",
@@ -187,37 +83,16 @@ export function CartDrawer() {
     }
   };
 
-  const clearCart = async () => {
+  const handleClearCart = async () => {
     if (!user) return;
 
-    // Actualización optimista
-    const previousItems = [...items];
-    setItems([]);
-
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
-      
-      const response = await fetch(buildApiUrl('/api/cart'), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        // Revertir si hay error
-        setItems(previousItems);
-        throw new Error('Error clearing cart');
-      }
-
+    const success = await clearCart();
+    if (success) {
       toast({
         title: "Carrito vacío",
         description: "Todos los productos han sido eliminados",
       });
-    } catch (error) {
-      console.error('Error clearing cart:', error);
+    } else {
       toast({
         title: "Error",
         description: "No se pudo vaciar el carrito",
@@ -272,11 +147,11 @@ export function CartDrawer() {
         </SheetHeader>
 
         <div className="mt-6 space-y-4">
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-8">
               <p className="text-gray-400">Cargando carrito...</p>
             </div>
-          ) : items.length === 0 ? (
+          ) : cartItems.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-400 mb-4">Tu carrito está vacío</p>
               <Button onClick={() => setOpen(false)}>
@@ -287,7 +162,7 @@ export function CartDrawer() {
             <>
               <div className="flex-1 overflow-y-auto max-h-96">
                 <AnimatePresence>
-                  {items.map((item) => (
+                  {cartItems.map((item) => (
                     <motion.div
                       key={item.id}
                       initial={{ opacity: 0, x: -20 }}
@@ -323,7 +198,7 @@ export function CartDrawer() {
                       <div className="flex flex-col items-center gap-2">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                             className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
                             disabled={item.quantity <= 1}
                           >
@@ -331,7 +206,7 @@ export function CartDrawer() {
                           </button>
                           <span className="text-white w-8 text-center font-medium">{item.quantity}</span>
                           <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                             className="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
                           >
                             <Plus className="w-4 h-4" />
@@ -339,7 +214,7 @@ export function CartDrawer() {
                         </div>
                         
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemoveItem(item.id)}
                           className="text-red-400 hover:text-red-300 transition-colors p-1"
                           title="Eliminar producto"
                         >
@@ -355,7 +230,7 @@ export function CartDrawer() {
                 <div className="flex justify-between items-center">
                   <span className="text-white font-bold text-lg">Total:</span>
                   <span className="text-yellow-500 font-bold text-2xl">
-                    ${totalAmount.toFixed(2)}
+                    ${cartItems.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0).toFixed(2)}
                   </span>
                 </div>
                 
@@ -378,7 +253,7 @@ export function CartDrawer() {
                     </Button>
                     
                     <Button
-                      onClick={clearCart}
+                      onClick={handleClearCart}
                       variant="outline"
                       className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
                       disabled={totalItems === 0}
