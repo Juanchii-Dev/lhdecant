@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     enabled: !!getAuthToken(),
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutos
-    cacheTime: 10 * 60 * 1000, // 10 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
   });
 
   // Mutation para login
@@ -175,7 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Actualizar el cache de React Query
       queryClient.setQueryData(["/api/user"], userData);
-      setUser(userData);
+      setUser(userData as User);
       
       toast({
         title: "Inicio de sesión exitoso",
@@ -239,7 +239,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (token && userDataStr) {
           const userData = JSON.parse(userDataStr);
-          setUser(userData);
+          setUser(userData as User);
           queryClient.setQueryData(["/api/user"], userData);
         } else {
           // Limpiar estado si no hay token válido
@@ -259,7 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Efecto para sincronizar el estado del usuario
   useEffect(() => {
     if (userData) {
-      setUser(userData);
+      setUser(userData as User);
     }
   }, [userData]);
 

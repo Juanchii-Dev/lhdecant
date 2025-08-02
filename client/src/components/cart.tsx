@@ -112,7 +112,7 @@ export function CartDrawer() {
       return;
     }
 
-    if (items.length === 0) {
+    if (cartItems.length === 0) {
       toast({
         title: "Carrito vacío",
         description: "Agrega productos antes de proceder al pago",
@@ -124,7 +124,7 @@ export function CartDrawer() {
     window.location.href = '/checkout';
   };
 
-  const totalAmount = cartItems.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+  const totalAmount = (cartItems as CartItem[]).reduce((sum: number, item: CartItem) => sum + (parseFloat(item.price) * item.quantity), 0);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -150,7 +150,7 @@ export function CartDrawer() {
             <div className="text-center py-8">
               <p className="text-gray-400">Cargando carrito...</p>
             </div>
-          ) : cartItems.length === 0 ? (
+          ) : (cartItems as CartItem[]).length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-400 mb-4">Tu carrito está vacío</p>
               <Button onClick={() => setOpen(false)}>
@@ -161,7 +161,7 @@ export function CartDrawer() {
             <>
               <div className="flex-1 overflow-y-auto max-h-96">
                 <AnimatePresence>
-                  {cartItems.map((item) => (
+                  {(cartItems as CartItem[]).map((item: CartItem) => (
                     <motion.div
                       key={item.id}
                       initial={{ opacity: 0, x: -20 }}
@@ -229,7 +229,7 @@ export function CartDrawer() {
                 <div className="flex justify-between items-center">
                   <span className="text-white font-bold text-lg">Total:</span>
                   <span className="text-yellow-500 font-bold text-2xl">
-                    ${cartItems.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0).toFixed(2)}
+                    ${(cartItems as CartItem[]).reduce((sum: number, item: CartItem) => sum + (parseFloat(item.price) * item.quantity), 0).toFixed(2)}
                   </span>
                 </div>
                 

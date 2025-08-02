@@ -53,11 +53,11 @@ export function useCart() {
     enabled: !!getAuthToken(),
     retry: false,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // Calcular total de items
-  const totalItems = cartItems.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
+  const totalItems = (cartItems as CartItem[]).reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
 
   // Función para agregar al carrito con fallback
   const addToCart = useCallback(async (productId: string, quantity: number = 1, size?: string) => {

@@ -134,14 +134,14 @@ class ApiService {
 
   // Métodos específicos para el carrito con fallbacks
   async getCart(): Promise<ApiResponse<any[]>> {
-    const response = await this.get('/cart');
+    const response = await this.get<any[]>('/cart');
     
     if (response.status === 404) {
       // Fallback: return empty cart
       return { data: [], status: 200, success: true };
     }
     
-    return response;
+    return response as ApiResponse<any[]>;
   }
 
   async addToCart(productId: string, quantity: number = 1, size?: string): Promise<ApiResponse<any>> {

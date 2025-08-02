@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Configuración de rendimiento y optimización
 export const PERFORMANCE_CONFIG = {
   // Lazy loading
@@ -153,7 +155,7 @@ export function measureCoreWebVitals() {
   new PerformanceObserver((entryList) => {
     const entries = entryList.getEntries();
     
-    entries.forEach((entry) => {
+    entries.forEach((entry: any) => {
       const fid = entry.processingStart - entry.startTime;
       console.log('FID:', fid);
       

@@ -9,6 +9,12 @@ import crypto from 'crypto';
 import { admin } from "./storage";
 import { uploadFromUrl, deleteImage } from "./cloudinary";
 
+// Utility function para manejar errores de manera segura
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 const db = admin.firestore();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-08-16' });
@@ -201,7 +207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error en /api/user:', error);
       res.status(500).json({
         error: 'Error interno del servidor',
-        message: error.message
+        message: getErrorMessage(error)
       });
     }
   });
@@ -231,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error en GET /api/cart:', error);
       res.status(500).json({
         error: 'Error interno del servidor',
-        message: error.message
+        message: getErrorMessage(error)
       });
     }
   });
@@ -272,7 +278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error en POST /api/cart:', error);
       res.status(500).json({
         error: 'Error interno del servidor',
-        message: error.message
+        message: getErrorMessage(error)
       });
     }
   });
@@ -296,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error en PUT /api/cart/:itemId:', error);
       res.status(500).json({
         error: 'Error interno del servidor',
-        message: error.message
+        message: getErrorMessage(error)
       });
     }
   });
@@ -317,7 +323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error en DELETE /api/cart/:itemId:', error);
       res.status(500).json({
         error: 'Error interno del servidor',
-        message: error.message
+        message: getErrorMessage(error)
       });
     }
   });
@@ -335,7 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error en DELETE /api/cart:', error);
       res.status(500).json({
         error: 'Error interno del servidor',
-        message: error.message
+        message: getErrorMessage(error)
       });
     }
   });
