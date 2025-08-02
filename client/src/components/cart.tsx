@@ -124,8 +124,7 @@ export function CartDrawer() {
     window.location.href = '/checkout';
   };
 
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+  const totalAmount = cartItems.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

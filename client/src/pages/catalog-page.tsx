@@ -38,11 +38,9 @@ export default function CatalogPage() {
 
   // Filter and sort perfumes
   const filteredPerfumes = perfumes?.filter((perfume: Perfume) => {
-    // Only show perfumes that are in stock (stock check)
-    if (!perfume.inStock) {
-      return false;
-    }
-
+    // Debug log
+    console.log('🔍 Filtering perfume:', perfume.name, 'Brand:', perfume.brand, 'Search term:', searchTerm, 'Selected brand:', selectedBrand);
+    
     // Filter by search term
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
@@ -52,15 +50,18 @@ export default function CatalogPage() {
       const matchesNotes = perfume.notes?.some((note: string) => note.toLowerCase().includes(searchLower)) || false;
       
       if (!matchesName && !matchesBrand && !matchesDescription && !matchesNotes) {
+        console.log('❌ Perfume filtered out by search term:', perfume.name);
         return false;
       }
     }
 
     // Filter by brand
-    if (selectedBrand && perfume.brand !== selectedBrand) {
+    if (selectedBrand && selectedBrand !== "all" && perfume.brand !== selectedBrand) {
+      console.log('❌ Perfume filtered out by brand:', perfume.name, 'Expected:', selectedBrand, 'Got:', perfume.brand);
       return false;
     }
 
+    console.log('✅ Perfume passed filters:', perfume.name);
     return true;
   }) || [];
 
