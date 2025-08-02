@@ -61,6 +61,13 @@ app.use((req, res, next) => {
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
+  // MIDDLEWARE DE LOGGING PARA DEBUG
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log('Headers:', req.headers);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('Body:', req.body);
+  }
+
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
@@ -89,7 +96,42 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // RUTA RAÍZ - CRÍTICA PARA FRONTEND
+  app.get('/', (_req, res) => {
+    res.json({
+      message: 'LH Decants Backend API',
+      status: 'running',
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      endpoints: [
+        'GET /',
+        'GET /health',
+        'GET /api/health',
+        'GET /api/user',
+        'GET /api/cart',
+        'POST /api/cart',
+        'PUT /api/cart/:id',
+        'DELETE /api/cart/:id',
+        'POST /api/auth/login',
+        'POST /api/auth/register',
+        'POST /api/auth/logout',
+        'POST /api/auth/refresh'
+      ]
+    });
+  });
+
   // Health check endpoint
+  app.get('/health', (_req, res) => {
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      cors: 'ultra-permissive'
+    });
+  });
+
+  // Health check endpoint API
   app.get('/api/health', (_req, res) => {
     res.json({ 
       status: 'ok', 
@@ -124,6 +166,30 @@ app.use((req, res, next) => {
       GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? '***SET***' : 'NOT_SET',
       FRONTEND_URL: process.env.FRONTEND_URL,
       timestamp: new Date().toISOString()
+    });
+  });
+
+  // MANEJO DE ERRORES GLOBAL
+  app.use('*', (req, res) => {
+    console.log(`Ruta no encontrada: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({
+      error: 'Ruta no encontrada',
+      method: req.method,
+      path: req.originalUrl,
+      availableRoutes: [
+        'GET /',
+        'GET /health',
+        'GET /api/health',
+        'GET /api/user',
+        'GET /api/cart',
+        'POST /api/cart',
+        'PUT /api/cart/:id',
+        'DELETE /api/cart/:id',
+        'POST /api/auth/login',
+        'POST /api/auth/register',
+        'POST /api/auth/logout',
+        'POST /api/auth/refresh'
+      ]
     });
   });
 
