@@ -7,6 +7,7 @@ import { useToast } from "../hooks/use-toast";
 import { useAddToCart } from "../hooks/use-add-to-cart";
 import { useQuery } from "@tanstack/react-query";
 import { buildApiUrl } from "../config/api";
+import { Perfume } from "../types/perfume";
 
 export default function CatalogPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,37 +36,49 @@ export default function CatalogPage() {
   });
 
   // Filter and sort perfumes
-  const filteredPerfumes = perfumes?.filter((perfume: any) => {
+  const filteredPerfumes = perfumes?.filter((perfume: Perfume) => {
     // Only show perfumes that are in stock (stock check)
     if (!perfume.inStock) {
       return false;
     }
-    
-    const matchesSearch = perfume.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         perfume.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         perfume.notes.some((note: string) => note.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = selectedCategory === "all" || perfume.category === selectedCategory;
-    const matchesBrand = selectedBrand === "all" || perfume.brand === selectedBrand;
-    
-    return matchesSearch && matchesCategory && matchesBrand;
+
+    // Filter by search term
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const matchesName = perfume.name.toLowerCase().includes(searchLower);
+      const matchesBrand = perfume.brand.toLowerCase().includes(searchLower);
+      const matchesDescription = perfume.description.toLowerCase().includes(searchLower);
+      const matchesNotes = perfume.notes?.some((note: string) => note.toLowerCase().includes(searchLower)) || false;
+      
+      if (!matchesName && !matchesBrand && !matchesDescription && !matchesNotes) {
+        return false;
+      }
+    }
+
+    // Filter by brand
+    if (selectedBrand && perfume.brand !== selectedBrand) {
+      return false;
+    }
+
+    return true;
   }) || [];
 
-  const sortedPerfumes = [...filteredPerfumes].sort((a: any, b: any) => {
+  const sortedPerfumes = [...filteredPerfumes].sort((a: Perfume, b: Perfume) => {
     switch (sortBy) {
       case "name":
         return a.name.localeCompare(b.name);
       case "brand":
         return a.brand.localeCompare(b.brand);
       case "price-low":
-        return parseFloat(a.prices[0]) - parseFloat(b.prices[0]);
+        return a.prices[0] - b.prices[0];
       case "price-high":
-        return parseFloat(b.prices[0]) - parseFloat(a.prices[0]);
+        return b.prices[0] - a.prices[0];
       default:
         return 0;
     }
   });
 
-  const uniqueBrands = perfumes?.reduce((brands: string[], perfume: any) => {
+  const uniqueBrands = perfumes?.reduce((brands: string[], perfume: Perfume) => {
     if (!brands.includes(perfume.brand)) {
       brands.push(perfume.brand);
     }
@@ -79,25 +92,36 @@ export default function CatalogPage() {
     }));
   };
 
-  const handleAddToCart = async (perfume: any, size: string) => {
-    const price = getPrice(perfume, size);
-    await addToCart(perfume.id.toString(), size, price);
+  const handleAddToCart = async (perfume: Perfume, size: string) => {
+    try {
+      await addToCart({ productId: perfume.id.toString(), size });
+      toast({
+        title: "Producto agregado",
+        description: "El producto se agregó correctamente al carrito",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al agregar al carrito",
+        variant: "destructive",
+      });
+    }
   };
 
-  const getPrice = (perfume: any, size: string) => {
+  const getPrice = (perfume: Perfume, size: string) => {
     const sizeIndex = perfume.sizes.indexOf(size);
     const originalPrice = sizeIndex !== -1 ? perfume.prices[sizeIndex] : perfume.prices[0];
     
     if (perfume.isOnOffer && perfume.discountPercentage) {
       const discount = parseFloat(perfume.discountPercentage);
-      const discountedPrice = parseFloat(originalPrice) * (1 - discount / 100);
+      const discountedPrice = originalPrice * (1 - discount / 100);
       return discountedPrice.toFixed(2);
     }
     
-    return originalPrice;
+    return originalPrice.toString();
   };
 
-  const getOriginalPrice = (perfume: any, size: string) => {
+  const getOriginalPrice = (perfume: Perfume, size: string) => {
     const sizeIndex = perfume.sizes.indexOf(size);
     return sizeIndex !== -1 ? perfume.prices[sizeIndex] : perfume.prices[0];
   };
@@ -179,7 +203,7 @@ export default function CatalogPage() {
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-700">
                 <SelectItem value="all">Todas las marcas</SelectItem>
-                {uniqueBrands.map((brand) => (
+                {uniqueBrands.map((brand: string) => (
                   <SelectItem key={brand} value={brand}>
                     {brand}
                   </SelectItem>

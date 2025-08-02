@@ -868,7 +868,7 @@ export default function AdminPage() {
                             <div className="text-right">
                               <p className="text-[#D4AF37] font-bold">${perfume.prices?.[0] || 0}</p>
                               <p className="text-gray-400 text-sm">
-                                {salesStats?.totalOrders > 0 ? 'Vendido' : 'Disponible'}
+                                {salesStats?.totalOrders && salesStats.totalOrders > 0 ? 'Vendido' : 'Disponible'}
                               </p>
                             </div>
                           </div>
@@ -1511,7 +1511,7 @@ export default function AdminPage() {
                 <Card className="bg-black/50 border-[#D4AF37]/20 backdrop-blur-md">
                   <CardHeader>
                     <CardTitle className="text-[#D4AF37]">
-                      {salesStats?.totalOrders > 0 ? 'Productos Más Vendidos' : 'Productos Destacados'}
+                      {salesStats?.totalOrders && salesStats.totalOrders > 0 ? 'Productos Más Vendidos' : 'Productos Destacados'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1531,7 +1531,7 @@ export default function AdminPage() {
                             <div className="text-right">
                               <p className="text-[#D4AF37] font-bold">${perfume.prices?.[0] || 0}</p>
                               <p className="text-gray-400 text-sm">
-                                {salesStats?.totalOrders > 0 ? 'Vendido' : 'Disponible'}
+                                {salesStats?.totalOrders && salesStats.totalOrders > 0 ? 'Vendido' : 'Disponible'}
                               </p>
                             </div>
                           </div>

@@ -8,7 +8,12 @@ interface User {
   id: string;
   email: string;
   name: string;
+  username?: string;
+  phone?: string;
+  avatar?: string;
   picture?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface AuthContextType {
@@ -18,6 +23,8 @@ interface AuthContextType {
   login: (credentials: { username: string; password: string }) => void;
   register: (credentials: { username: string; password: string; email: string }) => void;
   logout: () => void;
+  logoutMutation: any;
+  refetchUser: () => void;
   handleJWTFromURL: (token: string, refreshToken: string, userData: any) => void;
   refreshTokens: () => void;
 }
@@ -271,6 +278,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
+    logoutMutation,
+    refetchUser: refetch,
     handleJWTFromURL,
     refreshTokens,
   };

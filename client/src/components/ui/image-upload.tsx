@@ -1,178 +1,118 @@
-import { useState, useCallback } from "react";
-import { buildApiUrl } from "../config/api";
-import { useDropzone } from "react-dropzone";
-import { motion, AnimatePresence } from "framer-motion";
-import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
-import { Button } from "./button";
+import React, { useState, useRef } from 'react';
+import { buildApiUrl } from '../../config/api';
+import { Button } from './button';
+import { Input } from './input';
+import { Label } from './label';
+import { Card, CardContent } from './card';
+import { useToast } from '../../hooks/use-toast';
 
 interface ImageUploadProps {
-  onImageUpload: (imageUrl: string) => void;
-  currentImage?: string;
+  onImageUploaded: (imageUrl: string) => void;
   className?: string;
 }
 
-export default function ImageUpload({ onImageUpload, currentImage, className = "" }: ImageUploadProps) {
-  const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(currentImage || null);
+export function ImageUpload({ onImageUploaded, className }: ImageUploadProps) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (acceptedFiles.length === 0) return;
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    const file = acceptedFiles[0];
-    setUploading(true);
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Error",
+        description: "Por favor selecciona un archivo de imagen válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "El archivo es demasiado grande. Máximo 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
 
     try {
-      // Crear preview inmediato
-      const previewUrl = URL.createObjectURL(file);
-      setPreview(previewUrl);
+      const formData = new FormData();
+      formData.append('image', file);
 
-      // Convertir archivo a URL de datos para enviar al servidor
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const dataUrl = reader.result as string;
-          
-          // Enviar al servidor para subir a Cloudinary (solo admin)
-          const response = await fetch(buildApiUrl('/api/admin/images/upload'), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ imageUrl: dataUrl }),
-          });
+      const response = await fetch(buildApiUrl('/api/upload'), {
+        method: 'POST',
+        body: formData,
+      });
 
-          if (!response.ok) {
-            throw new Error('Error al subir imagen. Solo administradores pueden subir imágenes.');
-          }
+      if (!response.ok) {
+        throw new Error('Error al subir la imagen');
+      }
 
-          const result = await response.json();
-          onImageUpload(result.imageUrl);
-          setUploading(false);
-        } catch (error) {
-          console.error("Error uploading image:", error);
-          setUploading(false);
-          setPreview(null);
-        }
-      };
+      const data = await response.json();
+      onImageUploaded(data.imageUrl);
       
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      setUploading(false);
-      setPreview(null);
+      toast({
+        title: "Imagen subida",
+        description: "La imagen se subió correctamente",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al subir la imagen",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
-  }, [onImageUpload]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.webp']
-    },
-    maxFiles: 1,
-    maxSize: 5 * 1024 * 1024, // 5MB
-  });
-
-  const removeImage = () => {
-    setPreview(null);
-    onImageUpload("");
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Preview de imagen actual */}
-      {preview && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative group"
-        >
-          <div className="relative w-full h-48 bg-charcoal rounded-lg overflow-hidden border border-luxury-gold/20">
-            <img
-              src={preview}
-              alt="Preview"
-              className="w-full h-full object-cover"
+    <Card className={className}>
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="image-upload">Seleccionar Imagen</Label>
+            <Input
+              id="image-upload"
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              disabled={isUploading}
+              className="mt-2"
             />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Button
-                onClick={removeImage}
-                variant="destructive"
-                size="sm"
-                className="flex items-center space-x-2"
-              >
-                <X className="w-4 h-4" />
-                <span>Eliminar</span>
-              </Button>
-            </div>
           </div>
-        </motion.div>
-      )}
-
-      {/* Área de drop */}
-      <div {...getRootProps()}>
-        <motion.div
-          className={`
-            border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-300
-            ${isDragActive 
-              ? 'border-luxury-gold bg-luxury-gold/10' 
-              : 'border-luxury-gold/30 hover:border-luxury-gold/50 hover:bg-charcoal/50'
-            }
-            ${uploading ? 'pointer-events-none opacity-50' : ''}
-          `}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-        <input {...getInputProps()} />
-        
-        <AnimatePresence mode="wait">
-          {uploading ? (
-            <motion.div
-              key="uploading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex flex-col items-center space-y-4"
-            >
-              <Loader2 className="w-8 h-8 text-luxury-gold animate-spin" />
-              <div>
-                <p className="text-luxury-gold font-medium">Subiendo imagen...</p>
-                <p className="text-gray-400 text-sm">Por favor espera</p>
+          
+          {isUploading && (
+            <div className="space-y-2">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
               </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="upload"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex flex-col items-center space-y-4"
-            >
-              {isDragActive ? (
-                <>
-                  <Upload className="w-8 h-8 text-luxury-gold" />
-                  <p className="text-luxury-gold font-medium">Suelta la imagen aquí</p>
-                </>
-              ) : (
-                <>
-                  <ImageIcon className="w-8 h-8 text-gray-400" />
-                  <div>
-                    <p className="text-white font-medium">
-                      {preview ? 'Cambiar imagen' : 'Arrastra una imagen aquí'}
-                    </p>
-                    <p className="text-gray-400 text-sm mt-1">
-                      o haz clic para seleccionar
-                    </p>
-                    <p className="text-gray-500 text-xs mt-2">
-                      PNG, JPG, WEBP hasta 5MB
-                    </p>
-                  </div>
-                </>
-              )}
-            </motion.div>
+              <p className="text-sm text-gray-600">Subiendo imagen...</p>
+            </div>
           )}
-        </AnimatePresence>
-        </motion.div>
-      </div>
-    </div>
+          
+          <p className="text-sm text-gray-500">
+            Formatos soportados: JPG, PNG, GIF. Máximo 5MB.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 } 

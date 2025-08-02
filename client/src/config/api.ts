@@ -54,16 +54,18 @@ export const buildApiUrl = (endpoint: any): string => {
 };
 
 // Función helper para hacer requests a la API
-export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+export const apiRequest = async (method: string, endpoint: string, data?: any) => {
   const url = buildApiUrl(endpoint);
-  const config = {
-    ...API_CONFIG.REQUEST_CONFIG,
-    ...options,
+  const config: RequestInit = {
+    method,
     headers: {
-      ...API_CONFIG.REQUEST_CONFIG.headers,
-      ...options.headers,
+      'Content-Type': 'application/json',
     },
   };
+  
+  if (data) {
+    config.body = JSON.stringify(data);
+  }
   
   try {
     const response = await fetch(url, config);

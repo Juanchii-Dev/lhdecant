@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { useToast } from "../hooks/use-toast";
 import { useAddToCart } from "../hooks/use-add-to-cart";
 import { useQuery } from "@tanstack/react-query";
+import { Perfume } from "../types/perfume";
 
 export default function Collections() {
   const [selectedSizes, setSelectedSizes] = useState<{ [key: number]: string }>({});
@@ -29,9 +30,20 @@ export default function Collections() {
     }));
   };
 
-  const handleAddToCart = async (perfume: any, size: string) => {
-    const price = getPrice(perfume, size);
-    await addToCart(perfume.id.toString(), size, price);
+  const handleAddToCart = async (perfume: Perfume, size: string) => {
+    try {
+      await addToCart({ productId: perfume.id.toString(), size });
+      toast({
+        title: "Producto agregado",
+        description: "El producto se agregó correctamente al carrito",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al agregar al carrito",
+        variant: "destructive",
+      });
+    }
   };
 
   const getPrice = (perfume: any, size: string) => {

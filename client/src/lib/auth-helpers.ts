@@ -90,25 +90,26 @@ export const refreshToken = async (): Promise<boolean> => {
   }
 };
 
-// Función para logout completo
-export const handleLogout = (): void => {
-  if (import.meta.env.DEV) {
-    console.log('🚪 Ejecutando logout...');
-  }
+// Función para limpiar el estado de autenticación
+export const handleLogout = () => {
+  console.log('🧹 Limpiando estado de autenticación...');
   
-  // Limpiar tokens
+  // Limpiar localStorage
   localStorage.removeItem('authToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('userData');
   
-  // Limpiar cache de React Query
-  if (window.queryClient) {
-    window.queryClient.clear();
-  }
+  // Limpiar sessionStorage
+  sessionStorage.removeItem('authToken');
+  sessionStorage.removeItem('refreshToken');
+  sessionStorage.removeItem('userData');
   
-  if (import.meta.env.DEV) {
-    console.log('✅ Logout completado');
-  }
+  // Limpiar cookies si existen
+  document.cookie.split(";").forEach((c) => {
+    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+  });
+  
+  console.log('✅ Estado de autenticación limpiado');
 };
 
 // Función para debug de autenticación (solo en desarrollo)

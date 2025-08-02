@@ -33,34 +33,30 @@ export default function PerfumeCard({
     }
   };
 
-  const handleAddToCart = async (perfume: Perfume, size: string) => {
-    const price = getPrice(perfume, size);
-    
-    // Mostrar toast inmediato
-    toast({
-      title: "Agregando al carrito...",
-      description: `${perfume.name} - ${size}`,
-    });
-    
-    await addToCart(perfume.id.toString(), size, price);
-  };
-
-  const getPrice = (perfume: Perfume, size: string) => {
-    const sizeIndex = perfume.sizes.indexOf(size);
-    const originalPrice = sizeIndex !== -1 ? perfume.prices[sizeIndex] : perfume.prices[0];
-    
-    if (perfume.isOnOffer && perfume.discountPercentage) {
-      const discount = parseFloat(perfume.discountPercentage);
-      const discountedPrice = parseFloat(originalPrice) * (1 - discount / 100);
-      return discountedPrice.toFixed(2);
+  const handleAddToCart = async (size: string, price: number) => {
+    try {
+      await addToCart({ productId: perfume.id.toString(), size });
+      toast({
+        title: "Producto agregado",
+        description: "El producto se agregó correctamente al carrito",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al agregar al carrito",
+        variant: "destructive",
+      });
     }
-    
-    return originalPrice;
   };
 
   const getOriginalPrice = (perfume: Perfume, size: string) => {
     const sizeIndex = perfume.sizes.indexOf(size);
-    return sizeIndex !== -1 ? perfume.prices[sizeIndex] : perfume.prices[0];
+    return sizeIndex !== -1 ? perfume.prices[sizeIndex].toString() : perfume.prices[0].toString();
+  };
+
+  const calculateDiscountedPrice = (originalPrice: string, discount: number) => {
+    const price = parseFloat(originalPrice);
+    return price * (1 - discount / 100);
   };
 
   return (
@@ -154,7 +150,7 @@ export default function PerfumeCard({
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-bold luxury-gold-text">
-                      ${getPrice(perfume, selectedSize)}
+                      ${calculateDiscountedPrice(getOriginalPrice(perfume, selectedSize), parseFloat(perfume.discountPercentage || '0')).toFixed(2)}
                     </span>
                     <span className="text-lg text-gray-400 line-through">
                       ${getOriginalPrice(perfume, selectedSize)}
@@ -170,7 +166,7 @@ export default function PerfumeCard({
               ) : (
                 <>
                   <span className="text-2xl font-bold luxury-gold-text">
-                    ${getPrice(perfume, selectedSize)}
+                    ${getOriginalPrice(perfume, selectedSize)}
                   </span>
                   <span className="text-sm text-gray-400 ml-2">/ {selectedSize}</span>
                 </>
@@ -178,7 +174,7 @@ export default function PerfumeCard({
             </div>
             
             <Button
-              onClick={() => handleAddToCart(perfume, selectedSize)}
+              onClick={() => handleAddToCart(selectedSize, parseFloat(getOriginalPrice(perfume, selectedSize)))}
               className="luxury-button font-montserrat font-semibold px-6 py-2 rounded-xl"
             >
               Agregar

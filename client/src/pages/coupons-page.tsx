@@ -1,362 +1,334 @@
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "../hooks/use-auth";
-import { useToast } from "../hooks/use-toast";
-import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { getQueryFn, apiRequest } from "../lib/queryClient";
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Badge } from '../components/ui/badge';
+import { useToast } from '../hooks/use-toast';
+import { apiRequest } from '../config/api';
 import { 
   Gift, 
-  Copy, 
   CheckCircle, 
+  XCircle, 
   Clock, 
-  Percent, 
-  DollarSign,
-  Calendar,
-  Tag,
-  ShoppingBag,
-  AlertCircle
+  Percent,
+  Copy,
+  ExternalLink
 } from 'lucide-react';
 
 interface Coupon {
   id: string;
   code: string;
-  type: 'percentage' | 'fixed';
-  value: number;
-  minPurchase: number;
-  maxDiscount?: number;
+  description: string;
+  discountPercentage: number;
+  minimumAmount: number;
+  maximumDiscount: number;
   validFrom: string;
   validUntil: string;
+  isActive: boolean;
   usageLimit: number;
   usedCount: number;
-  isActive: boolean;
-  description: string;
-  categories?: string[];
-  brands?: string[];
 }
 
 interface UserCoupon {
   id: string;
   couponId: string;
-  userId: string;
-  usedAt?: string;
-  isUsed: boolean;
-  coupon: Coupon;
+  code: string;
+  description: string;
+  discountPercentage: number;
+  minimumAmount: number;
+  maximumDiscount: number;
+  validFrom: string;
+  validUntil: string;
+  isActive: boolean;
+  usedAt: string;
+  expiresAt: string;
 }
 
 export default function CouponsPage() {
-  const { user } = useAuth();
+  const [couponCode, setCouponCode] = useState('');
+  const [isApplying, setIsApplying] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [couponCode, setCouponCode] = useState('');
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Obtener cupones disponibles
-  const { data: availableCoupons = [], isLoading: couponsLoading } = useQuery<Coupon[]>({
+  const { data: availableCoupons = [] } = useQuery<Coupon[]>({
     queryKey: ['coupons', 'available'],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      const response = await fetch('/api/coupons/available');
+      if (!response.ok) throw new Error('Error obteniendo cupones');
+      return response.json();
+    },
   });
 
   // Obtener cupones del usuario
-  const { data: userCoupons = [], isLoading: userCouponsLoading } = useQuery<UserCoupon[]>({
-    queryKey: ['user-coupons', user?.id],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-    enabled: !!user?.id,
-  });
-
-  // Mutación para aplicar cupón
-  const applyCouponMutation = useMutation({
-    mutationFn: async (couponCode: string) => {
-      const response = await apiRequest('POST', '/api/coupons/apply', { code: couponCode });
+  const { data: userCoupons = [] } = useQuery<UserCoupon[]>({
+    queryKey: ['coupons', 'user'],
+    queryFn: async () => {
+      const response = await fetch('/api/coupons/user');
+      if (!response.ok) throw new Error('Error obteniendo cupones del usuario');
       return response.json();
     },
+  });
+
+  // Mutation para aplicar cupón
+  const applyCouponMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const response = await apiRequest('POST', '/api/coupons/apply', { code });
+      return response;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-coupons'] });
-      setCouponCode('');
       toast({
         title: "Cupón aplicado",
-        description: "El cupón se aplicó correctamente a tu cuenta",
+        description: "El cupón se aplicó correctamente",
       });
+      setCouponCode('');
+      queryClient.invalidateQueries({ queryKey: ['coupons', 'user'] });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "No se pudo aplicar el cupón",
+        description: error.message || "Error al aplicar el cupón",
         variant: "destructive",
       });
     },
   });
 
-  const handleApplyCoupon = () => {
-    if (couponCode.trim()) {
-      applyCouponMutation.mutate(couponCode.trim());
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa un código de cupón",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsApplying(true);
+    try {
+      await applyCouponMutation.mutateAsync(couponCode);
+    } finally {
+      setIsApplying(false);
     }
   };
 
-  const copyToClipboard = async (code: string) => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopiedCode(code);
-      toast({
-        title: "Código copiado",
-        description: "El código se copió al portapapeles",
-      });
-      setTimeout(() => setCopiedCode(null), 2000);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo copiar el código",
-        variant: "destructive",
-      });
-    }
+  const copyToClipboard = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast({
+      title: "Código copiado",
+      description: "El código se copió al portapapeles",
+    });
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
     });
   };
 
-  const isCouponValid = (coupon: Coupon) => {
-    const now = new Date();
-    const validFrom = new Date(coupon.validFrom);
-    const validUntil = new Date(coupon.validUntil);
-    return now >= validFrom && now <= validUntil && coupon.isActive && coupon.usedCount < coupon.usageLimit;
+  const isExpired = (dateString: string) => {
+    return new Date(dateString) < new Date();
   };
-
-  const getCouponValue = (coupon: Coupon) => {
-    if (coupon.type === 'percentage') {
-      return `${coupon.value}%`;
-    }
-    return `$${coupon.value}`;
-  };
-
-  const getCouponIcon = (coupon: Coupon) => {
-    return coupon.type === 'percentage' ? <Percent className="w-4 h-4" /> : <DollarSign className="w-4 h-4" />;
-  };
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-black pt-24 pb-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <Gift className="w-16 h-16 text-luxury-gold mx-auto mb-4" />
-            <h1 className="text-4xl font-bold text-luxury-gold mb-4">Códigos de Descuento</h1>
-            <p className="text-gray-400 mb-8">Debes iniciar sesión para acceder a los cupones</p>
-            <Button asChild>
-              <a href="/auth">Iniciar Sesión</a>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-black pt-24 pb-8">
-      <div className="container mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-luxury-gold mb-2">Códigos de Descuento</h1>
-          <p className="text-gray-400">Aprovecha nuestros cupones y ofertas especiales</p>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-white mb-4">
+            Códigos de Descuento
+          </h1>
+          <p className="text-gray-400">
+            Aprovecha nuestros cupones y promociones especiales
+          </p>
         </div>
 
-        {/* Aplicar Cupón */}
-        <Card className="bg-charcoal border-luxury-gold/20 mb-8">
+        {/* Apply Coupon Section */}
+        <Card className="bg-charcoal border-luxury-gold/20">
           <CardHeader>
             <CardTitle className="text-luxury-gold flex items-center gap-2">
-              <Tag className="h-5 w-5" />
+              <Gift className="w-5 h-5" />
               Aplicar Cupón
             </CardTitle>
-            <CardDescription>Ingresa un código de descuento para aplicarlo a tu carrito</CardDescription>
+            <CardDescription className="text-gray-400">
+              Ingresa un código de descuento para aplicarlo a tu próxima compra
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-4">
               <Input
                 value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                placeholder="Ingresa el código de descuento"
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="Ingresa el código del cupón"
                 className="flex-1"
+                maxLength={20}
               />
               <Button
                 onClick={handleApplyCoupon}
-                disabled={!couponCode.trim() || applyCouponMutation.isPending}
+                disabled={isApplying || !couponCode.trim()}
+                className="bg-luxury-gold text-black hover:bg-champagne"
               >
-                {applyCouponMutation.isPending ? 'Aplicando...' : 'Aplicar'}
+                {isApplying ? 'Aplicando...' : 'Aplicar'}
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Cupones Disponibles */}
-        <div className="mb-8">
+        {/* Available Coupons */}
+        <div>
           <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-            <Gift className="h-6 w-6 text-luxury-gold" />
+            <Gift className="w-6 h-6 text-luxury-gold" />
             Cupones Disponibles
           </h2>
           
-          {couponsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="bg-charcoal border-luxury-gold/20 animate-pulse">
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      <div className="h-6 bg-gray-700 rounded"></div>
-                      <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : availableCoupons.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {availableCoupons.map((coupon) => (
-                <Card key={coupon.id} className="bg-charcoal border-luxury-gold/20 hover:border-luxury-gold/40 transition-colors">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {getCouponIcon(coupon)}
-                        <CardTitle className="text-luxury-gold text-lg">{getCouponValue(coupon)}</CardTitle>
-                      </div>
-                      <Badge variant={isCouponValid(coupon) ? "default" : "secondary"}>
-                        {isCouponValid(coupon) ? "Válido" : "Expirado"}
-                      </Badge>
-                    </div>
-                    <CardDescription className="text-gray-300">{coupon.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-400">Código:</span>
-                      <div className="flex items-center gap-2">
-                        <code className="bg-black/50 px-2 py-1 rounded text-luxury-gold font-mono text-sm">
-                          {coupon.code}
-                        </code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(coupon.code)}
-                        >
-                          {copiedCode === coupon.code ? (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <ShoppingBag className="w-4 h-4" />
-                        <span>Mínimo: ${coupon.minPurchase}</span>
-                      </div>
-                      {coupon.maxDiscount && (
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <AlertCircle className="w-4 h-4" />
-                          <span>Máximo: ${coupon.maxDiscount}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <Calendar className="w-4 h-4" />
-                        <span>Válido hasta: {formatDate(coupon.validUntil)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <Clock className="w-4 h-4" />
-                        <span>Usos: {coupon.usedCount}/{coupon.usageLimit}</span>
-                      </div>
-                    </div>
-
-                    <Button
-                      className="w-full"
-                      disabled={!isCouponValid(coupon)}
-                      onClick={() => {
-                        setCouponCode(coupon.code);
-                        handleApplyCoupon();
-                      }}
-                    >
-                      Aplicar Cupón
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
+          {availableCoupons.length === 0 ? (
             <Card className="bg-charcoal border-luxury-gold/20">
               <CardContent className="p-8 text-center">
                 <Gift className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">No hay cupones disponibles</h3>
-                <p className="text-gray-400">Vuelve más tarde para nuevas ofertas</p>
+                <p className="text-gray-400">No hay cupones disponibles en este momento</p>
               </CardContent>
             </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {availableCoupons.map((coupon) => (
+                <Card key={coupon.id} className="bg-charcoal border-luxury-gold/20">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-semibold text-white mb-1">
+                          {coupon.description}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="bg-luxury-gold/20 text-luxury-gold">
+                            {coupon.discountPercentage}% OFF
+                          </Badge>
+                          {coupon.isActive ? (
+                            <Badge className="bg-green-500/20 text-green-400">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Activo
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Inactivo
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(coupon.code)}
+                        className="text-luxury-gold hover:text-champagne"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm text-gray-400">
+                      <div className="flex justify-between">
+                        <span>Código:</span>
+                        <span className="font-mono text-luxury-gold">{coupon.code}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Mínimo de compra:</span>
+                        <span>${coupon.minimumAmount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Descuento máximo:</span>
+                        <span>${coupon.maximumDiscount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Válido hasta:</span>
+                        <span className={isExpired(coupon.validUntil) ? 'text-red-400' : ''}>
+                          {formatDate(coupon.validUntil)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Usos restantes:</span>
+                        <span>{coupon.usageLimit - coupon.usedCount}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Mis Cupones */}
+        {/* User Coupons */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-            <CheckCircle className="h-6 w-6 text-luxury-gold" />
+            <CheckCircle className="w-6 h-6 text-luxury-gold" />
             Mis Cupones
           </h2>
           
-          {userCouponsLoading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="bg-charcoal border-luxury-gold/20 animate-pulse">
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      <div className="h-4 bg-gray-700 rounded"></div>
-                      <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : userCoupons.length > 0 ? (
-            <div className="space-y-4">
-              {userCoupons.map((userCoupon) => (
-                <Card key={userCoupon.id} className="bg-charcoal border-luxury-gold/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          {getCouponIcon(userCoupon.coupon)}
-                          <span className="text-luxury-gold font-semibold">
-                            {getCouponValue(userCoupon.coupon)}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-white font-medium">{userCoupon.coupon.description}</p>
-                          <p className="text-gray-400 text-sm">Código: {userCoupon.coupon.code}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant={userCoupon.isUsed ? "secondary" : "default"}>
-                          {userCoupon.isUsed ? "Usado" : "Disponible"}
-                        </Badge>
-                        {userCoupon.usedAt && (
-                          <p className="text-gray-400 text-sm mt-1">
-                            Usado: {formatDate(userCoupon.usedAt)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
+          {userCoupons.length === 0 ? (
             <Card className="bg-charcoal border-luxury-gold/20">
               <CardContent className="p-8 text-center">
                 <CheckCircle className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">No tienes cupones</h3>
-                <p className="text-gray-400">Aplica un cupón de los disponibles arriba</p>
+                <p className="text-gray-400">No tienes cupones aplicados</p>
               </CardContent>
             </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {userCoupons.map((userCoupon) => (
+                <Card key={userCoupon.id} className="bg-charcoal border-luxury-gold/20">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-semibold text-white mb-1">
+                          {userCoupon.description}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="bg-luxury-gold/20 text-luxury-gold">
+                            {userCoupon.discountPercentage}% OFF
+                          </Badge>
+                          {isExpired(userCoupon.expiresAt) ? (
+                            <Badge variant="destructive">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Expirado
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-green-500/20 text-green-400">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Válido
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm text-gray-400">
+                      <div className="flex justify-between">
+                        <span>Código:</span>
+                        <span className="font-mono text-luxury-gold">{userCoupon.code}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Mínimo de compra:</span>
+                        <span>${userCoupon.minimumAmount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Descuento máximo:</span>
+                        <span>${userCoupon.maximumDiscount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Aplicado el:</span>
+                        <span>{formatDate(userCoupon.usedAt)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Expira el:</span>
+                        <span className={isExpired(userCoupon.expiresAt) ? 'text-red-400' : ''}>
+                          {formatDate(userCoupon.expiresAt)}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
       </div>
