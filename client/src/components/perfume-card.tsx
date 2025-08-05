@@ -33,20 +33,9 @@ export default function PerfumeCard({
     }
   };
 
-  const handleAddToCart = async (size: string, price: number) => {
-    try {
-      await addToCart({ productId: perfume.id.toString(), size });
-      toast({
-        title: "Producto agregado",
-        description: "El producto se agregó correctamente al carrito",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al agregar al carrito",
-        variant: "destructive",
-      });
-    }
+  const handleAddToCart = (size: string, price: number) => {
+    addToCart({ productId: perfume.id.toString(), size });
+    // El toast se maneja automáticamente en el hook useCart
   };
 
   const getOriginalPrice = (perfume: Perfume, size: string) => {

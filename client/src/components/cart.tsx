@@ -10,7 +10,7 @@ import { useToast } from "../hooks/use-toast";
 
 interface CartItem {
   id: string;
-  perfumeId: string;
+  productId: string;
   size: string;
   price: string;
   quantity: number;
@@ -180,7 +180,7 @@ export function CartDrawer() {
                       
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-medium truncate">
-                          {item.perfume?.name || `Perfume ${item.perfumeId}`}
+                          {item.perfume?.name || `Perfume ${item.productId}`}
                         </h3>
                         <p className="text-gray-400 text-sm">{item.size}</p>
                         <p className="text-yellow-500 font-bold">${item.price} c/u</p>

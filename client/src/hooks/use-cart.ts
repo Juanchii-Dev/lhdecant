@@ -77,7 +77,9 @@ export function useCart() {
         try {
           const response = await apiService.addToCart(productId, quantity, size);
           if (response.success) {
-            return response.data;
+            // Si el servidor responde exitosamente, invalidar la query para obtener datos frescos
+            queryClient.invalidateQueries({ queryKey: ['cart'] });
+            return { success: true, source: 'server' };
           }
         } catch (error) {
           console.warn('Server add to cart failed, using localStorage:', error);
@@ -103,13 +105,16 @@ export function useCart() {
       }
       
       localStorage.setItem('localCart', JSON.stringify(localCart));
-      return localCart;
+      return { success: true, source: 'localStorage', data: localCart };
     },
     onSuccess: (data) => {
-      // Actualizar el cache inmediatamente
-      queryClient.setQueryData(['cart'], data);
-      // Refetch para asegurar sincronización
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      // Si es localStorage, actualizar el cache inmediatamente
+      if (data.source === 'localStorage') {
+        queryClient.setQueryData(['cart'], data.data);
+      } else {
+        // Si es servidor, invalidar para obtener datos frescos
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+      }
       
       toast({
         title: "Producto agregado",

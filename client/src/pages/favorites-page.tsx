@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Heart, Trash2, ShoppingCart, Star } from 'lucide-react';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
+import { useAddToCart } from '../hooks/use-add-to-cart';
 import { getQueryFn } from '../lib/queryClient';
 
 interface Favorite {
@@ -28,6 +29,7 @@ export default function FavoritesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { addToCart, isAdding } = useAddToCart();
   const [selectedFavorites, setSelectedFavorites] = useState<string[]>([]);
 
   // Obtener favoritos del usuario
@@ -69,37 +71,10 @@ export default function FavoritesPage() {
     },
   });
 
-  // Mutación para agregar al carrito
-  const addToCartMutation = useMutation({
-    mutationFn: async (perfumeId: string) => {
-      const response = await fetch(buildApiUrl('/api/cart'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          perfumeId,
-          quantity: 1,
-          size: '5ml', // Tamaño por defecto
-        }),
-      });
-      if (!response.ok) throw new Error('Error al agregar al carrito');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-      toast({
-        title: "Agregado al carrito",
-        description: "El perfume se agregó a tu carrito",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "No se pudo agregar al carrito",
-        variant: "destructive",
-      });
-    },
-  });
+  // Función para agregar al carrito usando el hook centralizado
+  const handleAddToCart = (perfumeId: string) => {
+    addToCart({ productId: perfumeId, size: '5ml' });
+  };
 
   // Eliminar múltiples favoritos
   const removeMultipleFavorites = async () => {
@@ -293,8 +268,8 @@ export default function FavoritesPage() {
                       ${favorite.perfume.price}
                     </span>
                     <button
-                      onClick={() => addToCartMutation.mutate(favorite.perfume.id)}
-                      disabled={addToCartMutation.isPending}
+                                              onClick={() => handleAddToCart(favorite.perfume.id)}
+                        disabled={isAdding}
                       className="flex items-center gap-2 px-3 py-2 bg-luxury-gold text-gray-900 font-semibold rounded-lg hover:bg-yellow-500 transition-colors disabled:opacity-50"
                     >
                       <ShoppingCart size={16} />

@@ -84,20 +84,9 @@ export default function CatalogPage() {
     }));
   };
 
-  const handleAddToCart = async (perfume: Perfume, size: string) => {
-    try {
-      await addToCart({ productId: perfume.id.toString(), size });
-      toast({
-        title: "Producto agregado",
-        description: "El producto se agregó correctamente al carrito",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al agregar al carrito",
-        variant: "destructive",
-      });
-    }
+  const handleAddToCart = (perfume: Perfume, size: string) => {
+    addToCart({ productId: perfume.id.toString(), size });
+    // El toast se maneja automáticamente en el hook useCart
   };
 
   const getPrice = (perfume: Perfume, size: string) => {

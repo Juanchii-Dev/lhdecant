@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { buildApiUrl } from "../config/api";
 import { useAuth } from "../hooks/use-auth";
 import { useToast } from "../hooks/use-toast";
+import { useCart } from "../hooks/use-cart";
 import { Button } from "../components/ui/button";
 import { loadStripe } from "@stripe/stripe-js";
 
 interface CartItem {
   id: string;
-  perfumeId: string;
+  productId: string;
   size: string;
   price: string;
   quantity: number;
@@ -22,33 +23,12 @@ interface CartItem {
 }
 
 export default function CheckoutPage() {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { cartItems: items, isLoading: loading } = useCart();
 
-  useEffect(() => {
-    const fetchCart = async () => {
-      if (!user) return;
-      
-      try {
-        const response = await fetch(buildApiUrl('/api/cart'), {
-          credentials: 'include'
-        });
-        if (response.ok) {
-          const cartItems = await response.json();
-          setItems(cartItems);
-        }
-      } catch (error) {
-        console.error('Error fetching cart:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchCart();
-  }, [user]);
 
   const handleCheckout = async () => {
     if (!user) {
@@ -61,7 +41,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (items.length === 0) {
+    if ((Array.isArray(items) ? items : []).length === 0) {
       toast({
         title: "Carrito vacío",
         description: "Agrega productos antes de proceder al pago",
@@ -74,11 +54,11 @@ export default function CheckoutPage() {
 
     try {
       // Preparar los datos del carrito para Stripe
-      const lineItems = items.map(item => ({
+      const lineItems = (Array.isArray(items) ? items : []).map(item => ({
         price_data: {
           currency: 'usd',
           product_data: {
-            name: item.perfume?.name || `Perfume ${item.perfumeId}`,
+            name: item.perfume?.name || `Perfume ${item.productId}`,
             description: `${item.perfume?.brand || 'Marca'} - ${item.size}`,
             images: item.perfume?.imageUrl ? [item.perfume.imageUrl] : [],
           },
@@ -175,7 +155,7 @@ export default function CheckoutPage() {
           <div className="bg-gray-900 p-6 rounded-lg">
             <h2 className="text-xl font-bold mb-4">Resumen del pedido</h2>
                 <div className="space-y-4">
-              {items.map((item) => (
+              {(Array.isArray(items) ? items : []).map((item: CartItem) => (
                 <div key={item.id} className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg">
                   <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center">
                         {item.perfume?.imageUrl ? (
@@ -189,7 +169,7 @@ export default function CheckoutPage() {
                         )}
                       </div>
                       <div className="flex-1">
-                    <h3 className="font-medium">{item.perfume?.name || `Perfume ${item.perfumeId}`}</h3>
+                    <h3 className="font-medium">{item.perfume?.name || `Perfume ${item.productId}`}</h3>
                     <p className="text-gray-400 text-sm">{item.size}</p>
                     <p className="text-yellow-500 font-bold">${item.price} x {item.quantity}</p>
                   </div>
@@ -230,7 +210,7 @@ export default function CheckoutPage() {
               {/* Botón de pago */}
                   <Button
                     onClick={handleCheckout}
-                disabled={processingPayment || items.length === 0}
+                disabled={processingPayment || (Array.isArray(items) ? items : []).length === 0}
                     className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 text-lg transition-colors duration-300"
                   >
                 {processingPayment ? (
