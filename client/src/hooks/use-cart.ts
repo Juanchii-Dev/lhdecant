@@ -27,7 +27,13 @@ export function useCart() {
       const savedCart = localStorage.getItem('localCart');
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart);
-        setCartItems(Array.isArray(parsedCart) ? parsedCart : []);
+        if (Array.isArray(parsedCart)) {
+          setCartItems(parsedCart);
+        } else {
+          setCartItems([]);
+        }
+      } else {
+        setCartItems([]);
       }
     } catch (error) {
       console.error('Error loading cart from localStorage:', error);
@@ -40,7 +46,11 @@ export function useCart() {
   // Guardar carrito en localStorage cuando cambie
   useEffect(() => {
     if (!isLoading) {
-      localStorage.setItem('localCart', JSON.stringify(cartItems));
+      try {
+        localStorage.setItem('localCart', JSON.stringify(cartItems));
+      } catch (error) {
+        console.error('Error saving cart to localStorage:', error);
+      }
     }
   }, [cartItems, isLoading]);
 

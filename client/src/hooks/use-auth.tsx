@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from './use-toast';
 import { getAuthToken, getRefreshToken, handleLogout as logoutHelper } from '../lib/auth-helpers';
 import { apiService } from '../lib/api-service';
@@ -37,36 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Función para renovar tokens
+  // Función para renovar tokens (simplificada)
   const refreshTokens = useCallback(async (): Promise<boolean> => {
-    try {
-      const refreshTokenValue = getRefreshToken();
-      if (!refreshTokenValue) {
-        return false;
-      }
-
-      const response = await fetch('https://lhdecant-backend.onrender.com/api/auth/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refreshToken: refreshTokenValue }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('authToken', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
-        if (data.user) {
-          localStorage.setItem('userData', JSON.stringify(data.user));
-          setUser(data.user);
-        }
-        return true;
-      }
-      return false;
-    } catch (error) {
-      return false;
-    }
+    // No hacer nada, ya que no queremos requests al servidor
+    return false;
   }, []);
 
   // Función para login
@@ -183,8 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Mutation para logout
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiService.logout();
-      return response;
+      // No hacer request al servidor, solo limpiar local
+      return { success: true };
     },
     onSuccess: () => {
       logoutHelper();
@@ -196,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     },
     onError: () => {
-      // Aún limpiar el estado local aunque falle el logout en el servidor
+      // Aún limpiar el estado local aunque falle
       logoutHelper();
       setUser(null);
       queryClient.clear();
@@ -215,7 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(userData as User);
   }, []);
 
-  // Función para refetch user (simplificada)
+  // Función para refetch user (no hace nada)
   const refetchUser = useCallback(() => {
     // No hacer nada, ya que usamos localStorage
   }, []);
