@@ -1,7 +1,4 @@
-import { useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAuthToken } from '../lib/auth-helpers';
-import { apiService } from '../lib/api-service';
+import { useCallback, useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 
 interface CartItem {
@@ -19,226 +16,138 @@ interface CartItem {
 }
 
 export function useCart() {
-  const queryClient = useQueryClient();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { toast } = useToast();
 
-  // Query para obtener el carrito con fallback robusto
-  const { data: cartItems = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['cart'],
-    queryFn: async () => {
-      try {
-        const token = getAuthToken();
-        
-        if (!token) {
-          // No hay token, usar localStorage
-          const localCart = localStorage.getItem('localCart');
-          return localCart ? JSON.parse(localCart) : [];
-        }
-
-        // Intentar obtener del servidor
-        const response = await apiService.getCart();
-        
-        if (response.success && Array.isArray(response.data)) {
-          return response.data;
-        }
-        
-        // Si falla el servidor, usar localStorage como fallback
-        console.warn('Server cart failed, using localStorage fallback');
-        const localCart = localStorage.getItem('localCart');
-        return localCart ? JSON.parse(localCart) : [];
-        
-      } catch (error) {
-        console.error('Error fetching cart:', error);
-        // Fallback a localStorage en caso de error
-        try {
-          const localCart = localStorage.getItem('localCart');
-          return localCart ? JSON.parse(localCart) : [];
-        } catch (parseError) {
-          console.error('Error parsing local cart:', parseError);
-          return [];
-        }
+  // Cargar carrito desde localStorage al inicializar
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem('localCart');
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        setCartItems(Array.isArray(parsedCart) ? parsedCart : []);
       }
-    },
-    enabled: true, // Siempre habilitado
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    refetchOnWindowFocus: false, // No refetch automático
-    retry: false, // No reintentar
-  });
+    } catch (error) {
+      console.error('Error loading cart from localStorage:', error);
+      setCartItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  // Calcular total de items con validación
-  const totalItems = (Array.isArray(cartItems) ? cartItems : []).reduce((sum: number, item: CartItem) => sum + (item.quantity || 0), 0);
+  // Guardar carrito en localStorage cuando cambie
+  useEffect(() => {
+    if (!isLoading) {
+      localStorage.setItem('localCart', JSON.stringify(cartItems));
+    }
+  }, [cartItems, isLoading]);
 
-  // Mutation para agregar al carrito
-  const addToCartMutation = useMutation({
-    mutationFn: async ({ productId, quantity = 1, size }: { productId: string; quantity?: number; size?: string }) => {
-      const token = getAuthToken();
-      
-      if (token) {
-        // Intentar agregar al servidor
-        try {
-          const response = await apiService.addToCart(productId, quantity, size);
-          if (response.success) {
-            // Si el servidor responde exitosamente, invalidar la query para obtener datos frescos
-            queryClient.invalidateQueries({ queryKey: ['cart'] });
-            return { success: true, source: 'server' };
-          }
-        } catch (error) {
-          console.warn('Server add to cart failed, using localStorage:', error);
-        }
-      }
-      
-      // Fallback a localStorage
-      const localCart = JSON.parse(localStorage.getItem('localCart') || '[]');
-      const existingItem = localCart.find((item: CartItem) => item.productId === productId && item.size === size);
-      
-      if (existingItem) {
-        existingItem.quantity += quantity;
+  // Calcular total de items
+  const totalItems = cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+
+  // Función para agregar al carrito
+  const addToCart = useCallback(async (productId: string, quantity: number = 1, size?: string) => {
+    setIsAddingToCart(true);
+    
+    try {
+      // Buscar si el item ya existe
+      const existingItemIndex = cartItems.findIndex(
+        item => item.productId === productId && item.size === (size || '50ml')
+      );
+
+      if (existingItemIndex >= 0) {
+        // Actualizar cantidad del item existente
+        const updatedCart = [...cartItems];
+        updatedCart[existingItemIndex].quantity += quantity;
+        setCartItems(updatedCart);
       } else {
-        const newItem = {
+        // Agregar nuevo item
+        const newItem: CartItem = {
           id: Date.now().toString(),
           productId,
           size: size || '50ml',
-          price: '0', // Precio se obtendrá del producto
+          price: '0', // Se actualizará cuando se obtenga la información del producto
           quantity,
-          perfume: { id: productId, name: 'Producto', brand: 'Marca' }
+          perfume: {
+            id: productId,
+            name: 'Producto',
+            brand: 'Marca'
+          }
         };
-        localCart.push(newItem);
+        setCartItems(prev => [...prev, newItem]);
       }
-      
-      localStorage.setItem('localCart', JSON.stringify(localCart));
-      return { success: true, source: 'localStorage', data: localCart };
-    },
-    onSuccess: (data) => {
-      // Si es localStorage, actualizar el cache inmediatamente
-      if (data.source === 'localStorage') {
-        queryClient.setQueryData(['cart'], data.data);
-      } else {
-        // Si es servidor, invalidar para obtener datos frescos
-        queryClient.invalidateQueries({ queryKey: ['cart'] });
-      }
-      
+
       toast({
         title: "Producto agregado",
         description: "El producto se agregó correctamente al carrito",
       });
-    },
-    onError: (error) => {
-      console.error('Failed to add to cart:', error);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
       toast({
         title: "Error",
         description: "No se pudo agregar el producto al carrito",
         variant: "destructive",
       });
+    } finally {
+      setIsAddingToCart(false);
     }
-  });
-
-  // Función para agregar al carrito (wrapper)
-  const addToCart = useCallback((productId: string, quantity: number = 1, size?: string) => {
-    addToCartMutation.mutate({ productId, quantity, size });
-  }, [addToCartMutation]);
-
-
+  }, [cartItems, toast]);
 
   // Función para actualizar cantidad
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
     try {
-      const token = getAuthToken();
-      
-      if (token) {
-        try {
-          const response = await apiService.updateCartItem(itemId, quantity);
-          if (response.success) {
-            queryClient.invalidateQueries({ queryKey: ['cart'] });
-            return true;
-          }
-        } catch (error) {
-          console.warn('Server update failed, using localStorage:', error);
-        }
-      }
-      
-      // Fallback a localStorage
-      const localCart = JSON.parse(localStorage.getItem('localCart') || '[]');
-      const updatedCart = localCart.map((item: CartItem) => 
-        item.id === itemId ? { ...item, quantity } : item
+      setCartItems(prev => 
+        prev.map(item => 
+          item.id === itemId ? { ...item, quantity: Math.max(1, quantity) } : item
+        )
       );
-      localStorage.setItem('localCart', JSON.stringify(updatedCart));
-      queryClient.setQueryData(['cart'], updatedCart);
       return true;
-      
     } catch (error) {
       console.error('Error updating quantity:', error);
       return false;
     }
-  }, [queryClient]);
+  }, []);
 
   // Función para eliminar item
   const removeItem = useCallback(async (itemId: string) => {
     try {
-      const token = getAuthToken();
-      
-      if (token) {
-        try {
-          const response = await apiService.removeCartItem(itemId);
-          if (response.success) {
-            queryClient.invalidateQueries({ queryKey: ['cart'] });
-            return true;
-          }
-        } catch (error) {
-          console.warn('Server remove failed, using localStorage:', error);
-        }
-      }
-      
-      // Fallback a localStorage
-      const localCart = JSON.parse(localStorage.getItem('localCart') || '[]');
-      const updatedCart = localCart.filter((item: CartItem) => item.id !== itemId);
-      localStorage.setItem('localCart', JSON.stringify(updatedCart));
-      queryClient.setQueryData(['cart'], updatedCart);
+      setCartItems(prev => prev.filter(item => item.id !== itemId));
       return true;
-      
     } catch (error) {
       console.error('Error removing item:', error);
       return false;
     }
-  }, [queryClient]);
+  }, []);
 
   // Función para limpiar carrito
   const clearCart = useCallback(async () => {
     try {
-      const token = getAuthToken();
-      
-      if (token) {
-        try {
-          const response = await apiService.clearCart();
-          if (response.success) {
-            queryClient.invalidateQueries({ queryKey: ['cart'] });
-            return true;
-          }
-        } catch (error) {
-          console.warn('Server clear failed, using localStorage:', error);
-        }
-      }
-      
-      // Fallback a localStorage
+      setCartItems([]);
       localStorage.removeItem('localCart');
-      queryClient.setQueryData(['cart'], []);
       return true;
-      
     } catch (error) {
       console.error('Error clearing cart:', error);
       return false;
     }
-  }, [queryClient]);
+  }, []);
+
+  // Función para refetch (no hace nada en esta implementación)
+  const refetch = useCallback(() => {
+    // No necesitamos refetch ya que usamos localStorage
+  }, []);
 
   return {
     cartItems,
     totalItems,
     isLoading,
-    error,
+    error: null,
     addToCart,
     updateQuantity,
     removeItem,
     clearCart,
     refetch,
-    isAddingToCart: addToCartMutation.isPending,
+    isAddingToCart,
   };
 } 

@@ -128,25 +128,4 @@ export const debugAuth = (): void => {
 export const isAuthenticated = (): boolean => {
   const token = getAuthToken();
   return !!token;
-};
-
-// Función para verificar la validez del token
-export const validateToken = async (): Promise<boolean> => {
-  try {
-    const token = getAuthToken();
-    if (!token) return false;
-    
-    const response = await fetch('https://lhdecant-backend.onrender.com/api/user', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    return response.ok;
-  } catch (error) {
-    console.error('Error validating token:', error);
-    return false;
-  }
 }; 

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from './use-toast';
-import { getAuthToken, getRefreshToken, handleLogout as logoutHelper, validateToken } from '../lib/auth-helpers';
+import { getAuthToken, getRefreshToken, handleLogout as logoutHelper } from '../lib/auth-helpers';
 import { apiService } from '../lib/api-service';
 
 interface User {
@@ -37,47 +37,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Query para obtener datos del usuario
-  const { data: userData, refetch, isLoading: userLoading } = useQuery({
-    queryKey: ["/api/user"],
-    queryFn: async () => {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('No auth token available');
+  // Función para renovar tokens
+  const refreshTokens = useCallback(async (): Promise<boolean> => {
+    try {
+      const refreshTokenValue = getRefreshToken();
+      if (!refreshTokenValue) {
+        return false;
       }
-      
-      const response = await apiService.getUser();
-      
-      if (response.error) {
-        if (response.status === 401) {
-          // Token expirado, intentar renovar
-          const refreshed = await refreshTokens();
-          if (refreshed) {
-            // Reintentar con el nuevo token
-            const retryResponse = await apiService.getUser();
-            
-            if (retryResponse.error) {
-              throw new Error('Failed to fetch user after token refresh');
-            }
-            
-            return retryResponse.data;
-          } else {
-            // No se pudo renovar el token, limpiar estado
-            logoutHelper();
-            throw new Error('Authentication failed');
-          }
+
+      const response = await fetch('https://lhdecant-backend.onrender.com/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken: refreshTokenValue }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('authToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        if (data.user) {
+          localStorage.setItem('userData', JSON.stringify(data.user));
+          setUser(data.user);
         }
-        throw new Error(response.error);
+        return true;
       }
-      
-      return response.data;
-    },
-    enabled: !!getAuthToken(),
-    retry: false,
-    staleTime: 10 * 60 * 1000, // 10 minutos
-    gcTime: 15 * 60 * 1000, // 15 minutos
-    refetchOnWindowFocus: false, // No refetch automático
-  });
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }, []);
+
+  // Función para login
+  const login = useCallback((credentials: { username: string; password: string }) => {
+    loginMutation.mutate(credentials);
+  }, []);
+
+  // Función para registro
+  const register = useCallback((credentials: { username: string; password: string; email: string }) => {
+    registerMutation.mutate(credentials);
+  }, []);
+
+  // Función para logout
+  const logout = useCallback(() => {
+    logoutMutation.mutate();
+  }, []);
 
   // Mutation para login
   const loginMutation = useMutation({
@@ -111,7 +116,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Actualizar estado con validación
       if (data.user && typeof data.user === 'object') {
         setUser(data.user as User);
-        queryClient.setQueryData(["/api/user"], data.user);
       }
       
       toast({
@@ -140,9 +144,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return response.data;
     },
     onSuccess: (data) => {
+      // Validar que los datos existen
+      if (!data || typeof data !== 'object') {
+        console.error('Invalid register response data:', data);
+        return;
+      }
+      
+      // Guardar tokens con validación
+      if (data.accessToken && typeof data.accessToken === 'string') {
+        localStorage.setItem('authToken', data.accessToken);
+      }
+      if (data.refreshToken && typeof data.refreshToken === 'string') {
+        localStorage.setItem('refreshToken', data.refreshToken);
+      }
+      if (data.user && typeof data.user === 'object') {
+        localStorage.setItem('userData', JSON.stringify(data.user));
+      }
+      
+      // Actualizar estado con validación
+      if (data.user && typeof data.user === 'object') {
+        setUser(data.user as User);
+      }
+      
       toast({
         title: "Registro exitoso",
-        description: "Tu cuenta ha sido creada correctamente",
+        description: `Bienvenido, ${data.user.name || data.user.email}`,
       });
     },
     onError: (error: any) => {
@@ -161,87 +187,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return response;
     },
     onSuccess: () => {
-      // Limpiar estado local
       logoutHelper();
       setUser(null);
       queryClient.clear();
-      // NO mostrar toast al cerrar sesión
+      toast({
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión correctamente",
+      });
     },
     onError: () => {
-      // Aún así limpiar el estado local
+      // Aún limpiar el estado local aunque falle el logout en el servidor
       logoutHelper();
       setUser(null);
       queryClient.clear();
-      // NO mostrar toast al cerrar sesión
+      toast({
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión correctamente",
+      });
     },
   });
 
-  // Función para manejar JWT desde URL (después de Google OAuth)
+  // Función para manejar JWT desde URL
   const handleJWTFromURL = useCallback((token: string, refreshToken: string, userData: any) => {
-    if (token && refreshToken) {
-      // Guardar tokens en localStorage
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('refreshToken', refreshToken);
-      if (userData) {
-        localStorage.setItem('userData', JSON.stringify(userData));
-      }
-      
-      // Actualizar el cache de React Query
-      queryClient.setQueryData(["/api/user"], userData);
-      setUser(userData as User);
-      
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: `Bienvenido, ${userData.name || userData.email}`,
-      });
-    }
-  }, [queryClient, toast]);
-
-  // Función para renovar tokens manualmente
-  const refreshTokens = useCallback(async () => {
-    try {
-      const refreshTokenValue = getRefreshToken();
-      if (!refreshTokenValue) {
-        return false;
-      }
-
-      const response = await fetch('https://lhdecant-backend.onrender.com/api/auth/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refreshToken: refreshTokenValue }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('authToken', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
-        if (data.user) {
-          localStorage.setItem('userData', JSON.stringify(data.user));
-        }
-        return true;
-      }
-      return false;
-    } catch (error) {
-      return false;
-    }
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem('userData', JSON.stringify(userData));
+    setUser(userData as User);
   }, []);
 
-  // Función para login
-  const login = useCallback((credentials: { username: string; password: string }) => {
-    loginMutation.mutate(credentials);
-  }, [loginMutation]);
-
-  // Función para registro
-  const register = useCallback((credentials: { username: string; password: string; email: string }) => {
-    registerMutation.mutate(credentials);
-  }, [registerMutation]);
-
-  // Función para logout
-  const logout = useCallback(() => {
-    logoutMutation.mutate();
-  }, [logoutMutation]);
+  // Función para refetch user (simplificada)
+  const refetchUser = useCallback(() => {
+    // No hacer nada, ya que usamos localStorage
+  }, []);
 
   // Efecto para inicializar el estado de autenticación
   useEffect(() => {
@@ -254,18 +231,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const userData = JSON.parse(userDataStr);
             setUser(userData as User);
-            queryClient.setQueryData(["/api/user"], userData);
-            
-            // Verificar que el token sigue siendo válido
-            const isValid = await validateToken();
-            if (!isValid) {
-              // Token expirado, intentar renovar
-              const refreshed = await refreshTokens();
-              if (!refreshed) {
-                // No se pudo renovar, limpiar estado
-                logoutHelper();
-              }
-            }
           } catch (parseError) {
             console.error('Error parsing user data:', parseError);
             logoutHelper();
@@ -273,7 +238,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           // Limpiar estado si no hay token válido
           setUser(null);
-          queryClient.removeQueries({ queryKey: ["/api/user"] });
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -284,44 +248,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initializeAuth();
-  }, [queryClient]);
-
-  // Efecto para sincronizar el estado del usuario
-  useEffect(() => {
-    if (userData) {
-      setUser(userData as User);
-    }
-  }, [userData]);
-
-  // Efecto para verificar periódicamente la validez del token
-  useEffect(() => {
-    if (!user) return;
-
-    const checkTokenValidity = async () => {
-      const isValid = await validateToken();
-      if (!isValid) {
-        const refreshed = await refreshTokens();
-        if (!refreshed) {
-          logoutHelper();
-        }
-      }
-    };
-
-    // Verificar cada 5 minutos
-    const interval = setInterval(checkTokenValidity, 5 * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, [user]);
+  }, []);
 
   const value: AuthContextType = {
     user,
-    isLoading: isLoading || userLoading,
+    isLoading,
     isAuthenticated: !!user,
     login,
     register,
     logout,
     logoutMutation,
-    refetchUser: refetch,
+    refetchUser,
     handleJWTFromURL,
     refreshTokens,
   };
