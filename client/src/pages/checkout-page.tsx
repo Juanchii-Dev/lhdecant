@@ -24,7 +24,7 @@ interface CartItem {
 
 export default function CheckoutPage() {
   const [processingPayment, setProcessingPayment] = useState(false);
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const { cartItems: items, isLoading: loading } = useCart();
 
@@ -111,12 +111,31 @@ export default function CheckoutPage() {
     }
   };
 
+  // Mostrar loading mientras se verifica la autenticación
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto mb-4"></div>
+          <p className="text-gray-400">Verificando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar autenticación después del loading
   if (!user) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Inicia sesión para continuar</h1>
           <p className="text-gray-400">Necesitas estar registrado para realizar la compra</p>
+          <button 
+            onClick={() => window.location.href = '/auth'}
+            className="mt-4 px-6 py-2 bg-luxury-gold text-gray-900 font-semibold rounded-lg hover:bg-yellow-500 transition-colors"
+          >
+            Ir al Login
+          </button>
         </div>
       </div>
     );

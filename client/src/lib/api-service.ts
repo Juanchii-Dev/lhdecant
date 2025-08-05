@@ -40,14 +40,7 @@ class ApiService {
     }
 
     if (response.status === 401) {
-      // No intentar renovar token automáticamente para evitar loops
-      // Solo limpiar tokens si no estamos en página de login
-      if (window.location.pathname !== '/auth' && window.location.pathname !== '/login') {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('userData');
-      }
-      
+      // No limpiar tokens automáticamente, dejar que el hook de auth maneje esto
       return { status: 401, error: 'Authentication failed', success: false };
     }
 

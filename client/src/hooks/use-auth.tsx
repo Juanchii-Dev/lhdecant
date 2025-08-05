@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from './use-toast';
-import { getAuthToken, getRefreshToken, handleLogout as logoutHelper } from '../lib/auth-helpers';
+import { getAuthToken, getRefreshToken, handleLogout as logoutHelper, validateToken } from '../lib/auth-helpers';
 import { apiService } from '../lib/api-service';
 
 interface User {
@@ -251,15 +251,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userDataStr = localStorage.getItem('userData');
         
         if (token && userDataStr) {
-          const userData = JSON.parse(userDataStr);
-          setUser(userData as User);
-          queryClient.setQueryData(["/api/user"], userData);
+          try {
+            const userData = JSON.parse(userDataStr);
+            setUser(userData as User);
+            queryClient.setQueryData(["/api/user"], userData);
+            
+            // Verificar que el token sigue siendo válido
+            const isValid = await validateToken();
+            if (!isValid) {
+              // Token expirado, intentar renovar
+              const refreshed = await refreshTokens();
+              if (!refreshed) {
+                // No se pudo renovar, limpiar estado
+                logoutHelper();
+              }
+            }
+          } catch (parseError) {
+            console.error('Error parsing user data:', parseError);
+            logoutHelper();
+          }
         } else {
           // Limpiar estado si no hay token válido
           setUser(null);
           queryClient.removeQueries({ queryKey: ["/api/user"] });
         }
       } catch (error) {
+        console.error('Error initializing auth:', error);
         logoutHelper();
       } finally {
         setIsLoading(false);
@@ -275,6 +292,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData as User);
     }
   }, [userData]);
+
+  // Efecto para verificar periódicamente la validez del token
+  useEffect(() => {
+    if (!user) return;
+
+    const checkTokenValidity = async () => {
+      const isValid = await validateToken();
+      if (!isValid) {
+        const refreshed = await refreshTokens();
+        if (!refreshed) {
+          logoutHelper();
+        }
+      }
+    };
+
+    // Verificar cada 5 minutos
+    const interval = setInterval(checkTokenValidity, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [user]);
 
   const value: AuthContextType = {
     user,
