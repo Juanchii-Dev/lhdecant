@@ -40,19 +40,12 @@ class ApiService {
     }
 
     if (response.status === 401) {
-      const refreshed = await refreshToken();
-      if (refreshed) {
-        return { status: 401, error: 'Token refreshed', success: false };
-      }
-      
-      // Limpiar tokens y redirigir al login
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('userData');
-      
-      // Redirigir al login solo si no estamos ya en la página de login
+      // No intentar renovar token automáticamente para evitar loops
+      // Solo limpiar tokens si no estamos en página de login
       if (window.location.pathname !== '/auth' && window.location.pathname !== '/login') {
-        window.location.href = '/auth?message=session-expired';
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userData');
       }
       
       return { status: 401, error: 'Authentication failed', success: false };

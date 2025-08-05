@@ -74,8 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     enabled: !!getAuthToken(),
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
+    staleTime: 10 * 60 * 1000, // 10 minutos
+    gcTime: 15 * 60 * 1000, // 15 minutos
+    refetchOnWindowFocus: false, // No refetch automático
   });
 
   // Mutation para login

@@ -59,9 +59,10 @@ export function useCart() {
         }
       }
     },
-    staleTime: 0, // Siempre obtener datos frescos
-    refetchOnWindowFocus: true,
-    retry: 1, // Solo reintentar una vez
+    enabled: true, // Siempre habilitado
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: false, // No refetch automático
+    retry: false, // No reintentar
   });
 
   // Calcular total de items con validación
@@ -132,9 +133,11 @@ export function useCart() {
   });
 
   // Función para agregar al carrito (wrapper)
-  const addToCart = useCallback(async (productId: string, quantity: number = 1, size?: string) => {
+  const addToCart = useCallback((productId: string, quantity: number = 1, size?: string) => {
     addToCartMutation.mutate({ productId, quantity, size });
   }, [addToCartMutation]);
+
+
 
   // Función para actualizar cantidad
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
